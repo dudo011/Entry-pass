@@ -2,147 +2,180 @@
  * 자재센터 출입차량 유형별 설정 데이터
  *
  * 유형을 추가/수정하려면 이 배열만 바꾸면 됩니다.
- * - safetyRules      : 유형별 필수 안전수칙 (기사가 확인 후 동의)
- * - route            : 유형별 차량 동선 안내
- * - requiredDocuments: 유형별 제출 서류 (required=true 는 필수)
+ * - requiredSafetyRules : 필수 안전수칙 (1페이지, 반드시 확인·동의)
+ * - otherSafetyRules    : 기타 안전수칙 (1페이지)
+ * - route               : 유형별 차량 동선 안내
+ * - requiredDocuments   : 유형별 제출 서류 (required=true 는 필수)
  */
 module.exports = [
   {
-    id: 'large-truck',
-    name: '대형 화물차',
-    subtitle: '11톤 이상 대형 납품·상하차 차량',
+    id: 'transport',
+    name: '물자수송용역 차량',
+    subtitle: '연간 물자수송 용역계약 차량',
     icon: '🚛',
     color: '#2563eb',
-    safetyRules: [
-      '센터 구내 진입 시 제한속도 10km/h 이하를 반드시 준수합니다.',
-      '상하차 구역 진입 전 유도원의 수신호를 대기하고 지시에 따릅니다.',
-      '하차 작업 중에는 반드시 시동을 끄고 주차 브레이크를 체결합니다.',
-      '적재함 개방·크레인 작업 시 하부 및 주변에 작업자가 없는지 확인합니다.',
-      '안전모·안전화 등 개인보호구를 착용한 상태로 하차합니다.',
-      '후진 시 반드시 유도원 배치 후 진행하며, 사각지대를 육안 확인합니다.',
+    requiredSafetyRules: [
+      '센터 구내 제한속도 10km/h 이하를 반드시 준수합니다.',
+      '상하차 전 시동을 정지하고 주차 브레이크 체결 및 바퀴 굄목을 설치합니다.',
+      '후진·정차 시 유도원의 신호에 따르고 사각지대를 육안 확인합니다.',
+      '안전모·안전화 등 개인보호구를 착용한 상태로 작업합니다.',
+      '적재물의 결속 상태를 확인하고 낙하를 방지합니다.',
+    ],
+    otherSafetyRules: [
+      '지정된 상하차 구역 외에서는 정차·작업하지 않습니다.',
+      '보행자 통로와 지게차 이동 동선에 주의합니다.',
+      '구내 흡연 및 화기 취급을 금지합니다.',
+      '작업 종료 후 주변을 정리정돈합니다.',
     ],
     route: {
-      summary: '정문 → 계량대 → B동 대형 상하차장',
+      summary: '정문 → 계량대 → 지정 상하차장',
       steps: [
         '정문 차단기에서 QR/승인번호 확인 후 진입',
-        '계량대(정문 우측 30m)에서 계근 후 대기',
-        '내부 순환도로 우측 차선을 따라 B동으로 이동',
-        'B동 대형 상하차장 유도원 지시에 따라 지정 베이에 정차',
+        '계량대에서 계근 후 대기',
+        '내부 순환도로를 따라 지정 상하차장으로 이동',
+        '유도원 지시에 따라 지정 베이에 정차',
       ],
     },
     requiredDocuments: [
       { key: 'license', label: '운전면허증', required: true },
-      { key: 'insurance', label: '차량 보험증권(자동차·화물)', required: true },
-      { key: 'delivery', label: '납품(거래) 명세서', required: true },
+      { key: 'insurance', label: '차량 보험증권', required: true },
+      { key: 'contract', label: '용역계약 확인서', required: true },
       { key: 'safetyEdu', label: '안전교육 이수증', required: false },
     ],
   },
   {
-    id: 'small-truck',
-    name: '중·소형 화물차',
-    subtitle: '1~5톤 납품·배송 차량',
-    icon: '🚚',
-    color: '#0d9488',
-    safetyRules: [
-      '센터 구내 제한속도 10km/h 이하를 준수합니다.',
-      '지정된 소형 하차장 외 구역에서는 정차·하차하지 않습니다.',
-      '수레·핸드파렛트 이동 시 보행자 통로를 확인하고 서행합니다.',
-      '하차 작업 중에는 시동을 끄고 주차 브레이크를 체결합니다.',
-      '안전화를 착용하고 무거운 자재는 2인 1조 또는 장비를 사용합니다.',
-    ],
-    route: {
-      summary: '정문 → A동 소형 하차장',
-      steps: [
-        '정문 차단기에서 승인번호 확인 후 진입',
-        '내부 순환도로를 따라 좌측 A동 방향으로 이동',
-        'A동 소형 하차장(1~4번 베이) 빈 자리에 정차',
-      ],
-    },
-    requiredDocuments: [
-      { key: 'license', label: '운전면허증', required: true },
-      { key: 'delivery', label: '납품(거래) 명세서', required: true },
-      { key: 'insurance', label: '차량 보험증권', required: false },
-    ],
-  },
-  {
-    id: 'tank-lorry',
-    name: '탱크로리·위험물',
-    subtitle: '유류·화학물질 등 위험물 운반 차량',
-    icon: '🛢️',
-    color: '#dc2626',
-    safetyRules: [
-      '위험물 하역 구역에서는 화기 취급 및 흡연을 절대 금지합니다.',
-      '정전기 방지를 위해 접지선을 연결한 후 하역을 시작합니다.',
-      '하역 중 엔진은 정지하고, 소화기를 차량 인근에 비치합니다.',
-      '누출 발생 시 즉시 하역을 중단하고 관리자에게 신고합니다.',
-      '개인보호구(내화학 장갑·보안경)를 착용하고 작업합니다.',
-      'MSDS(물질안전보건자료)를 지참하고 지시에 따라 작업합니다.',
-    ],
-    route: {
-      summary: '정문 → 위험물 전용 하역장(C동 후면)',
-      steps: [
-        '정문에서 위험물 반입 승인 확인 후 진입',
-        '내부 순환도로 우측 끝 위험물 전용 게이트로 이동',
-        'C동 후면 위험물 하역장에서 관리자 입회하에 정차',
-      ],
-    },
-    requiredDocuments: [
-      { key: 'license', label: '운전면허증', required: true },
-      { key: 'hazmat', label: '위험물 운송자격증', required: true },
-      { key: 'msds', label: 'MSDS(물질안전보건자료)', required: true },
-      { key: 'insurance', label: '차량 보험증권', required: true },
-    ],
-  },
-  {
-    id: 'equipment',
-    name: '지게차·특수장비',
-    subtitle: '지게차·크레인 등 장비 반입 차량',
+    id: 'construction',
+    name: '공사업체 차량',
+    subtitle: '공사·정비 용역 수행 차량',
     icon: '🏗️',
     color: '#d97706',
-    safetyRules: [
-      '장비 하차·이동 전 작업 반경 내 인원과 장애물을 확인합니다.',
-      '지게차 등 장비 운전자는 유효한 조종 자격을 소지해야 합니다.',
-      '고소·인양 작업 시 신호수를 배치하고 통제 구역을 설정합니다.',
-      '장비 이동 시 급선회·급제동을 금지하고 서행합니다.',
-      '작업 종료 후 장비를 안전한 위치에 하강·고정합니다.',
+    requiredSafetyRules: [
+      '센터 구내 제한속도를 준수하고 공사구역에서는 서행합니다.',
+      '작업 전 안전모·안전화·안전벨트 등 보호구를 착용합니다.',
+      '지정된 공사구역 외 지역으로 진입하지 않습니다.',
+      '중장비 작업 반경 내 접근을 금지하고 신호수를 배치합니다.',
+      '작업 전 위험성평가/작업 전 안전점검(TBM)에 참여합니다.',
+    ],
+    otherSafetyRules: [
+      '자재 적치 시 보행·차량 통로를 확보합니다.',
+      '분진·소음 발생 작업은 사전에 통보합니다.',
+      '화기작업 시 화기작업허가서를 소지합니다.',
+      '작업 종료 후 청소하고 폐자재를 반출합니다.',
     ],
     route: {
-      summary: '정문 → 장비 반입 야드(D동 옆)',
+      summary: '정문 → 공사현장 지정 게이트',
       steps: [
-        '정문에서 장비 반입 승인 확인 후 진입',
-        '내부 순환도로를 따라 D동 방향으로 이동',
-        'D동 옆 장비 반입 야드에서 통제요원 지시에 따라 하차',
+        '정문에서 공사 출입 승인 확인 후 진입',
+        '안내에 따라 공사현장 지정 게이트로 이동',
+        '현장 관리자 확인 후 지정 위치에 주차',
       ],
     },
     requiredDocuments: [
       { key: 'license', label: '운전면허증', required: true },
-      { key: 'operatorCert', label: '건설기계 조종사 면허/자격증', required: true },
-      { key: 'insurance', label: '차량·장비 보험증권', required: true },
+      { key: 'insurance', label: '차량 보험증권', required: true },
+      { key: 'workPermit', label: '공사계약서/작업허가서', required: true },
+      { key: 'safetyEdu', label: '안전보건교육 이수증', required: true },
+      { key: 'workPlan', label: '유해위험작업 작업계획서', required: false },
     ],
   },
   {
-    id: 'visitor',
-    name: '방문 승용차',
-    subtitle: '점검·미팅 등 방문 목적 차량',
-    icon: '🚗',
-    color: '#7c3aed',
-    safetyRules: [
+    id: 'delivery',
+    name: '기자재 납품차량',
+    subtitle: '기자재·부품 납품 차량',
+    icon: '🚚',
+    color: '#0d9488',
+    requiredSafetyRules: [
       '센터 구내 제한속도 10km/h 이하를 준수합니다.',
-      '지정된 방문자 주차구역에만 주차합니다.',
-      '작업 구역(상하차장·야드) 무단 출입을 금지합니다.',
-      '도보 이동 시 지정된 보행자 통로를 이용합니다.',
-      '방문증을 패용하고 담당 직원의 안내에 따라 이동합니다.',
+      '하차 전 시동을 정지하고 주차 브레이크를 체결합니다.',
+      '지게차 하역 작업 시 적재물 하부에 접근하지 않습니다.',
+      '안전모·안전화 등 개인보호구를 착용합니다.',
+    ],
+    otherSafetyRules: [
+      '지정된 하역장에서만 하차합니다.',
+      '납품 명세를 확인한 후 하차를 진행합니다.',
+      '보행자 통로를 준수합니다.',
+      '구내 흡연 및 화기 취급을 금지합니다.',
     ],
     route: {
-      summary: '정문 → 방문자 주차장(본관 앞)',
+      summary: '정문 → (대형은 계량대) → A동 하역장',
       steps: [
-        '정문에서 방문 승인 확인 후 진입',
-        '본관 방향으로 이동',
-        '본관 앞 방문자 주차장(P구역)에 주차 후 담당자 연락',
+        '정문에서 승인번호 확인 후 진입',
+        '대형 차량은 계량대 계근 후 이동',
+        'A동 하역장 빈 베이에 정차 후 하역',
       ],
     },
     requiredDocuments: [
-      { key: 'license', label: '운전면허증', required: false },
+      { key: 'license', label: '운전면허증', required: true },
+      { key: 'insurance', label: '차량 보험증권', required: true },
+      { key: 'delivery', label: '납품(거래) 명세서', required: true },
+    ],
+  },
+  {
+    id: 'scrap',
+    name: '불용품 매각차량',
+    subtitle: '불용·매각품 반출 차량',
+    icon: '♻️',
+    color: '#65a30d',
+    requiredSafetyRules: [
+      '센터 구내 제한속도를 준수합니다.',
+      '상차 전 시동을 정지하고 주차 브레이크 체결 및 굄목을 설치합니다.',
+      '크레인·지게차 상차 시 작업 반경 내 접근을 금지하고 신호수를 배치합니다.',
+      '안전모·안전화·보호장갑 등 개인보호구를 착용합니다.',
+      '반출 전 적재물 결속 상태를 확인하고 낙하를 방지합니다.',
+    ],
+    otherSafetyRules: [
+      '반출 물품을 계량하고 반출증을 확인합니다.',
+      '지정된 상차장 외에서는 작업하지 않습니다.',
+      '날카로운 고철·폐자재 취급에 주의합니다.',
+      '반출 전 정문 반출확인 절차를 이행합니다.',
+    ],
+    route: {
+      summary: '정문 → 매각품 보관장 → 계량대 → 반출',
+      steps: [
+        '정문에서 매각 반출 승인 확인 후 진입',
+        '매각품 보관장에서 담당자 입회하에 상차',
+        '계량대에서 계근 후 정문 반출확인 절차 진행',
+      ],
+    },
+    requiredDocuments: [
+      { key: 'license', label: '운전면허증', required: true },
+      { key: 'insurance', label: '차량 보험증권', required: true },
+      { key: 'saleContract', label: '매각(낙찰) 계약서/반출증', required: true },
+    ],
+  },
+  {
+    id: 'pcbs',
+    name: 'PCBs처리용역 차량',
+    subtitle: 'PCBs 함유 폐기물 처리 용역 차량',
+    icon: '☣️',
+    color: '#dc2626',
+    requiredSafetyRules: [
+      '유해화학물질 취급 구역에서 화기 취급 및 흡연을 절대 금지합니다.',
+      '상차·이송 전 접지 및 누출방지 조치를 완료합니다.',
+      '방제장비·흡착포·소화기를 차량 인근에 비치합니다.',
+      '내화학 장갑·보안경·방독마스크 등 개인보호구를 착용합니다.',
+      '누출·사고 발생 시 즉시 작업을 중단하고 관리자에게 신고합니다.',
+    ],
+    otherSafetyRules: [
+      '지정된 보관·상차 장소에서만 작업합니다.',
+      '폐기물 인계·인수서(올바로) 확인 후 반출합니다.',
+      '이송 경로 및 차량 표지 부착 상태를 확인합니다.',
+      '작업 종료 후 오염 여부를 점검합니다.',
+    ],
+    route: {
+      summary: '정문 → 지정 보관장소(격리구역) → 계량 → 전용 게이트 반출',
+      steps: [
+        '정문에서 PCBs 반출 승인 확인 후 진입',
+        '지정 격리 보관장소에서 관리자 입회하에 상차',
+        '계량 후 위험물 전용 게이트로 반출',
+      ],
+    },
+    requiredDocuments: [
+      { key: 'license', label: '운전면허증', required: true },
+      { key: 'hazmat', label: '위험물/폐기물 운반차량 서류', required: true },
+      { key: 'wasteContract', label: '폐기물 처리 용역계약서', required: true },
+      { key: 'manifest', label: '폐기물 인계서(올바로)', required: true },
+      { key: 'msds', label: 'MSDS(물질안전보건자료)', required: false },
     ],
   },
 ];

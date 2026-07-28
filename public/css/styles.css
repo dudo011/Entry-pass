@@ -235,6 +235,44 @@ textarea { min-height: 72px; resize: vertical; }
   max-width: 90%;
 }
 
+/* --- Auth / profile / admin additions ----------------------------------- */
+.appbar .link-btn { margin-left: auto; background: rgba(255,255,255,.14); border: 0;
+  color: #fff; font-size: 13px; font-weight: 600; padding: 7px 12px; border-radius: 8px; cursor: pointer; }
+.switch { text-align: center; color: var(--text-muted); font-size: 14px; margin-top: 16px; }
+.switch a { color: var(--primary); font-weight: 700; cursor: pointer; }
+.hint { text-align: center; color: var(--text-muted); font-size: 13px; margin-top: 16px; }
+.rule-list li .n.other { background: var(--surface-2); color: var(--text-muted); }
+.agree.soft { background: var(--surface-2); }
+.agree.soft span { color: var(--text); }
+
+.card .row { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; padding: 3px 0; }
+.card .row .k { color: var(--text-muted); flex: none; }
+.card .row span:last-child { text-align: right; }
+.big-cta { font-size: 17px; padding: 17px; margin-bottom: 16px; }
+.profile-card { padding: 14px 16px; }
+.profile-card .section-title { margin: 0 0 8px; display: flex; justify-content: space-between; }
+.link-inline, .link-inline:visited { color: var(--primary); font-weight: 700; cursor: pointer; font-size: 12px; }
+.muted { color: var(--text-muted); font-size: 14px; padding: 8px 2px; }
+.mini-card { display: block; width: 100%; text-align: left; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 12px; padding: 13px 14px; margin-bottom: 10px;
+  box-shadow: var(--shadow); color: var(--text); cursor: pointer; }
+.mini-card .mc-top { display: flex; align-items: center; justify-content: space-between; }
+.mini-card .veh { font-weight: 700; font-size: 15px; }
+.mini-card .meta { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+
+.type-card { position: relative; }
+.my-tag { position: absolute; top: 8px; right: 8px; background: var(--primary); color: #fff;
+  font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px; }
+
+.admin-bar { display: flex; align-items: center; gap: 10px; padding: 10px 16px 0; }
+.admin-bar .link-btn { margin-left: auto; background: var(--surface); border: 1px solid var(--border);
+  color: var(--primary); font-size: 13px; font-weight: 700; padding: 8px 12px; border-radius: 9px; cursor: pointer; }
+.role-badge { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px;
+  background: var(--border); color: var(--text-muted); }
+.role-badge.admin { background: #1e293b; color: #fff; }
+.retention-note { font-size: 12px; color: var(--text-muted); background: var(--surface-2);
+  border: 1px solid var(--border); border-radius: 10px; padding: 9px 12px; margin: 0 0 12px; }
+
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #0f172a; --surface: #1e293b; --surface-2: #172033; --border: #334155;
