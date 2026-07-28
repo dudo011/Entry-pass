@@ -7,8 +7,8 @@
  * - route               : 유형별 차량 동선 안내
  * - requiredDocuments   : 유형별 제출 서류 (required=true 는 필수)
  *
- * ※ 필수 안전수칙은 모든 차량에 공통(COMMON_REQUIRED)으로 적용합니다.
- *   차량유형별 추가 수칙이 생기면 해당 유형의 requiredSafetyRules 를
+ * ※ 필수/기타 안전수칙은 모든 차량에 공통(COMMON_REQUIRED / COMMON_OTHER)으로
+ *   적용합니다. 차량유형별 추가 수칙이 생기면 해당 유형의 배열을
  *   [...COMMON_REQUIRED, '유형별 추가 수칙1', ...] 형태로 확장하면 됩니다.
  */
 
@@ -22,6 +22,14 @@ const COMMON_REQUIRED = [
   '혹한·혹서기 충분한 휴식 시행',
 ];
 
+// 모든 차량유형 공통 기타 안전수칙
+const COMMON_OTHER = [
+  '자재센터 내 제한속도 20km 준수',
+  '교차지점 일단정지 후 확인',
+  '운전자 좌석 안전띠 착용, 동승자 승차석 외 탑승 금지',
+  '차량검사증 소지, 법정정기검사 필증 부착 등',
+];
+
 export default [
   {
     id: 'transport',
@@ -30,12 +38,7 @@ export default [
     icon: '🚛',
     color: '#2563eb',
     requiredSafetyRules: [...COMMON_REQUIRED],
-    otherSafetyRules: [
-      '지정된 상하차 구역 외에서는 정차·작업하지 않습니다.',
-      '보행자 통로와 지게차 이동 동선에 주의합니다.',
-      '구내 흡연 및 화기 취급을 금지합니다.',
-      '작업 종료 후 주변을 정리정돈합니다.',
-    ],
+    otherSafetyRules: [...COMMON_OTHER],
     route: {
       summary: '정문 → 계량대 → 지정 상하차장',
       steps: [
@@ -59,12 +62,7 @@ export default [
     icon: '🏗️',
     color: '#d97706',
     requiredSafetyRules: [...COMMON_REQUIRED],
-    otherSafetyRules: [
-      '자재 적치 시 보행·차량 통로를 확보합니다.',
-      '분진·소음 발생 작업은 사전에 통보합니다.',
-      '화기작업 시 화기작업허가서를 소지합니다.',
-      '작업 종료 후 청소하고 폐자재를 반출합니다.',
-    ],
+    otherSafetyRules: [...COMMON_OTHER],
     route: {
       summary: '정문 → 공사현장 지정 게이트',
       steps: [
@@ -88,12 +86,7 @@ export default [
     icon: '🚚',
     color: '#0d9488',
     requiredSafetyRules: [...COMMON_REQUIRED],
-    otherSafetyRules: [
-      '지정된 하역장에서만 하차합니다.',
-      '납품 명세를 확인한 후 하차를 진행합니다.',
-      '보행자 통로를 준수합니다.',
-      '구내 흡연 및 화기 취급을 금지합니다.',
-    ],
+    otherSafetyRules: [...COMMON_OTHER],
     route: {
       summary: '정문 → (대형은 계량대) → A동 하역장',
       steps: [
@@ -115,12 +108,7 @@ export default [
     icon: '♻️',
     color: '#65a30d',
     requiredSafetyRules: [...COMMON_REQUIRED],
-    otherSafetyRules: [
-      '반출 물품을 계량하고 반출증을 확인합니다.',
-      '지정된 상차장 외에서는 작업하지 않습니다.',
-      '날카로운 고철·폐자재 취급에 주의합니다.',
-      '반출 전 정문 반출확인 절차를 이행합니다.',
-    ],
+    otherSafetyRules: [...COMMON_OTHER],
     route: {
       summary: '정문 → 매각품 보관장 → 계량대 → 반출',
       steps: [
@@ -142,12 +130,7 @@ export default [
     icon: '☣️',
     color: '#dc2626',
     requiredSafetyRules: [...COMMON_REQUIRED],
-    otherSafetyRules: [
-      '지정된 보관·상차 장소에서만 작업합니다.',
-      '폐기물 인계·인수서(올바로) 확인 후 반출합니다.',
-      '이송 경로 및 차량 표지 부착 상태를 확인합니다.',
-      '작업 종료 후 오염 여부를 점검합니다.',
-    ],
+    otherSafetyRules: [...COMMON_OTHER],
     route: {
       summary: '정문 → 지정 보관장소(격리구역) → 계량 → 전용 게이트 반출',
       steps: [
