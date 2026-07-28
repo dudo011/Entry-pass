@@ -1,17 +1,18 @@
 {
   "name": "entry-pass",
-  "version": "0.1.0",
-  "description": "자재센터 출입차량 안전수칙 확인 및 사전 출입승인 모바일 웹앱 (MVP)",
-  "main": "server.js",
+  "version": "0.2.0",
+  "description": "자재센터 출입차량 안전수칙 확인 및 사전 출입승인 앱 (Cloudflare Workers + D1 + R2)",
+  "type": "module",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js"
-  },
-  "engines": {
-    "node": ">=18"
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:init": "wrangler d1 execute entry-pass-db --file schema.sql",
+    "db:init:local": "wrangler d1 execute entry-pass-db --local --file schema.sql"
   },
   "dependencies": {
-    "express": "^4.19.2",
-    "multer": "^1.4.5-lts.1"
+    "hono": "^4.6.0"
+  },
+  "devDependencies": {
+    "wrangler": "^3.90.0"
   }
 }

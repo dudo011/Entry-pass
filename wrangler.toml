@@ -1,0 +1,23 @@
+# Cloudflare Workers 설정
+# 배포 절차는 DEPLOY.md 참고.
+name = "entry-pass"
+main = "src/worker.js"
+compatibility_date = "2024-11-01"
+
+# 정적 프런트엔드(public/)를 Workers 에서 함께 서빙
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+# D1 데이터베이스 (사용자/세션/신청/서류 메타)
+# `wrangler d1 create entry-pass-db` 실행 후 출력된 database_id 를 붙여넣으세요.
+[[d1_databases]]
+binding = "DB"
+database_name = "entry-pass-db"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+
+# R2 버킷 (첨부 서류 파일)
+# `wrangler r2 bucket create entry-pass-docs` 로 생성.
+[[r2_buckets]]
+binding = "DOCS"
+bucket_name = "entry-pass-docs"

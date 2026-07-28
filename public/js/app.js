@@ -481,8 +481,7 @@
     app.querySelectorAll('[data-approve]').forEach((b) => b.onclick = () => reviewReq(b.dataset.approve, 'approve'));
     app.querySelectorAll('[data-reject]').forEach((b) => b.onclick = () => reviewReq(b.dataset.reject, 'reject'));
     const exp = document.getElementById('exportCsv');
-    if (exp) exp.onclick = () => window.open('/api/requests/export.csv?t=' + state.token, '_blank')
-      || downloadCsv();
+    if (exp) exp.onclick = downloadCsv;
   }
 
   async function downloadCsv() {

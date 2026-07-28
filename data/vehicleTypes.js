@@ -7,7 +7,7 @@
  * - route               : 유형별 차량 동선 안내
  * - requiredDocuments   : 유형별 제출 서류 (required=true 는 필수)
  */
-module.exports = [
+export default [
   {
     id: 'transport',
     name: '물자수송용역 차량',

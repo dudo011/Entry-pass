@@ -39,21 +39,37 @@
 | 승인담당 (approver) | ✅ | 승인/반려 탭 | ❌ |
 | 관리자 (admin) | ✅ | ✅ (전체이력 탭) | ✅ |
 
-## 실행 방법
+## 실행 방법 (로컬 개발)
+
+Cloudflare Workers 기반입니다. D1·R2는 로컬 에뮬레이션으로 동작합니다.
 
 ```bash
 npm install
-npm start          # http://localhost:3000
+npm run db:init:local   # 로컬 D1에 테이블 + 기본 직원 계정 생성
+npm run dev             # http://localhost:8787
 ```
 
-최초 실행 시 기본 직원 계정이 생성됩니다(콘솔에 출력):
+기본 직원 계정(스키마 시드):
 
 - 관리자: `admin` / `admin1234`
 - 승인담당: `staff` / `staff1234`
 
-> ⚠️ 운영 배포 전 반드시 기본 비밀번호를 변경하세요.
+> ⚠️ 운영 배포 전 반드시 기본 비밀번호를 변경하세요. (변경 방법은 `DEPLOY.md`)
 
 기사는 첫 화면 **운전기사 → 회원가입**으로 직접 계정을 만듭니다.
+
+## 배포 (Cloudflare)
+
+D1(DB) · R2(서류) · Workers(서버)를 Cloudflare 무료 티어로 배포합니다.
+자세한 절차는 **[`DEPLOY.md`](DEPLOY.md)** 참고.
+
+```bash
+npx wrangler login
+npx wrangler d1 create entry-pass-db     # 출력된 database_id 를 wrangler.toml 에 입력
+npx wrangler r2 bucket create entry-pass-docs
+npm run db:init                          # 원격 D1에 스키마 적용
+npm run deploy
+```
 
 ## 실제 내용으로 교체하기
 
@@ -66,13 +82,19 @@ npm start          # http://localhost:3000
 ## 구조
 
 ```
-server.js              백엔드 (Express) — 인증/권한/신청/승인/CSV/보존기간
+src/worker.js          백엔드 (Cloudflare Workers + Hono) — 인증/권한/신청/승인/CSV
+schema.sql             D1 스키마 (users/sessions/requests/documents) + 직원 시드
+wrangler.toml          Cloudflare 설정 (D1·R2·정적자산 바인딩)
 data/vehicleTypes.js   차량 유형별 안전수칙·동선·서류 설정
-data/db.json           사용자·세션·신청 기록 저장 (자동 생성, git 제외)
-uploads/               업로드된 서류 저장 (자동 생성, git 제외)
 public/                모바일 웹 프런트엔드 (빌드 불필요)
   index.html / css/styles.css / js/app.js
+DEPLOY.md              Cloudflare 배포 가이드
 ```
+
+- **D1 (SQLite)** — 사용자·세션·출입신청·서류 메타데이터 저장
+- **R2** — 첨부 서류 파일 저장 (신청 기록과 함께 보존기간까지 유지)
+- **Workers** — API 서버 + 정적 프런트엔드 서빙
+- 비밀번호는 Web Crypto **PBKDF2-SHA256** 으로 해시 저장
 
 ## API 요약
 
@@ -93,17 +115,19 @@ public/                모바일 웹 프런트엔드 (빌드 불필요)
 | GET | `/api/requests/export.csv` | 관리자 | 전체 기록 CSV |
 | GET | `/api/retention` | - | 보존 기간(년) |
 
-## 데이터 보존에 대한 참고 (운영 배포 시)
+## 데이터 보존 (3년 이상)
 
-- 앱은 기록을 **자동 삭제하지 않으며**, 기록마다 보존 만료일을 저장합니다.
-- 3년 이상 안정적 보관을 위해서는 서버가 **영구 스토리지**에서 실행되어야 합니다.
-  현재 저장소는 파일(`data/db.json`) 기반이므로, 실제 운영에서는
-  **영구 볼륨** 또는 **DB(PostgreSQL 등)** 로 전환하고 정기 백업을 권장합니다.
-- 첨부 서류(`uploads/`)도 함께 백업 대상에 포함하세요.
+- **기록과 서류를 자동 삭제하지 않습니다.** 신청 기록과 각 서류에
+  `retain_until`(신청일 + 3년)이 저장됩니다. 보존기간은 `src/worker.js` 의
+  `RETENTION_YEARS` 로 조정합니다.
+- **기록(D1)** 은 Cloudflare 관리형으로 보관되며,
+  `wrangler d1 export` 로 정기 백업을 권장합니다.
+- **서류(R2)** 도 삭제하지 않는 한 유지됩니다. 관리자 CSV 내보내기와
+  R2 백업으로 이중 보관하세요. (자세한 내용은 `DEPLOY.md`)
 
 ## 다음 단계 (확장 후보)
 
+- 관리자용 직원 계정 관리 / 비밀번호 변경 화면
+- 서류 보안 강화 (접근권한·암호화·보존기간 경과 후 자동 파기)
 - 승인 시 기사에게 문자/푸시 알림
 - QR 출입증 발급 및 정문 스캔 연동
-- 관리자용 직원 계정 관리 화면, 비밀번호 변경
-- DB 전환 및 클라우드 배포, 감사 로그 강화
