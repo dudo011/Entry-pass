@@ -61,9 +61,13 @@ npm run dev             # http://localhost:8787
 ## 배포 (Cloudflare)
 
 D1(DB) · R2(서류) · Workers(서버)를 Cloudflare 무료 티어로 배포합니다.
-자세한 절차는 **[`DEPLOY.md`](DEPLOY.md)** 참고.
+
+- **터미널 없이 브라우저로만 배포** → **[`DEPLOY-BROWSER.md`](DEPLOY-BROWSER.md)**
+  (Cloudflare 대시보드 + GitHub 웹 연동, 이후 코드 수정 시 자동 재배포)
+- **PC에서 명령어로 배포** → **[`DEPLOY.md`](DEPLOY.md)**
 
 ```bash
+# PC(터미널) 방식 요약
 npx wrangler login
 npx wrangler d1 create entry-pass-db     # 출력된 database_id 를 wrangler.toml 에 입력
 npx wrangler r2 bucket create entry-pass-docs
