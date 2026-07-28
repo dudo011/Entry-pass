@@ -103,27 +103,22 @@
     const typeOpts = state.vehicleTypes.map((t) =>
       `<option value="${t.id}">${esc(t.name)}</option>`).join('');
 
-    const idPw = `<div class="field-row">
-      <label class="field"><span class="lb">아이디 <span class="req">*</span></span>
-        <input type="text" id="a_loginId" autocomplete="username" placeholder="아이디"></label>
-      <label class="field"><span class="lb">비밀번호 <span class="req">*</span></span>
-        <input type="password" id="a_password" autocomplete="current-password" placeholder="비밀번호"></label>
-    </div>`;
+    // 라벨(항목명)과 입력칸을 좌우로 나란히 배치
+    const fld = (label, input) =>
+      `<label class="field-h"><span class="lb">${label} <span class="req">*</span></span>${input}</label>`;
 
     const cardInner = isReg ? `
-      <label class="field"><span class="lb">계약(차량) 유형 <span class="req">*</span></span>
-        <select id="a_vtype">${typeOpts}</select></label>
-      ${idPw}
-      <label class="field"><span class="lb">이름 <span class="req">*</span></span>
-        <input type="text" id="a_name" placeholder="홍길동"></label>
-      <label class="field"><span class="lb">연락처 <span class="req">*</span></span>
-        <input type="tel" id="a_phone" placeholder="010-0000-0000"></label>
-      <label class="field"><span class="lb">소속 업체 <span class="req">*</span></span>
-        <input type="text" id="a_company" placeholder="OO물류"></label>
-      <label class="field"><span class="lb">차량번호 <span class="req">*</span></span>
-        <input type="text" id="a_vnum" placeholder="12가 3456"></label>
+      ${fld('계약(차량) 유형', `<select id="a_vtype">${typeOpts}</select>`)}
+      ${fld('아이디', '<input type="text" id="a_loginId" autocomplete="username" placeholder="아이디">')}
+      ${fld('비밀번호', '<input type="password" id="a_password" autocomplete="new-password" placeholder="비밀번호">')}
+      ${fld('비밀번호 확인', '<input type="password" id="a_password2" autocomplete="new-password" placeholder="다시 입력">')}
+      ${fld('이름', '<input type="text" id="a_name" placeholder="홍길동">')}
+      ${fld('연락처', '<input type="tel" id="a_phone" placeholder="010-0000-0000">')}
+      ${fld('소속 업체', '<input type="text" id="a_company" placeholder="OO물류">')}
+      ${fld('차량번호', '<input type="text" id="a_vnum" placeholder="12가 3456">')}
       <button class="btn btn-primary" id="a_submit">가입하고 시작</button>` : `
-      ${idPw}
+      ${fld('아이디', '<input type="text" id="a_loginId" autocomplete="username" placeholder="아이디">')}
+      ${fld('비밀번호', '<input type="password" id="a_password" autocomplete="current-password" placeholder="비밀번호">')}
       <button class="btn btn-primary" id="a_submit">로그인</button>`;
 
     return appbar(isDriver ? '운전기사' : '자재센터 직원', isReg ? '회원가입' : '로그인', { back: 'landing' }) + `
@@ -150,6 +145,9 @@
         const company = v('a_company').trim(), vnum = v('a_vnum').trim();
         if (!name || !phone || !company || !vnum) {
           btn.disabled = false; return toast('모든 항목을 입력해 주세요.');
+        }
+        if (password !== v('a_password2')) {
+          btn.disabled = false; return toast('비밀번호가 일치하지 않습니다.');
         }
         out = await api('/auth/register', { method: 'POST', body: {
           loginId, password, name, phone, company,
