@@ -4,6 +4,13 @@
   const TOKEN_KEY = 'ep_token';
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  // 연락처 자동 하이픈: 010-1234-5678 형식
+  const formatPhone = (v) => {
+    const d = String(v).replace(/\D/g, '').slice(0, 11);
+    if (d.length < 4) return d;
+    if (d.length < 8) return d.slice(0, 3) + '-' + d.slice(3);
+    return d.slice(0, 3) + '-' + d.slice(3, 7) + '-' + d.slice(7);
+  };
 
   const state = {
     view: 'landing',
@@ -29,6 +36,23 @@
   let poll = null;
   const stopPoll = () => { if (poll) { clearInterval(poll); poll = null; } };
 
+  // 뒤로가기(하드웨어/브라우저 '<') 지원용 화면 검증
+  const AUTH_VIEWS = ['driverHome', 'driverProfile', 'driverTypes', 'driverRequired',
+    'driverOther', 'driverRoute', 'driverDocs', 'driverResult', 'staffConsole'];
+  function canRender(view) {
+    if (AUTH_VIEWS.includes(view) && !state.user) return false;
+    if (['driverRequired', 'driverOther', 'driverRoute', 'driverDocs'].includes(view) && !state.selectedType) return false;
+    if (view === 'driverResult' && !state.lastRequest) return false;
+    return true;
+  }
+  const fallbackView = () => state.user ? (state.user.role === 'staff' ? 'staffConsole' : 'driverHome') : 'landing';
+  function showView(view) { stopPoll(); state.view = view; render(); window.scrollTo(0, 0); }
+  window.addEventListener('popstate', (e) => {
+    let view = (e.state && e.state.view) || 'landing';
+    if (!canRender(view)) view = fallbackView();
+    showView(view);
+  });
+
   async function api(path, { method = 'GET', body, isForm } = {}) {
     const headers = {};
     if (state.token) headers.Authorization = 'Bearer ' + state.token;
@@ -48,7 +72,13 @@
     document.body.appendChild(t);
     setTimeout(() => t.remove(), 2400);
   }
-  function go(view) { stopPoll(); state.view = view; render(); window.scrollTo(0, 0); }
+  function go(view, opts) {
+    try {
+      if (opts && opts.replace) history.replaceState({ view }, '');
+      else history.pushState({ view }, '');
+    } catch { /* noop */ }
+    showView(view);
+  }
   function logout() {
     api('/auth/logout', { method: 'POST' }).catch(() => {});
     state.token = null; state.user = null; state.form = {}; state.files = {};
@@ -59,7 +89,7 @@
   // ==== 공통 UI ============================================================
   function appbar(title, sub, opts = {}) {
     return `<div class="appbar">
-      ${opts.back ? `<button class="back" data-nav="${opts.back}">‹</button>` : ''}
+      ${opts.back ? '<button class="back" data-histback>‹</button>' : ''}
       <div><h1>${esc(title)}</h1>${sub ? `<div class="sub">${esc(sub)}</div>` : ''}</div>
       ${opts.logout ? `<button class="link-btn" data-logout>로그아웃</button>` : ''}
     </div>`;
@@ -103,9 +133,9 @@
     const typeOpts = state.vehicleTypes.map((t) =>
       `<option value="${t.id}">${esc(t.name)}</option>`).join('');
 
-    // 라벨(항목명)과 입력칸을 좌우로 나란히 배치
+    // 라벨(항목명)과 입력칸을 좌우로 나란히 배치 (모든 항목 필수라 별표 생략)
     const fld = (label, input) =>
-      `<label class="field-h"><span class="lb">${label} <span class="req">*</span></span>${input}</label>`;
+      `<label class="field-h"><span class="lb">${label}</span>${input}</label>`;
 
     const cardInner = isReg ? `
       ${fld('계약(차량) 유형', `<select id="a_vtype">${typeOpts}</select>`)}
@@ -171,8 +201,9 @@
   }
 
   function enterAfterAuth() {
-    if (state.user.role === 'staff') { state.staffTab = 'pending'; go('staffConsole'); }
-    else go('driverHome');
+    // 로그인/회원가입 화면을 히스토리에서 대체 → 뒤로가기 시 로그인 화면이 다시 뜨지 않음
+    if (state.user.role === 'staff') { state.staffTab = 'pending'; go('staffConsole', { replace: true }); }
+    else go('driverHome', { replace: true });
   }
 
   // ==== 기사 홈 (신규 신청 / 내 이력) ======================================
@@ -422,6 +453,9 @@
       go(b.dataset.nav);
     });
     app.querySelectorAll('[data-logout]').forEach((b) => b.onclick = logout);
+    app.querySelectorAll('[data-histback]').forEach((b) => b.onclick = () => history.back());
+    // 연락처 입력 시 자동 하이픈
+    app.querySelectorAll('input[type=tel]').forEach((inp) => inp.oninput = () => { inp.value = formatPhone(inp.value); });
 
     // 역할 선택
     app.querySelectorAll('[data-role]').forEach((b) => b.onclick = () => {
@@ -584,6 +618,7 @@
       try { const me = await api('/auth/me'); state.user = me.user; }
       catch { state.token = null; localStorage.removeItem(TOKEN_KEY); }
     }
+    try { history.replaceState({ view: state.view }, ''); } catch { /* noop */ }
     render();
   }
   boot();

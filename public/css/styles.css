@@ -137,7 +137,7 @@ input[type=text], input[type=tel], input[type=password], input[type=datetime-loc
 }
 /* 라벨(항목명)과 입력칸을 좌우로 나란히 */
 .field-h { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-.field-h .lb { width: 92px; flex: none; margin: 0; font-size: 13px; font-weight: 600; line-height: 1.25; }
+.field-h .lb { width: 92px; flex: none; margin: 0; font-size: 13px; font-weight: 600; line-height: 1.25; word-break: keep-all; }
 .field-h > input, .field-h > select { flex: 1 1 0; min-width: 0; }
 .req { color: var(--danger); }
 input:focus, textarea:focus, select:focus {
