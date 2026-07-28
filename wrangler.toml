@@ -14,7 +14,7 @@ binding = "ASSETS"
 [[d1_databases]]
 binding = "DB"
 database_name = "entry-pass-db"
-database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+database_id = "0008ce41-b615-4871-9a83-4140003a724d"
 
 # R2 버킷 (첨부 서류 파일)
 # `wrangler r2 bucket create entry-pass-docs` 로 생성.
