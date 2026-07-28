@@ -84,23 +84,25 @@ p.lead { color: var(--text-muted); margin: 0 2px 18px; font-size: 14px; }
 .role-btn .arrow { margin-left: auto; color: var(--text-muted); font-size: 20px; }
 
 /* --- Vehicle type grid -------------------------------------------------- */
-.type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.type-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
 .type-card {
+  display: flex; align-items: center; gap: 14px;
   background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 16px 14px; cursor: pointer;
+  border-radius: var(--radius); padding: 16px; cursor: pointer;
   box-shadow: var(--shadow); text-align: left; color: var(--text);
   border-left: 4px solid var(--tc, var(--primary));
 }
-.type-card:active { transform: scale(.98); }
-.type-card .ico { font-size: 30px; }
-.type-card .tn { font-weight: 700; font-size: 15px; margin-top: 6px; }
-.type-card .ts { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.type-card:active { transform: scale(.99); }
+.type-card .ico { font-size: 32px; flex: none; }
+.type-card .tn-wrap { flex: 1 1 0; min-width: 0; }
+.type-card .tn { font-weight: 700; font-size: 16px; }
+.type-card .ts { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
 
 /* --- Rule / route lists ------------------------------------------------- */
 .rule-list, .route-list { list-style: none; margin: 0; padding: 0; }
 .rule-list li {
-  display: flex; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--border);
-  font-size: 14.5px;
+  display: flex; gap: 11px; padding: 11px 0; border-bottom: 1px solid var(--border);
+  font-size: 15.5px; line-height: 1.5;
 }
 .rule-list li:last-child { border-bottom: 0; }
 .rule-list li .n {
@@ -108,6 +110,10 @@ p.lead { color: var(--text-muted); margin: 0 2px 18px; font-size: 14px; }
   background: var(--danger-bg); color: var(--danger);
   font-size: 12px; font-weight: 700; display: grid; place-items: center; margin-top: 1px;
 }
+.rules-head { font-size: 16px; font-weight: 800; padding: 12px 14px; border-radius: 10px;
+  margin: 4px 2px 12px; line-height: 1.35; }
+.rules-head.req { background: var(--danger-bg); color: var(--danger); border: 1px solid #f4bcbc; }
+.rules-head.other { background: var(--warn-bg); color: #b45309; border: 1px solid #f2ce7e; }
 .route-summary {
   background: var(--surface-2); border: 1px dashed var(--border);
   border-radius: 10px; padding: 12px 14px; font-weight: 600; font-size: 14px;

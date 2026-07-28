@@ -264,8 +264,7 @@
       <button class="type-card" data-type="${t.id}" style="--tc:${t.color}">
         ${state.user && state.user.defaultVehicleTypeId === t.id ? '<span class="my-tag">내 계약</span>' : ''}
         <div class="ico">${t.icon}</div>
-        <div class="tn">${esc(t.name)}</div>
-        <div class="ts">${esc(t.subtitle)}</div>
+        <div class="tn-wrap"><div class="tn">${esc(t.name)}</div><div class="ts">${esc(t.subtitle)}</div></div>
       </button>`).join('');
     return appbar('차량 유형 선택', '해당하는 차량을 선택하세요', { back: 'driverHome' }) +
       `<div class="screen"><div class="type-grid">${cards}</div></div>`;
@@ -280,7 +279,7 @@
     return appbar(t.name, isReq ? '필수 안전수칙 (1/2)' : '기타 안전수칙 (2/2)', { back: isReq ? 'driverTypes' : 'driverRequired' }) +
       stepBar(isReq ? 0 : 1) + `
       <div class="screen">
-        <div class="section-title">${isReq ? '⚠️ 반드시 준수해야 하는 필수 안전수칙' : '📋 함께 지켜주세요 (기타 안전수칙)'}</div>
+        <div class="rules-head ${isReq ? 'req' : 'other'}">${isReq ? '필수안전수칙 : 위반시 안전지도서' : '기타안전수칙 : 위반시 안전계도서'}</div>
         <div class="card"><ul class="rule-list">${rules}</ul></div>
         <label class="agree ${isReq ? '' : 'soft'}">
           <input type="checkbox" id="agreeChk" ${checked ? 'checked' : ''}>
