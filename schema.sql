@@ -46,14 +46,15 @@ CREATE TABLE IF NOT EXISTS requests (
   retain_until TEXT NOT NULL               -- 보존 만료일 (신청일 + 보존기간)
 );
 
--- 출입 신청에 첨부된 서류. 실제 파일은 R2에 저장되고 여기에는 메타데이터/키만 보관.
+-- 출입 신청에 첨부된 서류. 파일(이미지/PDF)을 base64 로 D1에 직접 저장 (R2 미사용).
 -- 신청 기록과 동일하게 최소 보존기간까지 유지.
 CREATE TABLE IF NOT EXISTS documents (
   id TEXT PRIMARY KEY,
   request_id TEXT NOT NULL,
   label TEXT NOT NULL,
-  r2_key TEXT NOT NULL,
-  size INTEGER DEFAULT 0,
+  content_type TEXT DEFAULT 'application/octet-stream',
+  data TEXT NOT NULL,               -- base64 인코딩된 파일 내용
+  size INTEGER DEFAULT 0,           -- 원본(디코딩) 바이트 크기
   created_at TEXT NOT NULL,
   retain_until TEXT NOT NULL
 );

@@ -41,7 +41,7 @@
 
 ## 실행 방법 (로컬 개발)
 
-Cloudflare Workers 기반입니다. D1·R2는 로컬 에뮬레이션으로 동작합니다.
+Cloudflare Workers 기반입니다. D1은 로컬 에뮬레이션으로 동작합니다.
 
 ```bash
 npm install
@@ -60,7 +60,8 @@ npm run dev             # http://localhost:8787
 
 ## 배포 (Cloudflare)
 
-D1(DB) · R2(서류) · Workers(서버)를 Cloudflare 무료 티어로 배포합니다.
+D1(DB+서류) · Workers(서버)를 Cloudflare 무료 티어로 배포합니다.
+서류도 D1에 저장하므로 **R2·결제카드가 필요 없습니다.**
 
 - **터미널 없이 브라우저로만 배포** → **[`DEPLOY-BROWSER.md`](DEPLOY-BROWSER.md)**
   (Cloudflare 대시보드 + GitHub 웹 연동, 이후 코드 수정 시 자동 재배포)
@@ -70,7 +71,6 @@ D1(DB) · R2(서류) · Workers(서버)를 Cloudflare 무료 티어로 배포합
 # PC(터미널) 방식 요약
 npx wrangler login
 npx wrangler d1 create entry-pass-db     # 출력된 database_id 를 wrangler.toml 에 입력
-npx wrangler r2 bucket create entry-pass-docs
 npm run db:init                          # 원격 D1에 스키마 적용
 npm run deploy
 ```
@@ -88,16 +88,17 @@ npm run deploy
 ```
 src/worker.js          백엔드 (Cloudflare Workers + Hono) — 인증/권한/신청/승인/CSV
 schema.sql             D1 스키마 (users/sessions/requests/documents) + 직원 시드
-wrangler.toml          Cloudflare 설정 (D1·R2·정적자산 바인딩)
+wrangler.toml          Cloudflare 설정 (D1·정적자산 바인딩)
 data/vehicleTypes.js   차량 유형별 안전수칙·동선·서류 설정
 public/                모바일 웹 프런트엔드 (빌드 불필요)
   index.html / css/styles.css / js/app.js
 DEPLOY.md              Cloudflare 배포 가이드
 ```
 
-- **D1 (SQLite)** — 사용자·세션·출입신청·서류 메타데이터 저장
-- **R2** — 첨부 서류 파일 저장 (신청 기록과 함께 보존기간까지 유지)
+- **D1 (SQLite)** — 사용자·세션·출입신청 + **첨부 서류(base64)** 저장
+  (신청 기록과 함께 보존기간까지 유지, R2 불필요)
 - **Workers** — API 서버 + 정적 프런트엔드 서빙
+- 업로드 시 이미지 자동 압축(긴 변 1600px·JPEG)으로 용량 절감
 - 비밀번호는 Web Crypto **PBKDF2-SHA256** 으로 해시 저장
 
 ## API 요약
@@ -126,8 +127,8 @@ DEPLOY.md              Cloudflare 배포 가이드
   `RETENTION_YEARS` 로 조정합니다.
 - **기록(D1)** 은 Cloudflare 관리형으로 보관되며,
   `wrangler d1 export` 로 정기 백업을 권장합니다.
-- **서류(R2)** 도 삭제하지 않는 한 유지됩니다. 관리자 CSV 내보내기와
-  R2 백업으로 이중 보관하세요. (자세한 내용은 `DEPLOY.md`)
+- **서류** 도 D1에 함께 저장되어 삭제하지 않는 한 유지됩니다. 관리자 CSV 내보내기와
+  `wrangler d1 export` 백업으로 이중 보관하세요. (자세한 내용은 `DEPLOY.md`)
 
 ## 다음 단계 (확장 후보)
 

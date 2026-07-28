@@ -286,7 +286,7 @@
         <span class="dl">${esc(d.label)}</span>
         <span class="badge ${d.required ? 'required' : 'optional'}">${d.required ? '필수' : '선택'}</span>
         <span class="up"><label class="file-btn ${has ? 'has' : ''}">
-          ${has ? '✓ 첨부됨' : '파일 선택'}
+          ${has ? '✓ 첨부 · ' + (has.size / 1048576).toFixed(1) + 'MB' : '파일 선택'}
           <input type="file" data-doc="${d.key}" accept="image/*,application/pdf"></label></span>
       </div>`;
     }).join('');
@@ -464,11 +464,14 @@
     if (rulesNext) rulesNext.onclick = () =>
       go(state.view === 'driverRequired' ? 'driverOther' : 'driverRoute');
 
-    // 파일 선택
-    app.querySelectorAll('input[type=file][data-doc]').forEach((inp) => inp.onchange = () => {
+    // 파일 선택 (이미지는 업로드 전 자동 압축)
+    app.querySelectorAll('input[type=file][data-doc]').forEach((inp) => inp.onchange = async () => {
       const key = inp.dataset.doc;
-      if (inp.files[0]) state.files[key] = inp.files[0]; else delete state.files[key];
-      readForm(); render();
+      if (inp.files[0]) {
+        readForm();
+        state.files[key] = await compressImage(inp.files[0]);
+      } else { delete state.files[key]; }
+      render();
     });
 
     const submit = document.getElementById('submitReq');
@@ -491,12 +494,36 @@
     a.href = URL.createObjectURL(blob); a.download = 'entry-records.csv'; a.click();
   }
 
+  // 이미지는 긴 변 1600px·JPEG 품질 0.72 로 축소해 용량을 줄입니다 (사진 업로드 대비).
+  // PDF 등 이미지가 아닌 파일은 그대로 둡니다.
+  const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+  async function compressImage(file) {
+    if (!file.type || !file.type.startsWith('image/')) return file;
+    try {
+      const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+      const maxSide = 1600;
+      const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+      const w = Math.max(1, Math.round(bitmap.width * scale));
+      const h = Math.max(1, Math.round(bitmap.height * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(bitmap, 0, 0, w, h);
+      const blob = await new Promise((res) => canvas.toBlob(res, 'image/jpeg', 0.72));
+      if (blob && blob.size < file.size) {
+        return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' });
+      }
+    } catch { /* 실패 시 원본 사용 */ }
+    return file;
+  }
+
   async function submitRequest() {
     readForm();
     const f = state.form;
     if (!f.driverName || !f.phone || !f.vehicleNumber) return toast('기사명·연락처·차량번호를 입력하세요.');
     const missing = state.selectedType.requiredDocuments.filter((d) => d.required && !state.files[d.key]);
     if (missing.length) return toast(`필수 서류 미첨부: ${missing[0].label}`);
+    const tooBig = Object.values(state.files).find((file) => file.size > MAX_UPLOAD_BYTES);
+    if (tooBig) return toast(`파일이 너무 큽니다(5MB 초과): ${tooBig.name}. 사진으로 찍어 올려주세요.`);
     const btn = document.getElementById('submitReq'); btn.disabled = true; btn.textContent = '제출 중…';
     const fd = new FormData();
     fd.append('vehicleTypeId', state.selectedType.id);

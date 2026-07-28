@@ -1,10 +1,10 @@
 /**
- * 자재센터 출입 사전승인 앱 - Cloudflare Workers 백엔드 (Hono + D1 + R2)
+ * 자재센터 출입 사전승인 앱 - Cloudflare Workers 백엔드 (Hono + D1)
  *
- *  - D1(SQLite): 사용자/세션/신청/서류 메타데이터
- *  - R2        : 첨부 서류 파일 (신청 기록과 함께 보존기간까지 유지)
+ *  - D1(SQLite): 사용자/세션/신청 + 첨부 서류(base64) 저장 (R2 미사용, 카드 불필요)
  *  - 비밀번호  : Web Crypto PBKDF2-SHA256 (Workers 런타임 호환)
  *  - 정적 파일 : public/ (wrangler [assets] 로 서빙)
+ *  - 서류는 신청 기록과 함께 보존기간(retain_until)까지 유지
  */
 import { Hono } from 'hono';
 import vehicleTypes from '../data/vehicleTypes.js';
@@ -20,6 +20,23 @@ const toHex = (buf) => [...new Uint8Array(buf)].map((b) => b.toString(16).padSta
 const fromHex = (hex) => new Uint8Array(hex.match(/.{1,2}/g).map((b) => parseInt(b, 16)));
 const randHex = (n) => toHex(crypto.getRandomValues(new Uint8Array(n)));
 const nowISO = () => new Date().toISOString();
+
+// 첨부 서류는 R2 없이 D1에 base64 로 저장합니다 (결제카드 불필요).
+const MAX_DOC_BYTES = 5 * 1024 * 1024; // 개별 서류 최대 5MB (업로드 시 이미지 자동 압축)
+function base64FromBytes(bytes) {
+  let bin = '';
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+  }
+  return btoa(bin);
+}
+function bytesFromBase64(b64) {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
 
 async function derive(password, saltBytes) {
   const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
@@ -55,7 +72,7 @@ const publicUser = (u) => ({
 // 신청 레코드를 기존 프런트엔드가 기대하는 형태로 변환
 async function shapeRequest(env, row) {
   const docs = await env.DB.prepare(
-    'SELECT label, r2_key, size FROM documents WHERE request_id = ?').bind(row.id).all();
+    'SELECT id, label, size FROM documents WHERE request_id = ?').bind(row.id).all();
   let history = [];
   try { history = JSON.parse(row.history || '[]'); } catch { /* noop */ }
   return {
@@ -69,7 +86,7 @@ async function shapeRequest(env, row) {
     createdAt: row.created_at, retainUntil: row.retain_until,
     history,
     documents: (docs.results || []).map((d) => ({
-      label: d.label, url: `/uploads/${d.r2_key}`, size: d.size,
+      label: d.label, url: `/uploads/${d.id}`, size: d.size,
     })),
   };
 }
@@ -211,20 +228,17 @@ app.post('/api/requests', requireAuth('driver'), async (c) => {
       get('purpose') || '', get('visitAt') || '',
       1, String(get('agreedOther')) === 'true' ? 1 : 0, history, created, retainUntil).run();
 
-  // 서류를 R2에 저장 + documents 테이블에 메타 기록
+  // 서류를 D1에 base64 로 저장 (신청 기록과 함께 보존기간까지 유지)
   const files = form.getAll('documents');
   for (const file of files) {
     if (!file || typeof file === 'string' || !file.name) continue;
-    const ext = (file.name.match(/\.[\w]{1,10}$/) || [''])[0];
-    const key = `${Date.now()}-${randHex(8)}${ext}`;
-    const bytes = await file.arrayBuffer();
-    await c.env.DOCS.put(key, bytes, {
-      httpMetadata: { contentType: file.type || 'application/octet-stream' },
-    });
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    if (bytes.byteLength > MAX_DOC_BYTES) continue; // 과대 파일 방지 (클라이언트에서 압축)
     await c.env.DB.prepare(
-      `INSERT INTO documents (id, request_id, label, r2_key, size, created_at, retain_until)
-       VALUES (?,?,?,?,?,?,?)`)
-      .bind(randHex(8), id, file.name, key, bytes.byteLength, created, retainUntil).run();
+      `INSERT INTO documents (id, request_id, label, content_type, data, size, created_at, retain_until)
+       VALUES (?,?,?,?,?,?,?,?)`)
+      .bind(randHex(8), id, file.name, file.type || 'application/octet-stream',
+        base64FromBytes(bytes), bytes.byteLength, created, retainUntil).run();
   }
 
   const row = await c.env.DB.prepare('SELECT * FROM requests WHERE id = ?').bind(id).first();
@@ -298,17 +312,17 @@ app.post('/api/requests/:id/approve', requireStaff(), (c) => review(c, 'approved
 app.post('/api/requests/:id/reject', requireStaff(), (c) => review(c, 'rejected'));
 
 // ==========================================================================
-// 서류 파일 서빙 (R2). 무작위 키 기반 접근.
+// 서류 파일 서빙 (D1 에 저장된 base64 를 복원해 반환). 무작위 id 기반 접근.
 // ==========================================================================
-app.get('/uploads/:key', async (c) => {
-  const key = c.req.param('key');
-  const obj = await c.env.DOCS.get(key);
-  if (!obj) return c.json({ error: '파일을 찾을 수 없습니다.' }, 404);
+app.get('/uploads/:id', async (c) => {
+  const row = await c.env.DB.prepare(
+    'SELECT content_type, data FROM documents WHERE id = ?').bind(c.req.param('id')).first();
+  if (!row) return c.json({ error: '파일을 찾을 수 없습니다.' }, 404);
+  const bytes = bytesFromBase64(row.data);
   const headers = new Headers();
-  obj.writeHttpMetadata(headers);
-  headers.set('etag', obj.httpEtag);
+  headers.set('Content-Type', row.content_type || 'application/octet-stream');
   headers.set('Cache-Control', 'private, max-age=3600');
-  return new Response(obj.body, { headers });
+  return new Response(bytes, { headers });
 });
 
 // API/uploads 외의 요청은 정적 자산(public/)으로 위임
