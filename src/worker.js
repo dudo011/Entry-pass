@@ -131,8 +131,8 @@ function requireStaff(minRole) {
 // ==========================================================================
 app.post('/api/auth/register', async (c) => {
   const b = await c.req.json().catch(() => ({}));
-  if (!b.loginId || !b.password || !b.name || !b.phone) {
-    return c.json({ error: '아이디·비밀번호·이름·연락처는 필수입니다.' }, 400);
+  if (!b.loginId || !b.password || !b.name || !b.phone || !b.company || !b.defaultVehicleNumber) {
+    return c.json({ error: '모든 항목을 입력해 주세요.' }, 400);
   }
   if (String(b.password).length < 4) return c.json({ error: '비밀번호는 4자 이상이어야 합니다.' }, 400);
   const exists = await c.env.DB.prepare('SELECT id FROM users WHERE login_id = ?').bind(b.loginId).first();

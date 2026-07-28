@@ -130,11 +130,13 @@ p.lead { color: var(--text-muted); margin: 0 2px 18px; font-size: 14px; }
 label.field { display: block; margin-bottom: 14px; }
 label.field .lb { font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block; }
 label.field .req { color: var(--danger); }
-input[type=text], input[type=tel], input[type=datetime-local], textarea, select {
+input[type=text], input[type=tel], input[type=password], input[type=datetime-local], textarea, select {
   width: 100%; padding: 13px 14px; font-size: 16px; color: var(--text);
   border: 1px solid var(--border); border-radius: 11px; background: var(--surface-2);
   font-family: inherit;
 }
+.field-row { display: flex; gap: 10px; }
+.field-row .field { flex: 1 1 0; min-width: 0; }
 input:focus, textarea:focus, select:focus {
   outline: none; border-color: var(--primary); background: #fff;
   box-shadow: 0 0 0 3px rgba(29,78,216,.12);

@@ -102,28 +102,33 @@
     const isReg = isDriver && state.authMode === 'register';
     const typeOpts = state.vehicleTypes.map((t) =>
       `<option value="${t.id}">${esc(t.name)}</option>`).join('');
-    const regFields = isReg ? `
+
+    const idPw = `<div class="field-row">
+      <label class="field"><span class="lb">아이디 <span class="req">*</span></span>
+        <input type="text" id="a_loginId" autocomplete="username" placeholder="아이디"></label>
+      <label class="field"><span class="lb">비밀번호 <span class="req">*</span></span>
+        <input type="password" id="a_password" autocomplete="current-password" placeholder="비밀번호"></label>
+    </div>`;
+
+    const cardInner = isReg ? `
+      <label class="field"><span class="lb">계약(차량) 유형 <span class="req">*</span></span>
+        <select id="a_vtype">${typeOpts}</select></label>
+      ${idPw}
       <label class="field"><span class="lb">이름 <span class="req">*</span></span>
         <input type="text" id="a_name" placeholder="홍길동"></label>
       <label class="field"><span class="lb">연락처 <span class="req">*</span></span>
         <input type="tel" id="a_phone" placeholder="010-0000-0000"></label>
-      <label class="field"><span class="lb">소속 업체</span>
+      <label class="field"><span class="lb">소속 업체 <span class="req">*</span></span>
         <input type="text" id="a_company" placeholder="OO물류"></label>
-      <label class="field"><span class="lb">주 차량번호</span>
+      <label class="field"><span class="lb">차량번호 <span class="req">*</span></span>
         <input type="text" id="a_vnum" placeholder="12가 3456"></label>
-      <label class="field"><span class="lb">계약(차량) 유형</span>
-        <select id="a_vtype">${typeOpts}</select></label>` : '';
+      <button class="btn btn-primary" id="a_submit">가입하고 시작</button>` : `
+      ${idPw}
+      <button class="btn btn-primary" id="a_submit">로그인</button>`;
 
     return appbar(isDriver ? '운전기사' : '자재센터 직원', isReg ? '회원가입' : '로그인', { back: 'landing' }) + `
       <div class="screen">
-        <div class="card">
-          <label class="field"><span class="lb">아이디 <span class="req">*</span></span>
-            <input type="text" id="a_loginId" autocomplete="username" placeholder="아이디"></label>
-          <label class="field"><span class="lb">비밀번호 <span class="req">*</span></span>
-            <input type="password" id="a_password" autocomplete="current-password" placeholder="비밀번호"></label>
-          ${regFields}
-          <button class="btn btn-primary" id="a_submit">${isReg ? '가입하고 시작' : '로그인'}</button>
-        </div>
+        <div class="card">${cardInner}</div>
         ${isDriver ? `<p class="switch">
           ${isReg ? '이미 계정이 있으신가요?' : '처음 이용하시나요?'}
           <a data-authmode="${isReg ? 'login' : 'register'}">${isReg ? '로그인' : '회원가입'}</a>
@@ -141,13 +146,14 @@
     try {
       let out;
       if (state.authRole === 'driver' && state.authMode === 'register') {
-        if (!v('a_name').trim() || !v('a_phone').trim()) {
-          btn.disabled = false; return toast('이름과 연락처를 입력하세요.');
+        const name = v('a_name').trim(), phone = v('a_phone').trim();
+        const company = v('a_company').trim(), vnum = v('a_vnum').trim();
+        if (!name || !phone || !company || !vnum) {
+          btn.disabled = false; return toast('모든 항목을 입력해 주세요.');
         }
         out = await api('/auth/register', { method: 'POST', body: {
-          loginId, password, name: v('a_name').trim(), phone: v('a_phone').trim(),
-          company: v('a_company').trim(), defaultVehicleNumber: v('a_vnum').trim(),
-          defaultVehicleTypeId: v('a_vtype'),
+          loginId, password, name, phone, company,
+          defaultVehicleNumber: vnum, defaultVehicleTypeId: v('a_vtype'),
         }});
       } else {
         out = await api('/auth/login', { method: 'POST', body: { loginId, password } });
@@ -181,7 +187,7 @@
           <div class="section-title">내 기본정보 <a class="link-inline" data-nav="driverProfile">수정</a></div>
           <div class="row"><span class="k">연락처</span><span>${esc(u.phone) || '-'}</span></div>
           <div class="row"><span class="k">소속</span><span>${esc(u.company) || '-'}</span></div>
-          <div class="row"><span class="k">주 차량번호</span><span>${esc(u.defaultVehicleNumber) || '-'}</span></div>
+          <div class="row"><span class="k">차량번호</span><span>${esc(u.defaultVehicleNumber) || '-'}</span></div>
         </div>
         <div class="section-title">내 신청 내역</div>
         <div id="myList" class="muted">불러오는 중…</div>
@@ -217,7 +223,7 @@
         <label class="field"><span class="lb">이름</span><input type="text" id="p_name" value="${esc(u.name)}"></label>
         <label class="field"><span class="lb">연락처</span><input type="tel" id="p_phone" value="${esc(u.phone)}"></label>
         <label class="field"><span class="lb">소속 업체</span><input type="text" id="p_company" value="${esc(u.company)}"></label>
-        <label class="field"><span class="lb">주 차량번호</span><input type="text" id="p_vnum" value="${esc(u.defaultVehicleNumber)}"></label>
+        <label class="field"><span class="lb">차량번호</span><input type="text" id="p_vnum" value="${esc(u.defaultVehicleNumber)}"></label>
         <label class="field"><span class="lb">계약(차량) 유형</span><select id="p_vtype">${typeOpts}</select></label>
         <button class="btn btn-primary" id="p_save">저장</button>
       </div></div>`;
