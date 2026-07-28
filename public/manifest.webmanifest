@@ -1,0 +1,17 @@
+{
+  "name": "자재센터 출입 신청",
+  "short_name": "출입신청",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#1e293b",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
