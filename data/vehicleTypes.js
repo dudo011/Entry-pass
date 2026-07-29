@@ -30,6 +30,13 @@ const COMMON_OTHER = [
   '차량검사증 소지, 법정정기검사 필증 부착 등',
 ];
 
+// 공사업체·PCBs처리용역 차량 추가 필수 안전수칙 (공통 6개 + 아래 3개 = 총 9개, 2페이지)
+const EXTRA_CONSTRUCTION_PCBS = [
+  '작업계획서 작성 및 TBM 시행',
+  '크레인·지게차 아웃트리거 등 전도방지 조치 철저',
+  '인양물 작업전 해지장치 등 고정장치 확인, 작업 중 하부 출입금지',
+];
+
 export default [
   {
     id: 'transport',
@@ -61,7 +68,7 @@ export default [
     subtitle: '공사·정비 용역 수행 차량',
     icon: '🏗️',
     color: '#d97706',
-    requiredSafetyRules: [...COMMON_REQUIRED],
+    requiredSafetyRules: [...COMMON_REQUIRED, ...EXTRA_CONSTRUCTION_PCBS],
     otherSafetyRules: [...COMMON_OTHER],
     route: {
       summary: '정문 → 공사현장 지정 게이트',
@@ -129,7 +136,7 @@ export default [
     subtitle: 'PCBs 함유 폐기물 처리 용역 차량',
     icon: '☣️',
     color: '#dc2626',
-    requiredSafetyRules: [...COMMON_REQUIRED],
+    requiredSafetyRules: [...COMMON_REQUIRED, ...EXTRA_CONSTRUCTION_PCBS],
     otherSafetyRules: [...COMMON_OTHER],
     route: {
       summary: '정문 → 지정 보관장소(격리구역) → 계량 → 전용 게이트 반출',

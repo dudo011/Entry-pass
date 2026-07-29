@@ -22,6 +22,9 @@
     authMode: 'login',      // login | register
     authRole: 'driver',     // driver | staff
     selectedType: null,
+    safetyPages: [],        // 선택 유형의 안전수칙 페이지들(필수 여러 장 + 기타)
+    safetyIndex: 0,
+    safetyAgree: {},        // 페이지별 동의 체크 상태
     agreedRequired: false,
     agreedOther: false,
     form: {},
@@ -37,11 +40,12 @@
   const stopPoll = () => { if (poll) { clearInterval(poll); poll = null; } };
 
   // 뒤로가기(하드웨어/브라우저 '<') 지원용 화면 검증
-  const AUTH_VIEWS = ['driverHome', 'driverProfile', 'driverTypes', 'driverRequired',
-    'driverOther', 'driverRoute', 'driverDocs', 'driverResult', 'staffConsole'];
+  const AUTH_VIEWS = ['driverHome', 'driverProfile', 'driverTypes', 'driverSafety',
+    'driverRoute', 'driverDocs', 'driverResult', 'staffConsole'];
   function canRender(view) {
     if (AUTH_VIEWS.includes(view) && !state.user) return false;
-    if (['driverRequired', 'driverOther', 'driverRoute', 'driverDocs'].includes(view) && !state.selectedType) return false;
+    if (['driverSafety', 'driverRoute', 'driverDocs'].includes(view) && !state.selectedType) return false;
+    if (view === 'driverSafety' && !(state.safetyPages && state.safetyPages[state.safetyIndex])) return false;
     if (view === 'driverResult' && !state.lastRequest) return false;
     return true;
   }
@@ -49,6 +53,7 @@
   function showView(view) { stopPoll(); state.view = view; render(); window.scrollTo(0, 0); }
   window.addEventListener('popstate', (e) => {
     let view = (e.state && e.state.view) || 'landing';
+    if (e.state && typeof e.state.si === 'number') state.safetyIndex = e.state.si;
     if (!canRender(view)) view = fallbackView();
     showView(view);
   });
@@ -73,9 +78,11 @@
     setTimeout(() => t.remove(), 2400);
   }
   function go(view, opts) {
+    const hs = { view };
+    if (opts && opts.si !== undefined) { hs.si = opts.si; state.safetyIndex = opts.si; }
     try {
-      if (opts && opts.replace) history.replaceState({ view }, '');
-      else history.pushState({ view }, '');
+      if (opts && opts.replace) history.replaceState(hs, '');
+      else history.pushState(hs, '');
     } catch { /* noop */ }
     showView(view);
   }
@@ -94,10 +101,26 @@
       ${opts.logout ? `<button class="link-btn" data-logout>로그아웃</button>` : ''}
     </div>`;
   }
-  function stepBar(n) {
-    return `<div class="steps">${[0, 1, 2, 3].map((i) =>
-      `<div class="dot ${i <= n ? 'done' : ''}"></div>`).join('')}</div>`;
+  function stepBar(current, total) {
+    let d = '';
+    for (let i = 0; i < total; i++) d += `<div class="dot ${i <= current ? 'done' : ''}"></div>`;
+    return `<div class="steps">${d}</div>`;
   }
+  // 안전수칙 페이지 구성: 필수(6개 초과 시 여러 장) + 기타 1장
+  function buildSafetyPages(t) {
+    const PER = 6;
+    const req = t.requiredSafetyRules || [];
+    const nReq = Math.max(1, Math.ceil(req.length / PER));
+    const pages = [];
+    for (let i = 0; i < nReq; i++) {
+      pages.push({ kind: 'required', rules: req.slice(i * PER, i * PER + PER),
+        offset: i * PER, reqPage: i + 1, reqTotal: nReq });
+    }
+    pages.push({ kind: 'other', rules: t.otherSafetyRules || [] });
+    return pages;
+  }
+  // 전체 단계 수 = 안전수칙 페이지들 + 동선 + 서류
+  const safetyTotal = () => (state.safetyPages && state.safetyPages.length ? state.safetyPages.length : 1) + 2;
   const statusInfo = (s) => s === 'approved'
     ? { icon: '✅', title: '출입이 승인되었습니다', pill: '승인 완료' }
     : s === 'rejected'
@@ -270,26 +293,36 @@
       `<div class="screen"><div class="type-grid">${cards}</div></div>`;
   }
 
-  function rulesScreen(kind) {
+  function safetyScreen(idx) {
     const t = state.selectedType;
-    const isReq = kind === 'required';
-    const rules = (isReq ? t.requiredSafetyRules : t.otherSafetyRules)
-      .map((r, i) => `<li><span class="n ${isReq ? '' : 'other'}">${i + 1}</span><span>${esc(r)}</span></li>`).join('');
-    const checked = isReq ? state.agreedRequired : state.agreedOther;
-    return appbar(t.name, isReq ? '필수 안전수칙 (1/2)' : '기타 안전수칙 (2/2)', { back: isReq ? 'driverTypes' : 'driverRequired' }) +
-      stepBar(isReq ? 0 : 1) + `
+    const page = state.safetyPages[idx];
+    const isReq = page.kind === 'required';
+    const rules = page.rules.map((r, i) => {
+      const n = (isReq ? page.offset : 0) + i + 1;
+      return `<li><span class="n ${isReq ? '' : 'other'}">${n}</span><span>${esc(r)}</span></li>`;
+    }).join('');
+    const checked = !!state.safetyAgree[idx];
+    const lastSafety = idx === state.safetyPages.length - 1;
+    const nextKind = lastSafety ? null : state.safetyPages[idx + 1].kind;
+    const nextLabel = lastSafety ? '다음 · 차량동선 안내'
+      : (nextKind === 'other' ? '다음 · 기타 안전수칙' : '다음 · 필수 안전수칙');
+    const sub = isReq
+      ? (page.reqTotal > 1 ? `필수 안전수칙 (${page.reqPage}/${page.reqTotal})` : '필수 안전수칙')
+      : '기타 안전수칙';
+    const headText = isReq ? '필수안전수칙 : 위반시 안전지도서' : '기타안전수칙 : 위반시 안전계도서';
+    const agreeText = isReq
+      ? '위 필수 안전수칙을 모두 확인하였으며 준수할 것에 동의합니다.'
+      : '위 기타 안전수칙을 확인하였습니다.';
+    return appbar(t.name, sub, { back: true }) + stepBar(idx, safetyTotal()) + `
       <div class="screen">
-        <div class="rules-head ${isReq ? 'req' : 'other'}">${isReq ? '필수안전수칙 : 위반시 안전지도서' : '기타안전수칙 : 위반시 안전계도서'}</div>
+        <div class="rules-head ${isReq ? 'req' : 'other'}">${headText}</div>
         <div class="card"><ul class="rule-list">${rules}</ul></div>
         <label class="agree ${isReq ? '' : 'soft'}">
           <input type="checkbox" id="agreeChk" ${checked ? 'checked' : ''}>
-          <span>${isReq ? '위 필수 안전수칙을 모두 확인하였으며 준수할 것에 동의합니다.'
-                        : '위 기타 안전수칙을 확인하였습니다.'}</span>
+          <span>${agreeText}</span>
         </label>
         <div class="sticky-cta">
-          <button class="btn btn-primary" id="rulesNext" ${isReq && !checked ? 'disabled' : ''}>
-            ${isReq ? '다음 · 기타 안전수칙' : '다음 · 차량동선 안내'}
-          </button>
+          <button class="btn btn-primary" id="rulesNext" ${isReq && !checked ? 'disabled' : ''}>${nextLabel}</button>
         </div>
       </div>`;
   }
@@ -297,7 +330,7 @@
   function driverRoute() {
     const t = state.selectedType;
     const steps = t.route.steps.map((s) => `<li>${esc(s)}</li>`).join('');
-    return appbar(t.name, '차량 동선 안내', { back: 'driverOther' }) + stepBar(2) + `
+    return appbar(t.name, '차량 동선 안내', { back: true }) + stepBar(state.safetyPages.length, safetyTotal()) + `
       <div class="screen">
         <div class="section-title">🗺️ 센터 내 이동 경로</div>
         <div class="card">
@@ -324,7 +357,7 @@
           <input type="file" data-doc="${d.key}" accept="image/*,application/pdf"></label></span>
       </div>`;
     }).join('');
-    return appbar(t.name, '서류 제출 및 신청', { back: 'driverRoute' }) + stepBar(3) + `
+    return appbar(t.name, '서류 제출 및 신청', { back: true }) + stepBar(state.safetyPages.length + 1, safetyTotal()) + `
       <div class="screen">
         <div class="section-title">📎 필요 서류</div>
         <div class="card">${docs}</div>
@@ -431,7 +464,7 @@
   // ==== 렌더 + 이벤트 ======================================================
   function render() {
     const views = { landing, authView, driverHome, driverProfile, driverTypes,
-      driverRequired: () => rulesScreen('required'), driverOther: () => rulesScreen('other'),
+      driverSafety: () => safetyScreen(state.safetyIndex),
       driverRoute, driverDocs, driverResult, staffConsole };
     app.innerHTML = (views[state.view] || landing)();
     bind();
@@ -485,21 +518,28 @@
     // 유형 선택
     app.querySelectorAll('[data-type]').forEach((b) => b.onclick = () => {
       state.selectedType = state.vehicleTypes.find((t) => t.id === b.dataset.type);
-      state.agreedRequired = false; state.agreedOther = false; state.files = {}; state.form = {};
-      go('driverRequired');
+      state.safetyPages = buildSafetyPages(state.selectedType);
+      state.safetyAgree = {}; state.agreedRequired = true; state.agreedOther = false;
+      state.files = {}; state.form = {};
+      go('driverSafety', { si: 0 });
     });
 
-    // 안전수칙 체크 + 다음
+    // 안전수칙 체크 + 다음 (여러 장의 필수/기타 페이지 공통)
     const chk = document.getElementById('agreeChk');
     if (chk) chk.onchange = () => {
-      if (state.view === 'driverRequired') state.agreedRequired = chk.checked;
-      else state.agreedOther = chk.checked;
+      const idx = state.safetyIndex;
+      const page = state.safetyPages[idx];
+      state.safetyAgree[idx] = chk.checked;
+      if (page && page.kind === 'other') state.agreedOther = chk.checked;
       const nx = document.getElementById('rulesNext');
-      if (nx && state.view === 'driverRequired') nx.disabled = !chk.checked;
+      if (nx && page && page.kind === 'required') nx.disabled = !chk.checked;
     };
     const rulesNext = document.getElementById('rulesNext');
-    if (rulesNext) rulesNext.onclick = () =>
-      go(state.view === 'driverRequired' ? 'driverOther' : 'driverRoute');
+    if (rulesNext) rulesNext.onclick = () => {
+      const idx = state.safetyIndex;
+      if (idx < state.safetyPages.length - 1) go('driverSafety', { si: idx + 1 });
+      else go('driverRoute');
+    };
 
     // 파일 선택 (이미지는 업로드 전 자동 압축)
     app.querySelectorAll('input[type=file][data-doc]').forEach((inp) => inp.onchange = async () => {
