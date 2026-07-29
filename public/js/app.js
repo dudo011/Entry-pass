@@ -11,6 +11,18 @@
     if (d.length < 8) return d.slice(0, 3) + '-' + d.slice(3);
     return d.slice(0, 3) + '-' + d.slice(3, 7) + '-' + d.slice(7);
   };
+  // 다음 영업일(주말 제외) 오전 9시. ※ 공휴일은 자동 제외되지 않으니 필요 시 직접 변경.
+  function nextBusinessDay() {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1);
+    d.setHours(9, 0, 0, 0);
+    return d;
+  }
+  const toLocalDatetime = (d) => {
+    const p = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+  };
 
   const state = {
     view: 'landing',
@@ -359,7 +371,7 @@
           <label class="field"><span class="lb">계약 업체</span>
             <input type="text" id="company" value="${val('company', '')}" placeholder="예: OO전력"></label>
           <label class="field"><span class="lb">방문 예정 일시</span>
-            <input type="datetime-local" id="visitAt" value="${val('visitAt', '')}"></label>
+            <input type="datetime-local" id="visitAt" value="${val('visitAt', toLocalDatetime(nextBusinessDay()))}"></label>
         </div>`;
     const docsCard = hasDocs ? `
         <div class="section-title">📎 필요 서류 (모두 필수)</div>
@@ -479,6 +491,10 @@
     app.querySelectorAll('[data-histback]').forEach((b) => b.onclick = () => history.back());
     // 연락처 입력 시 자동 하이픈
     app.querySelectorAll('input[type=tel]').forEach((inp) => inp.oninput = () => { inp.value = formatPhone(inp.value); });
+    // 방문 예정 일시: 탭하면 달력 표시
+    app.querySelectorAll('input[type=datetime-local]').forEach((inp) => inp.onclick = () => {
+      try { inp.showPicker(); } catch { /* 미지원 브라우저는 기본 동작 */ }
+    });
 
     // 역할 선택
     app.querySelectorAll('[data-role]').forEach((b) => b.onclick = () => {
