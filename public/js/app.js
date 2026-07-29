@@ -144,9 +144,7 @@
     agreedRequired: false,
     agreedOther: false,
     form: {},
-    files: {},           // 슬롯(서류키)별 첨부 파일
-    fileUrls: {},         // 슬롯별 미리보기 objectURL
-    pendingPhotos: [],    // 한 번에 올린 뒤 아직 서류로 지정되지 않은 사진들
+    files: {},
     lastRequest: null,
     myRequests: [],
     // 직원 콘솔
@@ -220,7 +218,7 @@
   }
   function logout() {
     api('/auth/logout', { method: 'POST' }).catch(() => {});
-    state.token = null; state.user = null; state.form = {}; resetDocs();
+    state.token = null; state.user = null; state.form = {}; state.files = {};
     localStorage.removeItem(TOKEN_KEY);
     go('landing');
   }
@@ -478,48 +476,15 @@
     if (state.form.visitAt === undefined) state.form.visitAt = dateKey(nextBusinessDay());
     // 저장된 기본정보로 프리필
     const val = (k, dflt) => esc(f[k] !== undefined ? f[k] : dflt);
-
-    // 슬롯별 첨부 현황 (지정된 사진의 미리보기 + 삭제)
     const docs = t.requiredDocuments.map((d) => {
       const has = state.files[d.key];
-      const url = state.fileUrls[d.key];
-      const isImg = has && has.type && has.type.startsWith('image/');
-      const preview = has
-        ? (isImg && url
-            ? `<img class="slot-thumb" src="${esc(url)}" alt="${esc(d.label)}">`
-            : `<span class="slot-file">📄 ${esc(has.name)}</span>`)
-        : '';
-      return `<div class="doc-item ${has ? 'done' : ''}">
-        <span class="dl-wrap">
-          <span class="slot-mark">${has ? '✓' : '○'}</span>
-          <span class="dl">${esc(d.label)}</span>${d.note ? `<span class="dl-note">${esc(d.note)}</span>` : ''}${d.formUrl ? `<a class="form-dl" href="${esc(d.formUrl)}" target="_blank" rel="noopener">양식 ↓</a>` : ''}</span>
-        <span class="up">
-          ${has
-            ? `${preview}<button type="button" class="file-clear" data-clear="${d.key}">삭제</button>`
-            : `<label class="file-btn"><span>직접 선택</span><input type="file" data-doc="${d.key}" accept="image/*,application/pdf"></label>`}
-        </span>
+      return `<div class="doc-item">
+        <span class="dl-wrap"><span class="dl">${esc(d.label)}</span>${d.note ? `<span class="dl-note">${esc(d.note)}</span>` : ''}${d.formUrl ? `<a class="form-dl" href="${esc(d.formUrl)}" target="_blank" rel="noopener">양식 ↓</a>` : ''}</span>
+        <span class="up"><label class="file-btn ${has ? 'has' : ''}">
+          ${has ? '✓ 첨부 · ' + (has.size / 1048576).toFixed(1) + 'MB' : '파일 선택'}
+          <input type="file" data-doc="${d.key}" accept="image/*,application/pdf"></label></span>
       </div>`;
     }).join('');
-
-    // 미분류 사진 트레이: 여러 장을 한 번에 올린 뒤 각 항목에 지정
-    const pending = state.pendingPhotos || [];
-    const slotBtns = (photoId) => t.requiredDocuments.map((d) => {
-      const filled = !!state.files[d.key];
-      return `<button type="button" class="slot-assign${filled ? ' filled' : ''}" data-assign="${photoId}" data-slot="${d.key}">${esc(d.short || d.label)}${filled ? ' ✓' : ''}</button>`;
-    }).join('');
-    const trayHtml = pending.length ? `
-        <div class="tray">
-          <div class="tray-title">📥 미분류 사진 ${pending.length}장 · 아래에서 <b>해당 서류를 눌러</b> 지정하세요</div>
-          ${pending.map((p) => `
-            <div class="tray-item">
-              ${p.isImg
-                ? `<img class="tray-thumb" src="${esc(p.url)}" alt="사진">`
-                : `<span class="tray-file">📄 ${esc(p.file.name)}</span>`}
-              <div class="tray-slots">${slotBtns(p.id)}</div>
-              <button type="button" class="tray-del" data-discard="${p.id}" aria-label="사진 삭제">✕</button>
-            </div>`).join('')}
-        </div>` : '';
-
     const infoCard = `
         <div class="section-title">📝 신청 정보</div>
         <div class="card">
@@ -530,13 +495,7 @@
         </div>`;
     const docsCard = hasDocs ? `
         <div class="section-title">📎 제출 서류</div>
-        <div class="card">
-          <label class="batch-btn">📷 서류 사진 한 번에 선택
-            <input type="file" id="multiPick" accept="image/*,application/pdf" multiple></label>
-          <div class="batch-hint">여러 장을 한 번에 고른 뒤 각 사진을 해당 서류로 지정할 수 있어요.</div>
-          ${trayHtml}
-          ${docs}
-        </div>` : '';
+        <div class="card">${docs}</div>` : '';
     return appbar(t.name, hasDocs ? '신청 정보 및 서류' : '출입 신청 정보', { back: true }) + stepBar(state.safetyPages.length + 1, safetyTotal()) + `
       <div class="screen">
         ${infoCard}
@@ -764,7 +723,7 @@
       state.selectedType = state.vehicleTypes.find((t) => t.id === b.dataset.type);
       state.safetyPages = buildSafetyPages(state.selectedType);
       state.safetyAgree = {}; state.agreedRequired = true; state.agreedOther = false;
-      resetDocs(); state.form = {};
+      state.files = {}; state.form = {};
       go('driverSafety', { si: 0 });
     });
 
@@ -785,65 +744,13 @@
       else go('driverRoute');
     };
 
-    // 서류 사진 한 번에 선택 → 미분류 트레이에 담기(각각 압축)
-    const multiPick = document.getElementById('multiPick');
-    if (multiPick) multiPick.onchange = async () => {
-      const chosen = Array.from(multiPick.files || []);
-      if (!chosen.length) return;
-      readForm();
-      for (const raw of chosen) {
-        const file = await compressImage(raw);
-        const url = URL.createObjectURL(file);
-        state.pendingPhotos.push({
-          id: 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-          file, url, isImg: !!(file.type && file.type.startsWith('image/')),
-        });
-      }
-      render();
-    };
-
-    // 미분류 사진을 특정 서류(슬롯)로 지정
-    app.querySelectorAll('[data-assign]').forEach((b) => b.onclick = () => {
-      const key = b.dataset.slot;
-      const idx = state.pendingPhotos.findIndex((p) => p.id === b.dataset.assign);
-      if (idx < 0) return;
-      const p = state.pendingPhotos[idx];
-      const d = state.selectedType.requiredDocuments.find((x) => x.key === key);
-      // 이미 지정된 사진이 있으면 그 미리보기 해제
-      if (state.fileUrls[key]) { try { URL.revokeObjectURL(state.fileUrls[key]); } catch {} }
-      state.files[key] = labeledFile(p.file, d ? d.label : key);
-      state.fileUrls[key] = p.url;           // 미리보기 재사용
-      state.pendingPhotos.splice(idx, 1);    // 트레이에서 제거(해제하지 않음: 슬롯에서 사용 중)
-      render();
-    });
-
-    // 미분류 사진 삭제
-    app.querySelectorAll('[data-discard]').forEach((b) => b.onclick = () => {
-      const idx = state.pendingPhotos.findIndex((p) => p.id === b.dataset.discard);
-      if (idx < 0) return;
-      try { URL.revokeObjectURL(state.pendingPhotos[idx].url); } catch {}
-      state.pendingPhotos.splice(idx, 1);
-      render();
-    });
-
-    // 지정된 서류 삭제(미지정으로 되돌리기)
-    app.querySelectorAll('[data-clear]').forEach((b) => b.onclick = () => {
-      const key = b.dataset.clear;
-      if (state.fileUrls[key]) { try { URL.revokeObjectURL(state.fileUrls[key]); } catch {} }
-      delete state.files[key]; delete state.fileUrls[key];
-      render();
-    });
-
-    // 슬롯별 직접 선택(한 장씩 올리고 싶을 때)
+    // 파일 선택 (이미지는 업로드 전 자동 압축)
     app.querySelectorAll('input[type=file][data-doc]').forEach((inp) => inp.onchange = async () => {
       const key = inp.dataset.doc;
-      if (!inp.files[0]) return;
-      readForm();
-      const d = state.selectedType.requiredDocuments.find((x) => x.key === key);
-      const file = labeledFile(await compressImage(inp.files[0]), d ? d.label : key);
-      if (state.fileUrls[key]) { try { URL.revokeObjectURL(state.fileUrls[key]); } catch {} }
-      state.files[key] = file;
-      state.fileUrls[key] = URL.createObjectURL(file);
+      if (inp.files[0]) {
+        readForm();
+        state.files[key] = await compressImage(inp.files[0]);
+      } else { delete state.files[key]; }
       render();
     });
 
@@ -942,22 +849,6 @@
     a.href = URL.createObjectURL(blob); a.download = 'entry-records.csv'; a.click();
   }
 
-  // 첨부 서류 상태 초기화(미리보기 objectURL 해제 포함)
-  function resetDocs() {
-    Object.values(state.fileUrls || {}).forEach((u) => { try { URL.revokeObjectURL(u); } catch {} });
-    (state.pendingPhotos || []).forEach((p) => { try { URL.revokeObjectURL(p.url); } catch {} });
-    state.files = {}; state.fileUrls = {}; state.pendingPhotos = [];
-  }
-
-  // 파일 이름을 서류 라벨로 바꿔 저장(직원 화면에서 서류명이 그대로 보이도록)
-  function labeledFile(file, label) {
-    const ext = file.type && file.type.startsWith('image/')
-      ? 'jpg'
-      : ((file.name.match(/\.[^.]+$/) || ['.dat'])[0].slice(1) || 'dat');
-    try { return new File([file], `${label}.${ext}`, { type: file.type || 'application/octet-stream' }); }
-    catch { return file; }
-  }
-
   // 이미지는 긴 변 1600px·JPEG 품질 0.72 로 축소해 용량을 줄입니다 (사진 업로드 대비).
   // PDF 등 이미지가 아닌 파일은 그대로 둡니다.
   const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
@@ -1000,7 +891,7 @@
     Object.values(state.files).forEach((file) => fd.append('documents', file));
     try {
       const data = await api('/requests', { method: 'POST', body: fd, isForm: true });
-      state.lastRequest = data; state.form = {}; resetDocs();
+      state.lastRequest = data; state.form = {}; state.files = {};
       go('driverResult');
     } catch (e) { toast(e.message); btn.disabled = false; btn.textContent = '출입 신청 제출'; }
   }
