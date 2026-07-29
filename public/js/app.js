@@ -40,6 +40,92 @@
   const toLocalDatetime = (d) =>
     `${dateKey(d)}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 
+  // 방문 예정 일시 표시/선택용
+  const WD = ['일', '월', '화', '수', '목', '금', '토'];
+  const fmtVisit = (d) => {
+    const h = d.getHours(); const ap = h < 12 ? '오전' : '오후'; const h12 = ((h + 11) % 12) + 1;
+    return `${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()} (${WD[d.getDay()]}) ${ap} ${h12}:${String(d.getMinutes()).padStart(2, '0')}`;
+  };
+  const sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+
+  // 갤럭시 캘린더 앱 스타일의 월(月) 달력 + 시간 선택 모달
+  function openCalendar() {
+    const cur = state.form.visitAt ? new Date(state.form.visitAt) : nextBusinessDay();
+    const sel = new Date(cur);
+    const view = new Date(cur.getFullYear(), cur.getMonth(), 1);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    document.body.appendChild(backdrop);
+    const close = () => backdrop.remove();
+    backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
+
+    const hourOpts = Array.from({ length: 24 }, (_, h) =>
+      `<option value="${h}">${String(h).padStart(2, '0')}</option>`).join('');
+    const minOpts = ['00', '10', '20', '30', '40', '50'].map((m) =>
+      `<option value="${m}">${m}</option>`).join('');
+
+    function draw() {
+      const y = view.getFullYear(), m = view.getMonth();
+      const startWd = new Date(y, m, 1).getDay();
+      const daysInMonth = new Date(y, m + 1, 0).getDate();
+      const now = new Date();
+      let cells = '';
+      for (let i = 0; i < startWd; i++) cells += '<div></div>';
+      for (let day = 1; day <= daysInMonth; day++) {
+        const d = new Date(y, m, day);
+        const wd = d.getDay();
+        const cls = ['cal-cell'];
+        if (wd === 0) cls.push('sun'); else if (wd === 6) cls.push('sat');
+        if (HOLIDAYS.has(dateKey(d))) cls.push('hol');
+        if (sameDay(d, now)) cls.push('today');
+        if (sameDay(d, sel)) cls.push('sel');
+        const past = d < today;
+        cells += `<button type="button" class="${cls.join(' ')}" data-day="${day}" ${past ? 'disabled' : ''}>${day}</button>`;
+      }
+      backdrop.innerHTML = `<div class="cal-sheet">
+        <div class="cal-head">
+          <button class="cal-nav" data-mv="-1">‹</button>
+          <div class="mtitle">${y}년 ${m + 1}월</div>
+          <button class="cal-nav" data-mv="1">›</button>
+        </div>
+        <div class="cal-grid">
+          <div class="cal-wd sun">일</div><div class="cal-wd">월</div><div class="cal-wd">화</div>
+          <div class="cal-wd">수</div><div class="cal-wd">목</div><div class="cal-wd">금</div><div class="cal-wd sat">토</div>
+          ${cells}
+        </div>
+        <div class="cal-time">
+          <span class="lb">시간</span>
+          <select id="cal-h">${hourOpts}</select><span>:</span><select id="cal-m">${minOpts}</select>
+        </div>
+        <div class="cal-actions">
+          <button class="btn btn-ghost" data-cal="cancel">취소</button>
+          <button class="btn btn-primary" data-cal="ok">확인</button>
+        </div>
+      </div>`;
+      backdrop.querySelectorAll('[data-mv]').forEach((b) => b.onclick = () => {
+        view.setMonth(view.getMonth() + Number(b.dataset.mv)); draw();
+      });
+      backdrop.querySelectorAll('[data-day]').forEach((b) => b.onclick = () => {
+        sel.setFullYear(y, m, Number(b.dataset.day)); draw();
+      });
+      const hSel = backdrop.querySelector('#cal-h'); hSel.value = String(sel.getHours());
+      const mSel = backdrop.querySelector('#cal-m');
+      mSel.value = String(Math.floor(sel.getMinutes() / 10) * 10).padStart(2, '0');
+      hSel.onchange = () => sel.setHours(Number(hSel.value));
+      mSel.onchange = () => sel.setMinutes(Number(mSel.value));
+      backdrop.querySelector('[data-cal="cancel"]').onclick = close;
+      backdrop.querySelector('[data-cal="ok"]').onclick = () => {
+        state.form.visitAt = toLocalDatetime(sel);
+        const btn = document.getElementById('visitAt');
+        if (btn) btn.textContent = fmtVisit(sel);
+        close();
+      };
+    }
+    draw();
+  }
+
   const state = {
     view: 'landing',
     user: null,
@@ -370,6 +456,8 @@
     const u = state.user;
     const f = state.form;
     const hasDocs = t.requiredDocuments.length > 0;
+    // 방문 예정 일시 기본값(다음 영업일 09시)을 최초 진입 시 설정
+    if (state.form.visitAt === undefined) state.form.visitAt = toLocalDatetime(nextBusinessDay());
     // 저장된 기본정보로 프리필
     const val = (k, dflt) => esc(f[k] !== undefined ? f[k] : dflt);
     const docs = t.requiredDocuments.map((d) => {
@@ -387,7 +475,7 @@
           <label class="field"><span class="lb">계약 업체</span>
             <input type="text" id="company" value="${val('company', '')}" placeholder="예: OO전력"></label>
           <label class="field"><span class="lb">방문 예정 일시</span>
-            <input type="datetime-local" id="visitAt" value="${val('visitAt', toLocalDatetime(nextBusinessDay()))}"></label>
+            <button type="button" id="visitAt" class="datebtn">${esc(fmtVisit(new Date(state.form.visitAt)))}</button></label>
         </div>`;
     const docsCard = hasDocs ? `
         <div class="section-title">📎 필요 서류 (모두 필수)</div>
@@ -492,10 +580,9 @@
   }
 
   function readForm() {
-    ['company', 'visitAt'].forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) state.form[id] = el.value;
-    });
+    // 방문 예정 일시(visitAt)는 달력에서 직접 state.form 에 저장하므로 여기서 읽지 않음
+    const el = document.getElementById('company');
+    if (el) state.form.company = el.value;
   }
 
   function bind() {
@@ -507,10 +594,9 @@
     app.querySelectorAll('[data-histback]').forEach((b) => b.onclick = () => history.back());
     // 연락처 입력 시 자동 하이픈
     app.querySelectorAll('input[type=tel]').forEach((inp) => inp.oninput = () => { inp.value = formatPhone(inp.value); });
-    // 방문 예정 일시: 탭하면 달력 표시
-    app.querySelectorAll('input[type=datetime-local]').forEach((inp) => inp.onclick = () => {
-      try { inp.showPicker(); } catch { /* 미지원 브라우저는 기본 동작 */ }
-    });
+    // 방문 예정 일시: 탭하면 커스텀 월 달력 모달 열기
+    const visitBtn = document.getElementById('visitAt');
+    if (visitBtn) visitBtn.onclick = openCalendar;
 
     // 역할 선택
     app.querySelectorAll('[data-role]').forEach((b) => b.onclick = () => {
