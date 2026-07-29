@@ -57,8 +57,7 @@
 
     const backdrop = document.createElement('div');
     backdrop.className = 'modal-backdrop';
-    document.body.appendChild(backdrop);
-    const close = () => backdrop.remove();
+    const close = openOverlay(backdrop);
     backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
 
     const hourOpts = Array.from({ length: 24 }, (_, h) =>
@@ -126,6 +125,18 @@
     draw();
   }
 
+  // 사진 확대(라이트박스) — 앱을 벗어나지 않고 인앱 오버레이로 표시, 뒤로가기로 닫힘
+  function openLightbox(url, label) {
+    const el = document.createElement('div');
+    el.className = 'lightbox';
+    el.innerHTML = `<button class="lb-close" type="button" aria-label="닫기">✕</button>
+      <img src="${esc(url)}" alt="${esc(label || '')}">`;
+    const close = openOverlay(el);
+    el.addEventListener('click', (e) => {
+      if (e.target === el || e.target.classList.contains('lb-close')) close();
+    });
+  }
+
   const state = {
     view: 'landing',
     user: null,
@@ -166,7 +177,18 @@
   }
   const fallbackView = () => state.user ? (state.user.role === 'staff' ? 'staffConsole' : 'driverHome') : 'landing';
   function showView(view) { stopPoll(); state.view = view; render(); window.scrollTo(0, 0); }
+
+  // 오버레이(달력·사진 확대 등): 뒤로가기 시 화면 이동 대신 오버레이만 닫히게
+  const overlays = [];
+  function openOverlay(node) {
+    document.body.appendChild(node);
+    overlays.push(() => node.remove());
+    history.pushState({ view: state.view, ov: overlays.length }, '');
+    return () => history.back(); // 닫기: 뒤로가기로 처리해 히스토리 일관성 유지
+  }
+
   window.addEventListener('popstate', (e) => {
+    if (overlays.length) { const rm = overlays.pop(); try { rm(); } catch { /* noop */ } return; }
     let view = (e.state && e.state.view) || 'landing';
     if (e.state && typeof e.state.si === 'number') state.safetyIndex = e.state.si;
     if (!canRender(view)) view = fallbackView();
@@ -563,10 +585,10 @@
       return `<div class="doc-thumb-item">
         <div class="lbl">${esc(d.label)}</div>
         ${isImg
-          ? `<a href="${esc(d.url)}" target="_blank" rel="noopener"><img src="${esc(d.url)}" alt="${esc(d.label)}" loading="lazy"></a>`
+          ? `<img src="${esc(d.url)}" alt="${esc(d.label)}" loading="lazy" data-lightbox="${esc(d.url)}" data-label="${esc(d.label)}">`
           : `<a class="pdf" href="${esc(d.url)}" target="_blank" rel="noopener">📄 파일 열기</a>`}
       </div>`;
-    }).join('')}</div>` : '<div class="muted">첨부 서류 없음</div>';
+    }).join('')}</div>` : '<div class="muted" style="padding:0 2px">첨부 서류 없음</div>';
 
     return appbar('출입 신청 상세', st.pill, { back: true }) + `
       <div class="screen">
@@ -583,7 +605,7 @@
           ${r.status === 'rejected' && r.rejectReason ? `<div class="row"><span class="k">반려사유</span><span>${esc(r.rejectReason)}</span></div>` : ''}
         </div>
         <div class="section-title">📎 필수 서류</div>
-        <div class="card">${docsHtml}</div>
+        ${docsHtml}
         ${r.status === 'pending' ? `<div class="sticky-cta"><div class="btn-row">
           <button class="btn btn-danger" data-reject="${r.id}">반려</button>
           <button class="btn btn-success" data-approve="${r.id}">승인</button>
@@ -695,6 +717,7 @@
     });
     app.querySelectorAll('[data-approve]').forEach((b) => b.onclick = () => reviewReq(b.dataset.approve, 'approve'));
     app.querySelectorAll('[data-reject]').forEach((b) => b.onclick = () => reviewReq(b.dataset.reject, 'reject'));
+    app.querySelectorAll('img[data-lightbox]').forEach((im) => im.onclick = () => openLightbox(im.dataset.lightbox, im.dataset.label));
     const exp = document.getElementById('exportCsv');
     if (exp) exp.onclick = downloadCsv;
   }
