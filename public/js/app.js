@@ -302,12 +302,15 @@
     el.querySelector('.annot-save').onclick = async () => {
       const btn = el.querySelector('.annot-save'); btn.disabled = true; btn.textContent = '저장 중…';
       const off = document.createElement('canvas');
-      off.width = cv.width; off.height = cv.height;
+      // 서버 저장용량 절감: 긴 변 1200px로 축소 + JPEG 품질 0.62 (체크·서명 판독 가능한 선)
+      const maxSide = 1200;
+      const s = Math.min(1, maxSide / Math.max(cv.width, cv.height));
+      off.width = Math.round(cv.width * s); off.height = Math.round(cv.height * s);
       const octx = off.getContext('2d');
       octx.fillStyle = '#fff'; octx.fillRect(0, 0, off.width, off.height);
       octx.drawImage(bg, 0, 0, off.width, off.height);
-      octx.drawImage(cv, 0, 0);
-      const blob = await new Promise((res) => off.toBlob(res, 'image/jpeg', 0.85));
+      octx.drawImage(cv, 0, 0, off.width, off.height);
+      const blob = await new Promise((res) => off.toBlob(res, 'image/jpeg', 0.62));
       const file = new File([blob], `${doc.label}.jpg`, { type: 'image/jpeg' });
       state.files[doc.key] = file;
       close();
@@ -667,12 +670,12 @@
     const docs = t.requiredDocuments.map((d) => {
       const has = state.files[d.key];
       const formBtn = d.formImage
-        ? `<button type="button" class="form-fill" data-form="${d.key}">✍️ 양식 작성</button>`
+        ? `<button type="button" class="form-fill" data-form="${d.key}">양식</button>`
         : (d.formUrl ? `<a class="form-dl" href="${esc(d.formUrl)}" target="_blank" rel="noopener">양식 ↓</a>` : '');
       return `<div class="doc-item">
-        <span class="dl-wrap"><span class="dl">${esc(d.label)}</span>${d.note ? `<span class="dl-note">${esc(d.note)}</span>` : ''}${formBtn}</span>
+        <span class="dl-wrap"><span class="dl">${esc(d.label)}</span>${formBtn}${d.note ? `<span class="dl-note">${esc(d.note)}</span>` : ''}</span>
         <span class="up"><label class="file-btn ${has ? 'has' : ''}">
-          ${has ? '✓ 첨부 · ' + (has.size / 1048576).toFixed(1) + 'MB' : '파일 선택'}
+          ${has ? '첨부 완료' : '파일 선택'}
           <input type="file" data-doc="${d.key}" accept="image/*,application/pdf"></label></span>
       </div>`;
     }).join('');
