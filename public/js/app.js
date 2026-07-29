@@ -454,7 +454,7 @@
       <div class="hero">
         <div class="logo">🏭</div>
         <h1>자재센터 출입 신청</h1>
-        <p>출입 전 안전수칙을 확인하고 사전 승인을 받으세요.</p>
+        <p>출입 전 안전수칙을 확인하고<br>사전 승인을 받으세요.</p>
       </div>
       <div class="role-grid">
         <button class="role-btn" data-role="driver">
