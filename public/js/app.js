@@ -479,7 +479,7 @@
     const docs = t.requiredDocuments.map((d) => {
       const has = state.files[d.key];
       return `<div class="doc-item">
-        <span class="dl-wrap"><span class="dl">${esc(d.label)}</span><span class="badge ${d.required ? 'required' : 'optional'}">${d.required ? '필수' : '선택'}</span>${d.formUrl ? `<a class="form-dl" href="${esc(d.formUrl)}" target="_blank" rel="noopener">양식 ↓</a>` : ''}</span>
+        <span class="dl-wrap"><span class="dl">${esc(d.label)}</span>${d.note ? `<span class="dl-note">${esc(d.note)}</span>` : ''}${d.formUrl ? `<a class="form-dl" href="${esc(d.formUrl)}" target="_blank" rel="noopener">양식 ↓</a>` : ''}</span>
         <span class="up"><label class="file-btn ${has ? 'has' : ''}">
           ${has ? '✓ 첨부 · ' + (has.size / 1048576).toFixed(1) + 'MB' : '파일 선택'}
           <input type="file" data-doc="${d.key}" accept="image/*,application/pdf"></label></span>
@@ -488,13 +488,13 @@
     const infoCard = `
         <div class="section-title">📝 신청 정보</div>
         <div class="card">
-          <label class="field"><span class="lb">계약 업체</span>
-            <input type="text" id="company" value="${val('company', '')}" placeholder="예: OO전력"></label>
-          <label class="field"><span class="lb">방문 예정 일자</span>
+          <label class="field-h"><span class="lb">방문일자</span>
             <button type="button" id="visitAt" class="datebtn">${esc(fmtVisitDate(state.form.visitAt))}</button></label>
+          <label class="field-h"><span class="lb">계약업체</span>
+            <input type="text" id="company" value="${val('company', '')}" placeholder="예: OO전력"></label>
         </div>`;
     const docsCard = hasDocs ? `
-        <div class="section-title">📎 필요 서류 (모두 필수)</div>
+        <div class="section-title">📎 제출 서류</div>
         <div class="card">${docs}</div>` : '';
     return appbar(t.name, hasDocs ? '신청 정보 및 서류' : '출입 신청 정보', { back: true }) + stepBar(state.safetyPages.length + 1, safetyTotal()) + `
       <div class="screen">

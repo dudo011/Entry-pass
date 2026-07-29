@@ -144,7 +144,7 @@ input[type=text], input[type=tel], input[type=password], input[type=date], input
 /* 라벨(항목명)과 입력칸을 좌우로 나란히 */
 .field-h { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
 .field-h .lb { width: 92px; flex: none; margin: 0; font-size: 14px; font-weight: 600; line-height: 1.25; word-break: keep-all; }
-.field-h > input, .field-h > select { flex: 1 1 0; min-width: 0; }
+.field-h > input, .field-h > select, .field-h > .datebtn { flex: 1 1 0; min-width: 0; }
 .req { color: var(--danger); }
 input:focus, textarea:focus, select:focus {
   outline: none; border-color: var(--primary); background: #fff;
@@ -167,6 +167,8 @@ textarea { min-height: 72px; resize: vertical; }
 .doc-item:last-child { border-bottom: 0; }
 .doc-item .dl-wrap { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .doc-item .dl { font-size: 15px; font-weight: 600; }
+.doc-item .dl-note { font-size: 12px; font-weight: 700; color: var(--warn); background: var(--warn-bg);
+  padding: 2px 7px; border-radius: 6px; flex: none; }
 .doc-item .badge { font-size: 12px; padding: 2px 7px; border-radius: 6px; font-weight: 700; flex: none; }
 .badge.required { background: var(--danger-bg); color: var(--danger); }
 .badge.optional { background: var(--border); color: var(--text-muted); }

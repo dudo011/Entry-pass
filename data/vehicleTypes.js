@@ -26,7 +26,8 @@ const COMMON_REQUIRED = [
 const COMMON_OTHER = [
   '자재센터 내 제한속도 20km 준수',
   '교차지점 일단정지 후 확인',
-  '운전자 좌석 안전띠 착용, 동승자 승차석 외 탑승 금지',
+  '운전자 좌석 안전띠 착용',
+  '동승자 승차석 외 탑승 금지',
   '차량검사증 소지, 법정정기검사 필증 부착 등',
 ];
 
@@ -43,7 +44,8 @@ const WORK_DOCS = [
   { key: 'workPlan', label: '작업계획서', required: true, formUrl: '/forms/work-plan.pdf' },
   { key: 'safetyChecklist', label: '작업안전 체크리스트', required: true },
   { key: 'tbm', label: '작업 전 안전점검(TBM) 회의록', required: true },
-  { key: 'sitePhoto', label: '차량·운전자 현장사진', required: true },
+  // 현장사진은 자재센터 출입 후 등록하므로 신청 시에는 선택(없어도 신청 가능)
+  { key: 'sitePhoto', label: '차량·운전자 현장사진', required: false, note: '자재센터 출입 후 등록' },
 ];
 
 export default [
