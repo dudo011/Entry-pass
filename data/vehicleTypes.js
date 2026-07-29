@@ -43,7 +43,11 @@ const EXTRA_CONSTRUCTION_PCBS = [
 const WORK_DOCS = [
   { key: 'workPlan', label: '작업계획서', required: true },
   { key: 'tbm', label: 'TBM 회의록', required: true },
-  { key: 'safetyChecklist', label: '위험성 체크리스트', required: true, formImage: '/forms/work-plan.png', formUrl: '/forms/work-plan.pdf' },
+  // focus: 양식 작성 화면을 처음 열 때 확대해서 보여줄 영역(이미지 대비 비율).
+  //   위험성 체크리스트는 오른쪽 중간의 【핵심 Check Point】 박스부터 보이도록 초점.
+  { key: 'safetyChecklist', label: '위험성 체크리스트', required: true,
+    formImage: '/forms/work-plan.png', formUrl: '/forms/work-plan.pdf',
+    focus: { x: 0.355, y: 0.325, w: 0.645 } },
   // 현장사진은 자재센터 출입 후 등록하므로 신청 시에는 선택(없어도 신청 가능)
   { key: 'sitePhoto', label: '차량·운전자 현장사진', required: false, note: '자재센터 출입 후 등록' },
 ];

@@ -195,11 +195,18 @@
       const w = bg.naturalWidth, h = bg.naturalHeight;
       cv.width = w; cv.height = h;
       wrap.style.width = w + 'px'; wrap.style.height = h + 'px';
-      // 최초: 폭 맞춤 + 상단 정렬
       const r = stage.getBoundingClientRect();
-      scale = Math.min(r.width / w, 1.2);
-      tx = (r.width - w * scale) / 2; if (tx < 0) tx = 0;
-      ty = 10;
+      if (doc.focus) {
+        // 초점 영역(예: 핵심 Check Point 박스)을 화면 폭에 맞춰 확대, 상단 정렬
+        scale = Math.max(MINS, Math.min(MAXS, r.width / (doc.focus.w * w)));
+        tx = -doc.focus.x * w * scale;
+        ty = -doc.focus.y * h * scale + 8;
+      } else {
+        // 초점 지정이 없으면 문서 전체를 폭 맞춤 + 상단 정렬
+        scale = Math.min(r.width / w, 1.2);
+        tx = (r.width - w * scale) / 2; if (tx < 0) tx = 0;
+        ty = 10;
+      }
       applyTf();
     };
     bg.src = doc.formImage;
