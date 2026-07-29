@@ -40,17 +40,22 @@
   const toLocalDatetime = (d) =>
     `${dateKey(d)}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 
-  // 방문 예정 일시 표시/선택용
+  // 방문 예정 일자 표시/선택용 (시간 없이 날짜 + 요일)
   const WD = ['일', '월', '화', '수', '목', '금', '토'];
-  const fmtVisit = (d) => {
-    const h = d.getHours(); const ap = h < 12 ? '오전' : '오후'; const h12 = ((h + 11) % 12) + 1;
-    return `${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()} (${WD[d.getDay()]}) ${ap} ${h12}:${String(d.getMinutes()).padStart(2, '0')}`;
+  const parseDateKey = (s) => {
+    const [y, m, dd] = String(s || '').slice(0, 10).split('-').map(Number);
+    return (y && m && dd) ? new Date(y, m - 1, dd) : null;
+  };
+  const fmtVisitDate = (s) => {
+    const d = s instanceof Date ? s : parseDateKey(s);
+    if (!d) return '-';
+    return `${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()} (${WD[d.getDay()]})`;
   };
   const sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 
-  // 갤럭시 캘린더 앱 스타일의 월(月) 달력 + 시간 선택 모달
+  // 갤럭시 캘린더 앱 스타일의 월(月) 달력 (날짜만 선택, 시간 없음)
   function openCalendar() {
-    const cur = state.form.visitAt ? new Date(state.form.visitAt) : nextBusinessDay();
+    const cur = parseDateKey(state.form.visitAt) || nextBusinessDay();
     const sel = new Date(cur);
     const view = new Date(cur.getFullYear(), cur.getMonth(), 1);
     const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -59,11 +64,6 @@
     backdrop.className = 'modal-backdrop';
     const close = openOverlay(backdrop);
     backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
-
-    const hourOpts = Array.from({ length: 24 }, (_, h) =>
-      `<option value="${h}">${String(h).padStart(2, '0')}</option>`).join('');
-    const minOpts = ['00', '10', '20', '30', '40', '50'].map((m) =>
-      `<option value="${m}">${m}</option>`).join('');
 
     function draw() {
       const y = view.getFullYear(), m = view.getMonth();
@@ -94,10 +94,6 @@
           <div class="cal-wd">수</div><div class="cal-wd">목</div><div class="cal-wd">금</div><div class="cal-wd sat">토</div>
           ${cells}
         </div>
-        <div class="cal-time">
-          <span class="lb">시간</span>
-          <select id="cal-h">${hourOpts}</select><span>:</span><select id="cal-m">${minOpts}</select>
-        </div>
         <div class="cal-actions">
           <button class="btn btn-ghost" data-cal="cancel">취소</button>
           <button class="btn btn-primary" data-cal="ok">확인</button>
@@ -109,16 +105,11 @@
       backdrop.querySelectorAll('[data-day]').forEach((b) => b.onclick = () => {
         sel.setFullYear(y, m, Number(b.dataset.day)); draw();
       });
-      const hSel = backdrop.querySelector('#cal-h'); hSel.value = String(sel.getHours());
-      const mSel = backdrop.querySelector('#cal-m');
-      mSel.value = String(Math.floor(sel.getMinutes() / 10) * 10).padStart(2, '0');
-      hSel.onchange = () => sel.setHours(Number(hSel.value));
-      mSel.onchange = () => sel.setMinutes(Number(mSel.value));
       backdrop.querySelector('[data-cal="cancel"]').onclick = close;
       backdrop.querySelector('[data-cal="ok"]').onclick = () => {
-        state.form.visitAt = toLocalDatetime(sel);
+        state.form.visitAt = dateKey(sel);
         const btn = document.getElementById('visitAt');
-        if (btn) btn.textContent = fmtVisit(sel);
+        if (btn) btn.textContent = fmtVisitDate(sel);
         close();
       };
     }
@@ -159,6 +150,8 @@
     // 직원 콘솔
     staffTab: 'pending',
     staffData: [],
+    staffDetail: null,
+    statsFilter: { from: '', to: '', typeId: '', vehicle: '', company: '' },
   };
 
   let poll = null;
@@ -479,8 +472,8 @@
     const u = state.user;
     const f = state.form;
     const hasDocs = t.requiredDocuments.length > 0;
-    // 방문 예정 일시 기본값(다음 영업일 09시)을 최초 진입 시 설정
-    if (state.form.visitAt === undefined) state.form.visitAt = toLocalDatetime(nextBusinessDay());
+    // 방문 예정 일자 기본값(다음 영업일)을 최초 진입 시 설정
+    if (state.form.visitAt === undefined) state.form.visitAt = dateKey(nextBusinessDay());
     // 저장된 기본정보로 프리필
     const val = (k, dflt) => esc(f[k] !== undefined ? f[k] : dflt);
     const docs = t.requiredDocuments.map((d) => {
@@ -497,8 +490,8 @@
         <div class="card">
           <label class="field"><span class="lb">계약 업체</span>
             <input type="text" id="company" value="${val('company', '')}" placeholder="예: OO전력"></label>
-          <label class="field"><span class="lb">방문 예정 일시</span>
-            <button type="button" id="visitAt" class="datebtn">${esc(fmtVisit(new Date(state.form.visitAt)))}</button></label>
+          <label class="field"><span class="lb">방문 예정 일자</span>
+            <button type="button" id="visitAt" class="datebtn">${esc(fmtVisitDate(state.form.visitAt))}</button></label>
         </div>`;
     const docsCard = hasDocs ? `
         <div class="section-title">📎 필요 서류 (모두 필수)</div>
@@ -537,31 +530,48 @@
   }
 
   // ==== 직원 콘솔 ==========================================================
+  const visKey = (r) => (r.visitAt || '').slice(0, 10);
+  // 방문일자 오름차순 → 같은 날짜면 신청시간 오름차순 (빠른 날짜가 위로)
+  const byVisitThenCreated = (a, b) => {
+    const va = visKey(a), vb = visKey(b);
+    if (va !== vb) return va < vb ? -1 : 1;
+    return (a.createdAt || '') < (b.createdAt || '') ? -1 : 1;
+  };
+
   function staffConsole() {
     const u = state.user;
     const isAdmin = u.staffRole === 'admin';
-    const counts = { pending: 0, approved: 0, rejected: 0 };
-    state.staffData.forEach((r) => { counts[r.status] = (counts[r.status] || 0) + 1; });
-    const tab = (id, label) => `<button class="tab ${state.staffTab === id ? 'active' : ''}" data-tab="${id}">
-      ${label} <span class="cnt">${counts[id] || 0}</span></button>`;
+    const todayKey = dateKey(new Date());
+    const counts = {
+      pending: state.staffData.filter((r) => r.status === 'pending').length,
+      approved: state.staffData.filter((r) => r.status === 'approved' && visKey(r) >= todayKey).length,
+      rejected: state.staffData.filter((r) => r.status === 'rejected' && visKey(r) >= todayKey).length,
+    };
+    const tab = (id, label, cnt) => `<button class="tab ${state.staffTab === id ? 'active' : ''}" data-tab="${id}">
+      ${label}${cnt !== undefined ? ` <span class="cnt">${cnt}</span>` : ''}</button>`;
+    const tabs = tab('pending', '대기', counts.pending) + tab('approved', '승인', counts.approved) +
+      tab('rejected', '반려', counts.rejected) + tab('stats', '통계');
 
-    const tabs = tab('pending', '대기') + tab('approved', '승인') + tab('rejected', '반려');
+    const adminBar = `<div class="admin-bar"><span class="role-badge ${isAdmin ? 'admin' : ''}">${isAdmin ? '관리자' : '승인담당'}</span></div>`;
 
-    const list = state.staffData.filter((r) => r.status === state.staffTab);
-    const items = list.length ? list.map(staffListItem).join('')
-      : `<div class="empty">${state.staffTab === 'pending' ? '대기 중인 신청이 없습니다.' : '항목이 없습니다.'}</div>`;
-
-    const adminBar = isAdmin ? `<div class="admin-bar">
-      <span class="role-badge admin">관리자</span>
-      <button class="link-btn" id="exportCsv">📥 기록 CSV 내보내기</button>
-    </div>` : `<div class="admin-bar"><span class="role-badge">승인담당</span></div>`;
+    let body;
+    if (state.staffTab === 'stats') {
+      body = statsPanel(isAdmin);
+    } else {
+      let list = state.staffData.filter((r) => r.status === state.staffTab);
+      // 승인·반려는 출입 날짜가 지난 건 제외
+      if (state.staffTab === 'approved' || state.staffTab === 'rejected') {
+        list = list.filter((r) => visKey(r) >= todayKey);
+      }
+      list.sort(byVisitThenCreated);
+      body = list.length ? list.map(staffListItem).join('')
+        : `<div class="empty">${state.staffTab === 'pending' ? '대기 중인 신청이 없습니다.' : '항목이 없습니다.'}</div>`;
+    }
 
     return appbar('출입 신청 관리', `${u.name}님`, { logout: true }) +
       `<div class="tabs">${tabs}</div>${adminBar}
-       <div class="screen">${items}</div>`;
+       <div class="screen">${body}</div>`;
   }
-
-  const fmtDateTime = (iso) => iso ? new Date(iso).toLocaleString('ko-KR', { dateStyle: 'short', timeStyle: 'short' }) : '-';
 
   // 대기/승인/반려 리스트: 방문일자 + 차량번호만 표시, 클릭 시 상세
   function staffListItem(r) {
@@ -570,8 +580,49 @@
     return `<button class="mini-card" data-detail="${r.id}">
       <div class="mc-top"><span class="veh">${esc(r.vehicleNumber)}</span>
         <span class="status-pill ${r.status}">${st.pill}</span></div>
-      <div class="meta">방문 ${esc(fmtDateTime(r.visitAt))} · ${t ? t.icon : '🚚'} ${esc(r.vehicleTypeName)}</div>
+      <div class="meta">방문 ${esc(fmtVisitDate(r.visitAt))} · ${t ? t.icon : '🚚'} ${esc(r.vehicleTypeName)}</div>
     </button>`;
+  }
+
+  // 통계/조회: 필터 결과 반환
+  function statsResults() {
+    const f = state.statsFilter;
+    let res = state.staffData.slice();
+    if (f.from) res = res.filter((r) => visKey(r) >= f.from);
+    if (f.to) res = res.filter((r) => visKey(r) <= f.to);
+    if (f.typeId) res = res.filter((r) => r.vehicleTypeId === f.typeId);
+    if (f.vehicle) res = res.filter((r) => (r.vehicleNumber || '').includes(f.vehicle));
+    if (f.company) res = res.filter((r) => (r.company || '').includes(f.company));
+    return res.sort(byVisitThenCreated);
+  }
+
+  function statsPanel(isAdmin) {
+    const f = state.statsFilter;
+    const typeOpts = ['<option value="">전체</option>'].concat(state.vehicleTypes.map((t) =>
+      `<option value="${t.id}" ${f.typeId === t.id ? 'selected' : ''}>${esc(t.name)}</option>`)).join('');
+    const res = statsResults();
+    const by = { pending: 0, approved: 0, rejected: 0 };
+    res.forEach((r) => { by[r.status] = (by[r.status] || 0) + 1; });
+    const listHtml = res.length ? res.map(staffListItem).join('')
+      : '<div class="empty">조회 결과가 없습니다.</div>';
+    return `
+      <div class="card">
+        <label class="field"><span class="lb">출입 기간</span>
+          <div class="date-range"><input type="date" id="st-from" value="${esc(f.from)}">
+            <span>~</span><input type="date" id="st-to" value="${esc(f.to)}"></div></label>
+        <label class="field"><span class="lb">출입 목적(유형)</span><select id="st-type">${typeOpts}</select></label>
+        <label class="field"><span class="lb">차량번호</span>
+          <input type="text" id="st-vehicle" value="${esc(f.vehicle)}" placeholder="일부만 입력해도 됩니다"></label>
+        <label class="field"><span class="lb">계약업체</span>
+          <input type="text" id="st-company" value="${esc(f.company)}" placeholder="일부만 입력해도 됩니다"></label>
+        <div class="btn-row">
+          <button class="btn btn-ghost" id="st-reset">초기화</button>
+          <button class="btn btn-primary" id="st-search">조회</button>
+        </div>
+      </div>
+      <div class="stat-summary">총 <b>${res.length}</b>건 · 대기 ${by.pending} · 승인 ${by.approved} · 반려 ${by.rejected}
+        ${isAdmin ? '<button class="link-btn2" id="st-csv">📥 결과 CSV</button>' : ''}</div>
+      ${listHtml}`;
   }
 
   // 직원용 상세: 신청정보 박스 + 필수서류 박스(사진 바로 표시)
@@ -594,7 +645,7 @@
       <div class="screen">
         <div class="section-title">📝 신청 정보</div>
         <div class="card">
-          <div class="row"><span class="k">방문일자</span><span>${esc(fmtDateTime(r.visitAt))}</span></div>
+          <div class="row"><span class="k">방문일자</span><span>${esc(fmtVisitDate(r.visitAt))}</span></div>
           <div class="row"><span class="k">차량번호</span><span>${esc(r.vehicleNumber)}</span></div>
           <div class="row"><span class="k">방문목적</span><span>${esc(r.vehicleTypeName)}</span></div>
           <div class="row"><span class="k">계약업체</span><span>${esc(r.company) || '-'}</span></div>
@@ -618,7 +669,9 @@
     app.innerHTML = (views[state.view] || landing)();
     bind();
     if (state.view === 'driverHome') loadMyRequests();
-    if (state.view === 'staffConsole') startStaffPolling();
+    // 통계 탭에선 폴링 중단(입력 중 재렌더로 필터가 초기화되지 않도록)
+    if (state.view === 'staffConsole' && state.staffTab !== 'stats') ensurePolling();
+    else stopPoll();
   }
 
   function readForm() {
@@ -715,8 +768,40 @@
     app.querySelectorAll('[data-approve]').forEach((b) => b.onclick = () => reviewReq(b.dataset.approve, 'approve'));
     app.querySelectorAll('[data-reject]').forEach((b) => b.onclick = () => reviewReq(b.dataset.reject, 'reject'));
     app.querySelectorAll('img[data-lightbox]').forEach((im) => im.onclick = () => openLightbox(im.dataset.lightbox, im.dataset.label));
-    const exp = document.getElementById('exportCsv');
-    if (exp) exp.onclick = downloadCsv;
+
+    // 통계/조회
+    const stSearch = document.getElementById('st-search');
+    if (stSearch) stSearch.onclick = () => {
+      const v = (id) => (document.getElementById(id) || {}).value || '';
+      state.statsFilter = { from: v('st-from'), to: v('st-to'), typeId: v('st-type'),
+        vehicle: v('st-vehicle').trim(), company: v('st-company').trim() };
+      render();
+    };
+    const stReset = document.getElementById('st-reset');
+    if (stReset) stReset.onclick = () => {
+      state.statsFilter = { from: '', to: '', typeId: '', vehicle: '', company: '' }; render();
+    };
+    const stCsv = document.getElementById('st-csv');
+    if (stCsv) stCsv.onclick = downloadStatsCsv;
+  }
+
+  function downloadStatsCsv() {
+    const res = statsResults();
+    const esc2 = (v) => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
+    const stK = { pending: '대기', approved: '승인', rejected: '반려' };
+    const header = ['방문일자', '요일', '차량번호', '출입목적', '계약업체', '연락처', '상태', '신청일시'];
+    const lines = res.map((r) => {
+      const d = parseDateKey(r.visitAt);
+      const date = d ? dateKey(d) : '';
+      const wd = d ? WD[d.getDay()] : '';
+      return [date, wd, r.vehicleNumber, r.vehicleTypeName, r.company, r.phone,
+        stK[r.status] || r.status, new Date(r.createdAt).toLocaleString('ko-KR')].map(esc2).join(',');
+    });
+    const csv = '﻿' + header.map(esc2).join(',') + '\n' + lines.join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    a.download = 'entry-stats.csv'; a.click();
+    toast('결과 CSV를 내보냈습니다.');
   }
 
   async function downloadCsv() {
@@ -798,7 +883,12 @@
     try { state.staffData = await api('/requests'); } catch (e) { return toast(e.message); }
     if (state.view === 'staffConsole') render();
   }
-  function startStaffPolling() { stopPoll(); loadStaff(); poll = setInterval(loadStaff, 5000); }
+  // 이미 폴링 중이면 재시작하지 않음(재렌더 → 재시작 무한루프 방지)
+  function ensurePolling() {
+    if (poll) return;
+    loadStaff();
+    poll = setInterval(loadStaff, 5000);
+  }
 
   // ==== 부팅 ===============================================================
   async function boot() {

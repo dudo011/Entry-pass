@@ -136,7 +136,7 @@ p.lead { color: var(--text-muted); margin: 0 2px 18px; font-size: 15px; }
 label.field { display: block; margin-bottom: 14px; }
 label.field .lb { font-size: 14px; font-weight: 600; margin-bottom: 6px; display: block; }
 label.field .req { color: var(--danger); }
-input[type=text], input[type=tel], input[type=password], input[type=datetime-local], textarea, select {
+input[type=text], input[type=tel], input[type=password], input[type=date], input[type=datetime-local], textarea, select {
   width: 100%; padding: 13px 14px; font-size: 17px; color: var(--text);
   border: 1px solid var(--border); border-radius: 11px; background: var(--surface-2);
   font-family: inherit;
@@ -241,6 +241,15 @@ textarea { min-height: 72px; resize: vertical; }
   text-decoration: none; font-weight: 600;
 }
 .empty { text-align: center; color: var(--text-muted); padding: 50px 16px; font-size: 15px; }
+
+/* 통계/조회 */
+.date-range { display: flex; align-items: center; gap: 8px; }
+.date-range input { flex: 1 1 0; min-width: 0; }
+.stat-summary { display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  font-size: 15px; font-weight: 600; color: var(--text); padding: 4px 2px 12px; }
+.stat-summary b { color: var(--primary); font-size: 18px; }
+.link-btn2 { margin-left: auto; background: var(--surface); border: 1px solid var(--border);
+  color: var(--primary); font-size: 14px; font-weight: 700; padding: 7px 11px; border-radius: 9px; cursor: pointer; }
 
 /* 직원 상세: 서류 사진 바로 표시 (외곽 박스 없이 각 서류를 전체폭 크게) */
 .doc-thumbs { display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; }
