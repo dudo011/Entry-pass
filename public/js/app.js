@@ -162,15 +162,14 @@
 
     const cardInner = isReg ? `
       ${fld('계약(차량) 유형', `<select id="a_vtype">${typeOpts}</select>`)}
-      ${fld('아이디', '<input type="text" id="a_loginId" autocomplete="username" placeholder="아이디">')}
+      ${fld('아이디(차량번호)', '<input type="text" id="a_loginId" autocomplete="username" placeholder="예: 12가3456">')}
       ${fld('비밀번호', '<input type="password" id="a_password" autocomplete="new-password" placeholder="비밀번호">')}
       ${fld('비밀번호 확인', '<input type="password" id="a_password2" autocomplete="new-password" placeholder="다시 입력">')}
       ${fld('이름', '<input type="text" id="a_name" placeholder="홍길동">')}
       ${fld('연락처', '<input type="tel" id="a_phone" placeholder="010-0000-0000">')}
-      ${fld('소속 업체', '<input type="text" id="a_company" placeholder="OO물류">')}
-      ${fld('차량번호', '<input type="text" id="a_vnum" placeholder="12가 3456">')}
+      <p class="hint" style="margin:2px 2px 12px;text-align:left">※ 아이디는 <b>차량번호</b>로 입력하세요. (소속업체는 출입 신청 시 입력)</p>
       <button class="btn btn-primary" id="a_submit">가입하고 시작</button>` : `
-      ${fld('아이디', '<input type="text" id="a_loginId" autocomplete="username" placeholder="아이디">')}
+      ${fld(isDriver ? '아이디(차량번호)' : '아이디', `<input type="text" id="a_loginId" autocomplete="username" placeholder="${isDriver ? '차량번호' : '아이디'}">`)}
       ${fld('비밀번호', '<input type="password" id="a_password" autocomplete="current-password" placeholder="비밀번호">')}
       <button class="btn btn-primary" id="a_submit">로그인</button>`;
 
@@ -188,23 +187,22 @@
     const v = (id) => (document.getElementById(id) || {}).value || '';
     const loginId = v('a_loginId').trim();
     const password = v('a_password');
-    if (!loginId || !password) return toast('아이디와 비밀번호를 입력하세요.');
+    if (!loginId || !password) return toast('아이디(차량번호)와 비밀번호를 입력하세요.');
     const btn = document.getElementById('a_submit');
     btn.disabled = true;
     try {
       let out;
       if (state.authRole === 'driver' && state.authMode === 'register') {
         const name = v('a_name').trim(), phone = v('a_phone').trim();
-        const company = v('a_company').trim(), vnum = v('a_vnum').trim();
-        if (!name || !phone || !company || !vnum) {
+        if (!name || !phone) {
           btn.disabled = false; return toast('모든 항목을 입력해 주세요.');
         }
         if (password !== v('a_password2')) {
           btn.disabled = false; return toast('비밀번호가 일치하지 않습니다.');
         }
+        // 아이디를 차량번호로 사용
         out = await api('/auth/register', { method: 'POST', body: {
-          loginId, password, name, phone, company,
-          defaultVehicleNumber: vnum, defaultVehicleTypeId: v('a_vtype'),
+          loginId, password, name, phone, defaultVehicleTypeId: v('a_vtype'),
         }});
       } else {
         out = await api('/auth/login', { method: 'POST', body: { loginId, password } });
@@ -237,9 +235,8 @@
         <button class="btn btn-primary big-cta" data-nav="driverTypes">＋ 새 출입 신청</button>
         <div class="profile-card card">
           <div class="section-title">내 기본정보 <a class="link-inline" data-nav="driverProfile">수정</a></div>
+          <div class="row"><span class="k">차량번호(아이디)</span><span>${esc(u.defaultVehicleNumber || u.loginId) || '-'}</span></div>
           <div class="row"><span class="k">연락처</span><span>${esc(u.phone) || '-'}</span></div>
-          <div class="row"><span class="k">소속</span><span>${esc(u.company) || '-'}</span></div>
-          <div class="row"><span class="k">차량번호</span><span>${esc(u.defaultVehicleNumber) || '-'}</span></div>
         </div>
         <div class="section-title">내 신청 내역</div>
         <div id="myList" class="muted">불러오는 중…</div>
@@ -272,10 +269,9 @@
       `<option value="${t.id}" ${u.defaultVehicleTypeId === t.id ? 'selected' : ''}>${esc(t.name)}</option>`).join('');
     return appbar('내 기본정보', null, { back: 'driverHome' }) + `
       <div class="screen"><div class="card">
-        <label class="field"><span class="lb">이름</span><input type="text" id="p_name" value="${esc(u.name)}"></label>
+        <div class="row"><span class="k">차량번호(아이디)</span><span>${esc(u.defaultVehicleNumber || u.loginId)}</span></div>
+        <label class="field" style="margin-top:12px"><span class="lb">이름</span><input type="text" id="p_name" value="${esc(u.name)}"></label>
         <label class="field"><span class="lb">연락처</span><input type="tel" id="p_phone" value="${esc(u.phone)}"></label>
-        <label class="field"><span class="lb">소속 업체</span><input type="text" id="p_company" value="${esc(u.company)}"></label>
-        <label class="field"><span class="lb">차량번호</span><input type="text" id="p_vnum" value="${esc(u.defaultVehicleNumber)}"></label>
         <label class="field"><span class="lb">계약(차량) 유형</span><select id="p_vtype">${typeOpts}</select></label>
         <button class="btn btn-primary" id="p_save">저장</button>
       </div></div>`;
@@ -351,31 +347,27 @@
     const docs = t.requiredDocuments.map((d) => {
       const has = state.files[d.key];
       return `<div class="doc-item">
-        <span class="dl-wrap"><span class="dl">${esc(d.label)}</span><span class="badge ${d.required ? 'required' : 'optional'}">${d.required ? '필수' : '선택'}</span></span>
+        <span class="dl-wrap"><span class="dl">${esc(d.label)}</span><span class="badge ${d.required ? 'required' : 'optional'}">${d.required ? '필수' : '선택'}</span>${d.formUrl ? `<a class="form-dl" href="${esc(d.formUrl)}" target="_blank" rel="noopener">양식 ↓</a>` : ''}</span>
         <span class="up"><label class="file-btn ${has ? 'has' : ''}">
           ${has ? '✓ 첨부 · ' + (has.size / 1048576).toFixed(1) + 'MB' : '파일 선택'}
           <input type="file" data-doc="${d.key}" accept="image/*,application/pdf"></label></span>
       </div>`;
     }).join('');
-    return appbar(t.name, hasDocs ? '서류 제출 및 신청' : '출입 신청 정보', { back: true }) + stepBar(state.safetyPages.length + 1, safetyTotal()) + `
-      <div class="screen">
-        ${hasDocs ? `<div class="section-title">📎 필요 서류 (모두 필수)</div>
-        <div class="card">${docs}</div>` : ''}
+    const infoCard = `
         <div class="section-title">📝 신청 정보</div>
         <div class="card">
-          <label class="field"><span class="lb">기사명 <span class="req">*</span></span>
-            <input type="text" id="driverName" value="${val('driverName', u.name)}"></label>
-          <label class="field"><span class="lb">연락처 <span class="req">*</span></span>
-            <input type="tel" id="phone" value="${val('phone', u.phone)}"></label>
-          <label class="field"><span class="lb">차량번호 <span class="req">*</span></span>
-            <input type="text" id="vehicleNumber" value="${val('vehicleNumber', u.defaultVehicleNumber)}" placeholder="12가 3456"></label>
-          <label class="field"><span class="lb">소속 업체</span>
-            <input type="text" id="company" value="${val('company', u.company)}"></label>
+          <label class="field"><span class="lb">계약 업체</span>
+            <input type="text" id="company" value="${val('company', '')}" placeholder="예: OO전력"></label>
           <label class="field"><span class="lb">방문 예정 일시</span>
             <input type="datetime-local" id="visitAt" value="${val('visitAt', '')}"></label>
-          <label class="field"><span class="lb">방문/작업 목적</span>
-            <textarea id="purpose" placeholder="예: 물자 수송">${val('purpose', '')}</textarea></label>
-        </div>
+        </div>`;
+    const docsCard = hasDocs ? `
+        <div class="section-title">📎 필요 서류 (모두 필수)</div>
+        <div class="card">${docs}</div>` : '';
+    return appbar(t.name, hasDocs ? '신청 정보 및 서류' : '출입 신청 정보', { back: true }) + stepBar(state.safetyPages.length + 1, safetyTotal()) + `
+      <div class="screen">
+        ${infoCard}
+        ${docsCard}
         <div class="sticky-cta"><button class="btn btn-primary" id="submitReq">출입 신청 제출</button></div>
       </div>`;
   }
@@ -448,9 +440,8 @@
       </div>
       <div class="row"><span class="k">기사명</span><span>${esc(r.driverName)} (${esc(r.phone)})</span></div>
       <div class="row"><span class="k">차량번호</span><span>${esc(r.vehicleNumber)}</span></div>
-      <div class="row"><span class="k">소속</span><span>${esc(r.company) || '-'}</span></div>
+      <div class="row"><span class="k">계약업체</span><span>${esc(r.company) || '-'}</span></div>
       <div class="row"><span class="k">방문예정</span><span>${esc(visit)}</span></div>
-      <div class="row"><span class="k">목적</span><span>${esc(r.purpose) || '-'}</span></div>
       <div class="row"><span class="k">안전수칙</span><span>필수 ${r.agreedRequired ? '✅' : '❌'} · 기타 ${r.agreedOther ? '✅' : '—'}</span></div>
       <div class="docs">${docs}</div>
       ${r.reviewedAt ? `<div class="meta">처리: ${esc(r.reviewedBy)} · ${new Date(r.reviewedAt).toLocaleString('ko-KR', { dateStyle: 'short', timeStyle: 'short' })}${r.rejectReason ? ' · 사유: ' + esc(r.rejectReason) : ''}</div>` : ''}
@@ -473,7 +464,7 @@
   }
 
   function readForm() {
-    ['driverName', 'phone', 'vehicleNumber', 'company', 'visitAt', 'purpose'].forEach((id) => {
+    ['company', 'visitAt'].forEach((id) => {
       const el = document.getElementById(id);
       if (el) state.form[id] = el.value;
     });
@@ -508,8 +499,7 @@
       const v = (id) => (document.getElementById(id) || {}).value || '';
       try {
         const out = await api('/auth/profile', { method: 'PUT', body: {
-          name: v('p_name'), phone: v('p_phone'), company: v('p_company'),
-          defaultVehicleNumber: v('p_vnum'), defaultVehicleTypeId: v('p_vtype'),
+          name: v('p_name'), phone: v('p_phone'), defaultVehicleTypeId: v('p_vtype'),
         }});
         state.user = out.user; toast('저장되었습니다.'); go('driverHome');
       } catch (e) { toast(e.message); }
@@ -596,7 +586,9 @@
   async function submitRequest() {
     readForm();
     const f = state.form;
-    if (!f.driverName || !f.phone || !f.vehicleNumber) return toast('기사명·연락처·차량번호를 입력하세요.');
+    const u = state.user;
+    // 기사명·연락처·차량번호는 회원가입 정보(프로필)에서 자동 사용
+    const vnum = u.defaultVehicleNumber || u.loginId;
     const missing = state.selectedType.requiredDocuments.filter((d) => d.required && !state.files[d.key]);
     if (missing.length) return toast(`필수 서류 미첨부: ${missing[0].label}`);
     const tooBig = Object.values(state.files).find((file) => file.size > MAX_UPLOAD_BYTES);
@@ -604,9 +596,9 @@
     const btn = document.getElementById('submitReq'); btn.disabled = true; btn.textContent = '제출 중…';
     const fd = new FormData();
     fd.append('vehicleTypeId', state.selectedType.id);
-    fd.append('driverName', f.driverName); fd.append('phone', f.phone);
-    fd.append('vehicleNumber', f.vehicleNumber); fd.append('company', f.company || '');
-    fd.append('visitAt', f.visitAt || ''); fd.append('purpose', f.purpose || '');
+    fd.append('driverName', u.name); fd.append('phone', u.phone);
+    fd.append('vehicleNumber', vnum); fd.append('company', f.company || '');
+    fd.append('visitAt', f.visitAt || ''); fd.append('purpose', '');
     fd.append('agreedRequired', 'true'); fd.append('agreedOther', String(state.agreedOther));
     Object.values(state.files).forEach((file) => fd.append('documents', file));
     try {

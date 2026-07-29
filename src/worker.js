@@ -131,21 +131,22 @@ function requireStaff(minRole) {
 // ==========================================================================
 app.post('/api/auth/register', async (c) => {
   const b = await c.req.json().catch(() => ({}));
-  if (!b.loginId || !b.password || !b.name || !b.phone || !b.company || !b.defaultVehicleNumber) {
+  if (!b.loginId || !b.password || !b.name || !b.phone) {
     return c.json({ error: '모든 항목을 입력해 주세요.' }, 400);
   }
   if (String(b.password).length < 4) return c.json({ error: '비밀번호는 4자 이상이어야 합니다.' }, 400);
   const exists = await c.env.DB.prepare('SELECT id FROM users WHERE login_id = ?').bind(b.loginId).first();
-  if (exists) return c.json({ error: '이미 사용 중인 아이디입니다.' }, 409);
+  if (exists) return c.json({ error: '이미 사용 중인 차량번호(아이디)입니다.' }, 409);
 
   const { salt, hash } = await hashPassword(b.password);
   const id = randHex(8);
+  // 아이디를 차량번호로 사용 (기사가 여러 업체 스팟 소속이라 소속업체는 회원가입에서 제외)
   await c.env.DB.prepare(
     `INSERT INTO users (id, role, login_id, name, salt, hash, phone, company,
       default_vehicle_number, default_vehicle_type_id, created_at)
      VALUES (?,?,?,?,?,?,?,?,?,?,?)`)
-    .bind(id, 'driver', b.loginId, b.name, salt, hash, b.phone, b.company || '',
-      b.defaultVehicleNumber || '', b.defaultVehicleTypeId || '', nowISO()).run();
+    .bind(id, 'driver', b.loginId, b.name, salt, hash, b.phone, '',
+      b.loginId, b.defaultVehicleTypeId || '', nowISO()).run();
 
   const token = randHex(24);
   await c.env.DB.prepare('INSERT INTO sessions (token, user_id, created_at) VALUES (?,?,?)')
