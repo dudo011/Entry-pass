@@ -128,6 +128,187 @@
     });
   }
 
+  // 앱 내 양식 작성(주석) — 양식 이미지를 캔버스에 띄우고 펜으로 작성 후
+  // 저장하면 곧바로 해당 제출서류에 첨부(구글드라이브 왕복 생략).
+  // 한 손가락=펜, 두 손가락=확대/이동. 기본 펜 색상은 파란색.
+  function openFormAnnotator(doc) {
+    const el = document.createElement('div');
+    el.className = 'annot';
+    el.innerHTML = `
+      <div class="annot-bar">
+        <button class="annot-x" type="button" aria-label="닫기">✕</button>
+        <div class="annot-title">${esc(doc.label)} 작성</div>
+        <button class="annot-save" type="button">저장</button>
+      </div>
+      <div class="annot-stage">
+        <div class="annot-wrap"><img class="annot-bg" alt="양식"><canvas class="annot-cv"></canvas></div>
+      </div>
+      <div class="annot-tools">
+        <button class="atool pen active" data-tool="pen" type="button">✏️ 펜</button>
+        <span class="swatches">
+          <button class="sw active" data-color="#1d4ed8" style="--c:#1d4ed8" type="button" aria-label="파랑"></button>
+          <button class="sw" data-color="#dc2626" style="--c:#dc2626" type="button" aria-label="빨강"></button>
+          <button class="sw" data-color="#111827" style="--c:#111827" type="button" aria-label="검정"></button>
+        </span>
+        <button class="atool" data-act="undo" type="button">↩︎ 되돌리기</button>
+        <button class="atool" data-act="clear" type="button">전체 지우기</button>
+      </div>
+      <div class="annot-hint">한 손가락: 펜 &nbsp;·&nbsp; 두 손가락: 확대·이동</div>`;
+    const close = openOverlay(el);
+
+    const stage = el.querySelector('.annot-stage');
+    const wrap = el.querySelector('.annot-wrap');
+    const bg = el.querySelector('.annot-bg');
+    const cv = el.querySelector('.annot-cv');
+    const ctx = cv.getContext('2d');
+
+    let scale = 1, tx = 0, ty = 0;
+    const MINS = 0.25, MAXS = 8;
+    let penActive = true, color = '#1d4ed8';
+    const BASE_W = 4; // 캔버스 픽셀 기준 펜 굵기
+    const strokes = []; let cur = null;
+    const pointers = new Map();
+    let mode = null, panStart = null, pinch = null;
+
+    const applyTf = () => { wrap.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`; };
+    const redrawAll = () => {
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      for (const s of strokes) strokePath(s);
+    };
+    function strokePath(s) {
+      if (!s.points.length) return;
+      ctx.strokeStyle = s.color; ctx.lineWidth = s.width;
+      ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(s.points[0].x, s.points[0].y);
+      for (let i = 1; i < s.points.length; i++) ctx.lineTo(s.points[i].x, s.points[i].y);
+      if (s.points.length === 1) ctx.lineTo(s.points[0].x + 0.01, s.points[0].y + 0.01);
+      ctx.stroke();
+    }
+    // 화면 좌표 → 캔버스(양식 원본 픽셀) 좌표
+    function toCanvas(clientX, clientY) {
+      const r = stage.getBoundingClientRect();
+      return { x: (clientX - r.left - tx) / scale, y: (clientY - r.top - ty) / scale };
+    }
+
+    bg.onload = () => {
+      const w = bg.naturalWidth, h = bg.naturalHeight;
+      cv.width = w; cv.height = h;
+      wrap.style.width = w + 'px'; wrap.style.height = h + 'px';
+      // 최초: 폭 맞춤 + 상단 정렬
+      const r = stage.getBoundingClientRect();
+      scale = Math.min(r.width / w, 1.2);
+      tx = (r.width - w * scale) / 2; if (tx < 0) tx = 0;
+      ty = 10;
+      applyTf();
+    };
+    bg.src = doc.formImage;
+
+    // ---- 포인터: 한 손가락 펜/이동, 두 손가락 확대·이동 ----
+    function onDown(e) {
+      try { stage.setPointerCapture(e.pointerId); } catch { /* noop */ }
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pointers.size === 2) {
+        // 두 손가락 → 확대/이동 시작 (진행 중이던 펜 획은 그대로 확정)
+        cur = null; mode = 'pinch';
+        const pts = [...pointers.values()];
+        const dx = pts[0].x - pts[1].x, dy = pts[0].y - pts[1].y;
+        const midX = (pts[0].x + pts[1].x) / 2, midY = (pts[0].y + pts[1].y) / 2;
+        const c = toCanvas(midX, midY);
+        pinch = { dist: Math.hypot(dx, dy), s0: scale, cx: c.x, cy: c.y };
+      } else if (penActive) {
+        mode = 'draw';
+        cur = { color, width: BASE_W, points: [toCanvas(e.clientX, e.clientY)] };
+      } else {
+        mode = 'pan';
+        panStart = { x: e.clientX, y: e.clientY, tx, ty };
+      }
+    }
+    function onMove(e) {
+      if (!pointers.has(e.pointerId)) return;
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (mode === 'pinch' && pointers.size >= 2) {
+        const pts = [...pointers.values()];
+        const dx = pts[0].x - pts[1].x, dy = pts[0].y - pts[1].y;
+        const dist = Math.hypot(dx, dy) || 1;
+        const midX = (pts[0].x + pts[1].x) / 2, midY = (pts[0].y + pts[1].y) / 2;
+        let ns = pinch.s0 * (dist / pinch.dist);
+        ns = Math.max(MINS, Math.min(MAXS, ns));
+        const r = stage.getBoundingClientRect();
+        // 두 손가락 중점 아래의 양식 지점을 고정
+        tx = (midX - r.left) - pinch.cx * ns;
+        ty = (midY - r.top) - pinch.cy * ns;
+        scale = ns; applyTf();
+      } else if (mode === 'draw' && cur) {
+        const p = toCanvas(e.clientX, e.clientY);
+        const prev = cur.points[cur.points.length - 1];
+        cur.points.push(p);
+        ctx.strokeStyle = cur.color; ctx.lineWidth = cur.width;
+        ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(prev.x, prev.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+      } else if (mode === 'pan' && panStart) {
+        tx = panStart.tx + (e.clientX - panStart.x);
+        ty = panStart.ty + (e.clientY - panStart.y);
+        applyTf();
+      }
+    }
+    function onUp(e) {
+      pointers.delete(e.pointerId);
+      try { stage.releasePointerCapture(e.pointerId); } catch { /* noop */ }
+      if (mode === 'draw' && cur) { strokes.push(cur); cur = null; }
+      if (pointers.size === 1) {
+        // 확대 후 한 손가락 남으면 이동으로 전환(실수로 그려지지 않도록)
+        const only = [...pointers.values()][0];
+        mode = 'pan'; panStart = { x: only.x, y: only.y, tx, ty };
+      } else if (pointers.size === 0) {
+        mode = null; panStart = null; pinch = null;
+      }
+    }
+    stage.addEventListener('pointerdown', onDown);
+    stage.addEventListener('pointermove', onMove);
+    stage.addEventListener('pointerup', onUp);
+    stage.addEventListener('pointercancel', onUp);
+
+    // ---- 도구 ----
+    el.querySelector('[data-tool="pen"]').onclick = (ev) => {
+      penActive = !penActive;
+      ev.currentTarget.classList.toggle('active', penActive);
+      ev.currentTarget.textContent = penActive ? '✏️ 펜' : '✋ 이동';
+    };
+    el.querySelectorAll('.sw').forEach((b) => b.onclick = () => {
+      color = b.dataset.color;
+      el.querySelectorAll('.sw').forEach((x) => x.classList.toggle('active', x === b));
+      // 색을 고르면 펜을 자동 활성화
+      penActive = true;
+      const pt = el.querySelector('[data-tool="pen"]');
+      pt.classList.add('active'); pt.textContent = '✏️ 펜';
+    });
+    el.querySelector('[data-act="undo"]').onclick = () => { strokes.pop(); redrawAll(); };
+    el.querySelector('[data-act="clear"]').onclick = () => {
+      if (strokes.length && !confirm('작성한 내용을 모두 지울까요?')) return;
+      strokes.length = 0; redrawAll();
+    };
+    el.querySelector('.annot-x').onclick = () => {
+      if (strokes.length && !confirm('저장하지 않고 닫을까요? 작성한 내용이 사라집니다.')) return;
+      close();
+    };
+    el.querySelector('.annot-save').onclick = async () => {
+      const btn = el.querySelector('.annot-save'); btn.disabled = true; btn.textContent = '저장 중…';
+      const off = document.createElement('canvas');
+      off.width = cv.width; off.height = cv.height;
+      const octx = off.getContext('2d');
+      octx.fillStyle = '#fff'; octx.fillRect(0, 0, off.width, off.height);
+      octx.drawImage(bg, 0, 0, off.width, off.height);
+      octx.drawImage(cv, 0, 0);
+      const blob = await new Promise((res) => off.toBlob(res, 'image/jpeg', 0.85));
+      const file = new File([blob], `${doc.label}.jpg`, { type: 'image/jpeg' });
+      state.files[doc.key] = file;
+      close();
+      toast(`${doc.label} 첨부 완료`);
+      render();
+    };
+  }
+
   const state = {
     view: 'landing',
     user: null,
@@ -478,8 +659,11 @@
     const val = (k, dflt) => esc(f[k] !== undefined ? f[k] : dflt);
     const docs = t.requiredDocuments.map((d) => {
       const has = state.files[d.key];
+      const formBtn = d.formImage
+        ? `<button type="button" class="form-fill" data-form="${d.key}">✍️ 양식 작성</button>`
+        : (d.formUrl ? `<a class="form-dl" href="${esc(d.formUrl)}" target="_blank" rel="noopener">양식 ↓</a>` : '');
       return `<div class="doc-item">
-        <span class="dl-wrap"><span class="dl">${esc(d.label)}</span>${d.note ? `<span class="dl-note">${esc(d.note)}</span>` : ''}${d.formUrl ? `<a class="form-dl" href="${esc(d.formUrl)}" target="_blank" rel="noopener">양식 ↓</a>` : ''}</span>
+        <span class="dl-wrap"><span class="dl">${esc(d.label)}</span>${d.note ? `<span class="dl-note">${esc(d.note)}</span>` : ''}${formBtn}</span>
         <span class="up"><label class="file-btn ${has ? 'has' : ''}">
           ${has ? '✓ 첨부 · ' + (has.size / 1048576).toFixed(1) + 'MB' : '파일 선택'}
           <input type="file" data-doc="${d.key}" accept="image/*,application/pdf"></label></span>
@@ -743,6 +927,13 @@
       if (idx < state.safetyPages.length - 1) go('driverSafety', { si: idx + 1 });
       else go('driverRoute');
     };
+
+    // 양식 작성(앱 내 주석) 열기
+    app.querySelectorAll('[data-form]').forEach((b) => b.onclick = () => {
+      readForm();
+      const d = state.selectedType.requiredDocuments.find((x) => x.key === b.dataset.form);
+      if (d) openFormAnnotator(d);
+    });
 
     // 파일 선택 (이미지는 업로드 전 자동 압축)
     app.querySelectorAll('input[type=file][data-doc]').forEach((inp) => inp.onchange = async () => {

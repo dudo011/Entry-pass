@@ -43,7 +43,7 @@ const EXTRA_CONSTRUCTION_PCBS = [
 const WORK_DOCS = [
   { key: 'workPlan', label: '작업계획서', required: true },
   { key: 'tbm', label: 'TBM 회의록', required: true },
-  { key: 'safetyChecklist', label: '위험성 체크리스트', required: true, formUrl: '/forms/work-plan.pdf' },
+  { key: 'safetyChecklist', label: '위험성 체크리스트', required: true, formImage: '/forms/work-plan.png', formUrl: '/forms/work-plan.pdf' },
   // 현장사진은 자재센터 출입 후 등록하므로 신청 시에는 선택(없어도 신청 가능)
   { key: 'sitePhoto', label: '차량·운전자 현장사진', required: false, note: '자재센터 출입 후 등록' },
 ];
