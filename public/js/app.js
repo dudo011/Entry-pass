@@ -413,7 +413,7 @@
       <button class="type-card" data-type="${t.id}" style="--tc:${t.color}">
         ${state.user && state.user.defaultVehicleTypeId === t.id ? '<span class="my-tag">내 계약</span>' : ''}
         <div class="ico">${t.icon}</div>
-        <div class="tn-wrap"><div class="tn">${esc(t.name)}</div><div class="ts">${esc(t.subtitle)}</div></div>
+        <div class="tn-wrap"><div class="tn">${esc(t.name)}</div></div>
       </button>`).join('');
     return appbar('차량 유형 선택', '해당하는 차량을 선택하세요', { back: 'driverHome' }) +
       `<div class="screen"><div class="type-grid">${cards}</div></div>`;

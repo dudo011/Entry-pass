@@ -57,7 +57,7 @@ body {
 /* --- Cards / typography ------------------------------------------------- */
 .card {
   background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 12px 16px; box-shadow: var(--shadow);
+  border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow);
   margin-bottom: 14px;
 }
 /* 카드 내부 첫/마지막 항목의 상하 여백을 줄여 박스가 너무 커 보이지 않도록 */
@@ -276,9 +276,10 @@ textarea { min-height: 72px; resize: vertical; }
   cursor: pointer; z-index: 301; }
 
 /* --- 커스텀 달력(방문 예정 일시) ---------------------------------------- */
-.datebtn { width: 100%; text-align: left; padding: 13px 14px; font-size: 17px; color: var(--text);
+.datebtn { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  text-align: left; padding: 13px 14px; font-size: 17px; line-height: 1.2; color: var(--text);
   border: 1px solid var(--border); border-radius: 11px; background: var(--surface-2); cursor: pointer; font-family: inherit; }
-.datebtn::after { content: '📅'; float: right; opacity: .7; }
+.datebtn::after { content: '📅'; opacity: .7; font-size: 15px; line-height: 1; flex: none; }
 .modal-backdrop { position: fixed; inset: 0; background: rgba(15,23,42,.5); z-index: 200;
   display: flex; align-items: flex-end; justify-content: center; }
 .cal-sheet { background: var(--surface); width: 100%; max-width: 520px; border-radius: 20px 20px 0 0;
