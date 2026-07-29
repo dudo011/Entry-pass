@@ -621,7 +621,7 @@
         </div>
       </div>
       <div class="stat-summary">총 <b>${res.length}</b>건 · 대기 ${by.pending} · 승인 ${by.approved} · 반려 ${by.rejected}
-        ${isAdmin ? '<button class="link-btn2" id="st-csv">📥 결과 CSV</button>' : ''}</div>
+        ${isAdmin ? '<button class="link-btn2" id="st-csv">📥 결과 Excel</button>' : ''}</div>
       ${listHtml}`;
   }
 
@@ -782,26 +782,64 @@
       state.statsFilter = { from: '', to: '', typeId: '', vehicle: '', company: '' }; render();
     };
     const stCsv = document.getElementById('st-csv');
-    if (stCsv) stCsv.onclick = downloadStatsCsv;
+    if (stCsv) stCsv.onclick = downloadStatsXlsx;
   }
 
-  function downloadStatsCsv() {
+  // ---- 순수 JS xlsx 생성기 (라이브러리 없이, store-zip + inlineStr) ----
+  const _crcTable = (() => { let c, t = []; for (let n = 0; n < 256; n++) { c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  const _crc32 = (u8) => { let c = 0xFFFFFFFF; for (let i = 0; i < u8.length; i++) c = _crcTable[(c ^ u8[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+  function _zipStore(files) {
+    const u16 = (n) => [n & 255, (n >> 8) & 255]; const u32 = (n) => [n & 255, (n >> 8) & 255, (n >> 16) & 255, (n >> 24) & 255];
+    const D = 20513, T = 0; const chunks = [], central = []; let off = 0;
+    for (const f of files) {
+      const nm = new TextEncoder().encode(f.name); const crc = _crc32(f.data); const sz = f.data.length;
+      const lh = [0x50, 0x4b, 0x03, 0x04, ...u16(20), ...u16(0), ...u16(0), ...u16(T), ...u16(D), ...u32(crc), ...u32(sz), ...u32(sz), ...u16(nm.length), ...u16(0)];
+      const local = new Uint8Array(lh.length + nm.length + sz); local.set(lh, 0); local.set(nm, lh.length); local.set(f.data, lh.length + nm.length);
+      chunks.push(local);
+      const ch = [0x50, 0x4b, 0x01, 0x02, ...u16(20), ...u16(20), ...u16(0), ...u16(0), ...u16(T), ...u16(D), ...u32(crc), ...u32(sz), ...u32(sz), ...u16(nm.length), ...u16(0), ...u16(0), ...u16(0), ...u16(0), ...u32(0), ...u32(off)];
+      const cd = new Uint8Array(ch.length + nm.length); cd.set(ch, 0); cd.set(nm, ch.length); central.push(cd); off += local.length;
+    }
+    const cs = central.reduce((a, c) => a + c.length, 0);
+    const eocd = new Uint8Array([0x50, 0x4b, 0x05, 0x06, ...u16(0), ...u16(0), ...u16(files.length), ...u16(files.length), ...u32(cs), ...u32(off), ...u16(0)]);
+    const out = new Uint8Array(chunks.reduce((a, c) => a + c.length, 0) + cs + eocd.length); let p = 0;
+    for (const c of chunks) { out.set(c, p); p += c.length; }
+    for (const c of central) { out.set(c, p); p += c.length; }
+    out.set(eocd, p); return out;
+  }
+  const _xe = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])).replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
+  const _col = (i) => { let s = ''; i++; while (i > 0) { const m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; };
+  function buildXlsx(sheetName, aoa) {
+    const enc = new TextEncoder();
+    let rows = '';
+    aoa.forEach((row, ri) => {
+      let cells = '';
+      row.forEach((v, ci) => { cells += `<c r="${_col(ci)}${ri + 1}" t="inlineStr"><is><t xml:space="preserve">${_xe(v)}</t></is></c>`; });
+      rows += `<row r="${ri + 1}">${cells}</row>`;
+    });
+    const sheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${rows}</sheetData></worksheet>`;
+    return _zipStore([
+      { name: '[Content_Types].xml', data: enc.encode('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>') },
+      { name: '_rels/.rels', data: enc.encode('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>') },
+      { name: 'xl/workbook.xml', data: enc.encode(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="${_xe(sheetName)}" sheetId="1" r:id="rId1"/></sheets></workbook>`) },
+      { name: 'xl/_rels/workbook.xml.rels', data: enc.encode('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>') },
+      { name: 'xl/worksheets/sheet1.xml', data: enc.encode(sheet) },
+    ]);
+  }
+
+  function downloadStatsXlsx() {
     const res = statsResults();
-    const esc2 = (v) => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
     const stK = { pending: '대기', approved: '승인', rejected: '반려' };
     const header = ['방문일자', '요일', '차량번호', '출입목적', '계약업체', '연락처', '상태', '신청일시'];
-    const lines = res.map((r) => {
+    const aoa = [header].concat(res.map((r) => {
       const d = parseDateKey(r.visitAt);
-      const date = d ? dateKey(d) : '';
-      const wd = d ? WD[d.getDay()] : '';
-      return [date, wd, r.vehicleNumber, r.vehicleTypeName, r.company, r.phone,
-        stK[r.status] || r.status, new Date(r.createdAt).toLocaleString('ko-KR')].map(esc2).join(',');
-    });
-    const csv = '﻿' + header.map(esc2).join(',') + '\n' + lines.join('\n');
+      return [d ? dateKey(d) : '', d ? WD[d.getDay()] : '', r.vehicleNumber, r.vehicleTypeName,
+        r.company, r.phone, stK[r.status] || r.status, new Date(r.createdAt).toLocaleString('ko-KR')];
+    }));
+    const data = buildXlsx('조회결과', aoa);
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-    a.download = 'entry-stats.csv'; a.click();
-    toast('결과 CSV를 내보냈습니다.');
+    a.href = URL.createObjectURL(new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+    a.download = 'entry-stats.xlsx'; a.click();
+    toast('결과를 Excel로 내보냈습니다.');
   }
 
   async function downloadCsv() {
