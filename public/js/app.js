@@ -81,8 +81,8 @@
         if (HOLIDAYS.has(dateKey(d))) cls.push('hol');
         if (sameDay(d, now)) cls.push('today');
         if (sameDay(d, sel)) cls.push('sel');
-        const past = d < today;
-        cells += `<button type="button" class="${cls.join(' ')}" data-day="${day}" ${past ? 'disabled' : ''}>${day}</button>`;
+        const blocked = d < today || HOLIDAYS.has(dateKey(d)); // 지난 날짜·공휴일 선택 불가
+        cells += `<button type="button" class="${cls.join(' ')}" data-day="${day}" ${blocked ? 'disabled' : ''}>${day}</button>`;
       }
       backdrop.innerHTML = `<div class="cal-sheet">
         <div class="cal-head">
@@ -155,12 +155,13 @@
 
   // 뒤로가기(하드웨어/브라우저 '<') 지원용 화면 검증
   const AUTH_VIEWS = ['driverHome', 'driverProfile', 'driverTypes', 'driverSafety',
-    'driverRoute', 'driverDocs', 'driverResult', 'staffConsole'];
+    'driverRoute', 'driverDocs', 'driverResult', 'staffConsole', 'staffDetail'];
   function canRender(view) {
     if (AUTH_VIEWS.includes(view) && !state.user) return false;
     if (['driverSafety', 'driverRoute', 'driverDocs'].includes(view) && !state.selectedType) return false;
     if (view === 'driverSafety' && !(state.safetyPages && state.safetyPages[state.safetyIndex])) return false;
     if (view === 'driverResult' && !state.lastRequest) return false;
+    if (view === 'staffDetail' && !state.staffDetail) return false;
     return true;
   }
   const fallbackView = () => state.user ? (state.user.role === 'staff' ? 'staffConsole' : 'driverHome') : 'landing';
@@ -522,12 +523,10 @@
     const tab = (id, label) => `<button class="tab ${state.staffTab === id ? 'active' : ''}" data-tab="${id}">
       ${label} <span class="cnt">${counts[id] || 0}</span></button>`;
 
-    let tabs = tab('pending', '대기') + tab('approved', '승인') + tab('rejected', '반려');
-    if (isAdmin) tabs += tab('all', '전체이력');
+    const tabs = tab('pending', '대기') + tab('approved', '승인') + tab('rejected', '반려');
 
-    const list = state.staffTab === 'all' ? state.staffData
-      : state.staffData.filter((r) => r.status === state.staffTab);
-    const cards = list.length ? list.map(renderReqCard).join('')
+    const list = state.staffData.filter((r) => r.status === state.staffTab);
+    const items = list.length ? list.map(staffListItem).join('')
       : `<div class="empty">${state.staffTab === 'pending' ? '대기 중인 신청이 없습니다.' : '항목이 없습니다.'}</div>`;
 
     const adminBar = isAdmin ? `<div class="admin-bar">
@@ -537,42 +536,66 @@
 
     return appbar('출입 신청 관리', `${u.name}님`, { logout: true }) +
       `<div class="tabs">${tabs}</div>${adminBar}
-       <div class="screen"><p class="retention-note">🗄️ 모든 출입·승인 기록은 서버에 ${state.retentionYears}년 이상 보관됩니다.</p>${cards}</div>`;
+       <div class="screen">${items}</div>`;
   }
 
-  function renderReqCard(r) {
-    const t = state.vehicleTypes.find((x) => x.id === r.vehicleTypeId);
+  const fmtDateTime = (iso) => iso ? new Date(iso).toLocaleString('ko-KR', { dateStyle: 'short', timeStyle: 'short' }) : '-';
+
+  // 대기/승인/반려 리스트: 방문일자 + 차량번호만 표시, 클릭 시 상세
+  function staffListItem(r) {
     const st = statusInfo(r.status);
-    const docs = (r.documents || []).map((d) =>
-      `<a href="${esc(d.url)}" target="_blank" rel="noopener">📄 ${esc(d.label)}</a>`).join('')
-      || '<span class="meta">첨부 서류 없음</span>';
-    const visit = r.visitAt ? new Date(r.visitAt).toLocaleString('ko-KR', { dateStyle: 'short', timeStyle: 'short' }) : '-';
-    return `<div class="req-card">
-      <div class="rh">
-        <span style="font-size:22px">${t ? t.icon : '🚚'}</span>
-        <div><div class="veh">${esc(r.vehicleTypeName)}</div>
-          <div class="meta">${esc(r.passNo)} · ${new Date(r.createdAt).toLocaleString('ko-KR', { dateStyle: 'short', timeStyle: 'short' })}</div></div>
-        <span class="status-pill ${r.status}" style="margin-left:auto">${st.pill}</span>
-      </div>
-      <div class="row"><span class="k">기사명</span><span>${esc(r.driverName)} (${esc(r.phone)})</span></div>
-      <div class="row"><span class="k">차량번호</span><span>${esc(r.vehicleNumber)}</span></div>
-      <div class="row"><span class="k">계약업체</span><span>${esc(r.company) || '-'}</span></div>
-      <div class="row"><span class="k">방문예정</span><span>${esc(visit)}</span></div>
-      <div class="row"><span class="k">안전수칙</span><span>필수 ${r.agreedRequired ? '✅' : '❌'} · 기타 ${r.agreedOther ? '✅' : '—'}</span></div>
-      <div class="docs">${docs}</div>
-      ${r.reviewedAt ? `<div class="meta">처리: ${esc(r.reviewedBy)} · ${new Date(r.reviewedAt).toLocaleString('ko-KR', { dateStyle: 'short', timeStyle: 'short' })}${r.rejectReason ? ' · 사유: ' + esc(r.rejectReason) : ''}</div>` : ''}
-      ${r.status === 'pending' ? `<div class="btn-row" style="margin-top:8px">
-        <button class="btn btn-danger" data-reject="${r.id}">반려</button>
-        <button class="btn btn-success" data-approve="${r.id}">승인</button>
-      </div>` : ''}
-    </div>`;
+    const t = state.vehicleTypes.find((x) => x.id === r.vehicleTypeId);
+    return `<button class="mini-card" data-detail="${r.id}">
+      <div class="mc-top"><span class="veh">${esc(r.vehicleNumber)}</span>
+        <span class="status-pill ${r.status}">${st.pill}</span></div>
+      <div class="meta">방문 ${esc(fmtDateTime(r.visitAt))} · ${t ? t.icon : '🚚'} ${esc(r.vehicleTypeName)}</div>
+    </button>`;
+  }
+
+  // 직원용 상세: 신청정보 박스 + 필수서류 박스(사진 바로 표시)
+  function staffDetail() {
+    const r = state.staffDetail;
+    if (!r) return staffConsole();
+    const st = statusInfo(r.status);
+    const docs = (r.documents || []);
+    const docsHtml = docs.length ? `<div class="doc-thumbs">${docs.map((d) => {
+      const isImg = (d.contentType || '').startsWith('image/') || /\.(jpe?g|png|gif|webp|heic)$/i.test(d.label);
+      return `<div class="doc-thumb-item">
+        <div class="lbl">${esc(d.label)}</div>
+        ${isImg
+          ? `<a href="${esc(d.url)}" target="_blank" rel="noopener"><img src="${esc(d.url)}" alt="${esc(d.label)}" loading="lazy"></a>`
+          : `<a class="pdf" href="${esc(d.url)}" target="_blank" rel="noopener">📄 파일 열기</a>`}
+      </div>`;
+    }).join('')}</div>` : '<div class="muted">첨부 서류 없음</div>';
+
+    return appbar('출입 신청 상세', st.pill, { back: true }) + `
+      <div class="screen">
+        <div class="section-title">📝 신청 정보</div>
+        <div class="card">
+          <div class="row"><span class="k">방문일자</span><span>${esc(fmtDateTime(r.visitAt))}</span></div>
+          <div class="row"><span class="k">차량번호</span><span>${esc(r.vehicleNumber)}</span></div>
+          <div class="row"><span class="k">방문목적</span><span>${esc(r.vehicleTypeName)}</span></div>
+          <div class="row"><span class="k">계약업체</span><span>${esc(r.company) || '-'}</span></div>
+          <div class="row"><span class="k">기사명</span><span>${esc(r.driverName)}</span></div>
+          <div class="row"><span class="k">연락처</span><span>${esc(r.phone)}</span></div>
+          <div class="row"><span class="k">안전수칙</span><span>필수 ${r.agreedRequired ? '✅' : '❌'} · 기타 ${r.agreedOther ? '✅' : '—'}</span></div>
+          ${r.reviewedAt ? `<div class="row"><span class="k">처리</span><span>${esc(r.reviewedBy)} · ${esc(fmtDateTime(r.reviewedAt))}</span></div>` : ''}
+          ${r.status === 'rejected' && r.rejectReason ? `<div class="row"><span class="k">반려사유</span><span>${esc(r.rejectReason)}</span></div>` : ''}
+        </div>
+        <div class="section-title">📎 필수 서류</div>
+        <div class="card">${docsHtml}</div>
+        ${r.status === 'pending' ? `<div class="sticky-cta"><div class="btn-row">
+          <button class="btn btn-danger" data-reject="${r.id}">반려</button>
+          <button class="btn btn-success" data-approve="${r.id}">승인</button>
+        </div></div>` : ''}
+      </div>`;
   }
 
   // ==== 렌더 + 이벤트 ======================================================
   function render() {
     const views = { landing, authView, driverHome, driverProfile, driverTypes,
       driverSafety: () => safetyScreen(state.safetyIndex),
-      driverRoute, driverDocs, driverResult, staffConsole };
+      driverRoute, driverDocs, driverResult, staffConsole, staffDetail };
     app.innerHTML = (views[state.view] || landing)();
     bind();
     if (state.view === 'driverHome') loadMyRequests();
@@ -666,6 +689,10 @@
 
     // 직원 콘솔
     app.querySelectorAll('[data-tab]').forEach((b) => b.onclick = () => { state.staffTab = b.dataset.tab; render(); });
+    app.querySelectorAll('[data-detail]').forEach((b) => b.onclick = () => {
+      state.staffDetail = state.staffData.find((r) => r.id === b.dataset.detail);
+      go('staffDetail');
+    });
     app.querySelectorAll('[data-approve]').forEach((b) => b.onclick = () => reviewReq(b.dataset.approve, 'approve'));
     app.querySelectorAll('[data-reject]').forEach((b) => b.onclick = () => reviewReq(b.dataset.reject, 'reject'));
     const exp = document.getElementById('exportCsv');
@@ -742,6 +769,8 @@
       await api(`/requests/${id}/${action}`, { method: 'POST', body });
       toast(action === 'approve' ? '승인되었습니다.' : '반려되었습니다.');
       await loadStaff();
+      // 상세 화면에서 처리했으면 목록으로 복귀
+      if (state.view === 'staffDetail') history.back();
     } catch (e) { toast(e.message); }
   }
 

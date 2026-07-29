@@ -72,7 +72,7 @@ const publicUser = (u) => ({
 // 신청 레코드를 기존 프런트엔드가 기대하는 형태로 변환
 async function shapeRequest(env, row) {
   const docs = await env.DB.prepare(
-    'SELECT id, label, size FROM documents WHERE request_id = ?').bind(row.id).all();
+    'SELECT id, label, size, content_type FROM documents WHERE request_id = ?').bind(row.id).all();
   let history = [];
   try { history = JSON.parse(row.history || '[]'); } catch { /* noop */ }
   return {
@@ -86,7 +86,7 @@ async function shapeRequest(env, row) {
     createdAt: row.created_at, retainUntil: row.retain_until,
     history,
     documents: (docs.results || []).map((d) => ({
-      label: d.label, url: `/uploads/${d.id}`, size: d.size,
+      label: d.label, url: `/uploads/${d.id}`, size: d.size, contentType: d.content_type,
     })),
   };
 }

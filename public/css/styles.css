@@ -242,6 +242,16 @@ textarea { min-height: 72px; resize: vertical; }
 }
 .empty { text-align: center; color: var(--text-muted); padding: 50px 16px; font-size: 14px; }
 
+/* 직원 상세: 서류 사진 바로 표시 */
+.doc-thumbs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.doc-thumb-item { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--surface-2); }
+.doc-thumb-item .lbl { font-size: 12px; font-weight: 700; padding: 7px 9px; color: var(--text-muted);
+  border-bottom: 1px solid var(--border); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.doc-thumb-item img { width: 100%; display: block; max-height: 240px; object-fit: contain; background: #fff; }
+.doc-thumb-item a.pdf { display: block; padding: 28px 8px; text-align: center; color: var(--primary);
+  font-weight: 700; text-decoration: none; }
+@media (max-width: 380px) { .doc-thumbs { grid-template-columns: 1fr; } }
+
 /* --- 커스텀 달력(방문 예정 일시) ---------------------------------------- */
 .datebtn { width: 100%; text-align: left; padding: 13px 14px; font-size: 16px; color: var(--text);
   border: 1px solid var(--border); border-radius: 11px; background: var(--surface-2); cursor: pointer; font-family: inherit; }
