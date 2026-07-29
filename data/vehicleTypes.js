@@ -41,9 +41,9 @@ const EXTRA_CONSTRUCTION_PCBS = [
 // 공사업체(배전공사)·PCBs처리용역·불용품매각 차량 제출 서류 (사진/PDF 업로드)
 // formUrl 이 있으면 앱에서 빈 양식을 내려받을 수 있습니다. (양식 파일은 public/forms/ 에 추가)
 const WORK_DOCS = [
-  { key: 'workPlan', label: '작업계획서', required: true, formUrl: '/forms/work-plan.pdf' },
-  { key: 'safetyChecklist', label: '작업안전 체크리스트', required: true },
-  { key: 'tbm', label: '작업 전 안전점검(TBM) 회의록', required: true },
+  { key: 'workPlan', label: '작업계획서', required: true },
+  { key: 'tbm', label: 'TBM 회의록', required: true },
+  { key: 'safetyChecklist', label: '위험성 체크리스트', required: true, formUrl: '/forms/work-plan.pdf' },
   // 현장사진은 자재센터 출입 후 등록하므로 신청 시에는 선택(없어도 신청 가능)
   { key: 'sitePhoto', label: '차량·운전자 현장사진', required: false, note: '자재센터 출입 후 등록' },
 ];

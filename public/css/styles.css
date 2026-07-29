@@ -57,9 +57,13 @@ body {
 /* --- Cards / typography ------------------------------------------------- */
 .card {
   background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow);
+  border-radius: var(--radius); padding: 12px 16px; box-shadow: var(--shadow);
   margin-bottom: 14px;
 }
+/* 카드 내부 첫/마지막 항목의 상하 여백을 줄여 박스가 너무 커 보이지 않도록 */
+.card > .field-h:last-child { margin-bottom: 0; }
+.card > .doc-item:first-child { padding-top: 2px; }
+.card > .doc-item:last-child { padding-bottom: 2px; }
 .section-title { font-size: 14px; font-weight: 700; color: var(--text-muted);
   text-transform: none; letter-spacing: .01em; margin: 4px 2px 10px; }
 h2.title { font-size: 22px; font-weight: 800; margin: 4px 2px 4px; }
