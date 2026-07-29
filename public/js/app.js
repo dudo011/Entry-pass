@@ -598,10 +598,7 @@
           <div class="row"><span class="k">차량번호</span><span>${esc(r.vehicleNumber)}</span></div>
           <div class="row"><span class="k">방문목적</span><span>${esc(r.vehicleTypeName)}</span></div>
           <div class="row"><span class="k">계약업체</span><span>${esc(r.company) || '-'}</span></div>
-          <div class="row"><span class="k">기사명</span><span>${esc(r.driverName)}</span></div>
           <div class="row"><span class="k">연락처</span><span>${esc(r.phone)}</span></div>
-          <div class="row"><span class="k">안전수칙</span><span>필수 ${r.agreedRequired ? '✅' : '❌'} · 기타 ${r.agreedOther ? '✅' : '—'}</span></div>
-          ${r.reviewedAt ? `<div class="row"><span class="k">처리</span><span>${esc(r.reviewedBy)} · ${esc(fmtDateTime(r.reviewedAt))}</span></div>` : ''}
           ${r.status === 'rejected' && r.rejectReason ? `<div class="row"><span class="k">반려사유</span><span>${esc(r.rejectReason)}</span></div>` : ''}
         </div>
         <div class="section-title">📎 필수 서류</div>

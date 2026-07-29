@@ -44,8 +44,8 @@ body {
   width: 34px; height: 34px; border-radius: 9px; font-size: 18px; cursor: pointer;
   display: grid; place-items: center; flex: none;
 }
-.appbar h1 { font-size: 17px; margin: 0; font-weight: 700; flex: 1; }
-.appbar .sub { font-size: 12px; opacity: .7; font-weight: 500; }
+.appbar h1 { font-size: 18px; margin: 0; font-weight: 700; flex: 1; }
+.appbar .sub { font-size: 13px; opacity: .7; font-weight: 500; }
 
 .screen { padding: 16px 16px calc(24px + env(safe-area-inset-bottom)); }
 
@@ -60,16 +60,16 @@ body {
   border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow);
   margin-bottom: 14px;
 }
-.section-title { font-size: 13px; font-weight: 700; color: var(--text-muted);
+.section-title { font-size: 14px; font-weight: 700; color: var(--text-muted);
   text-transform: none; letter-spacing: .01em; margin: 4px 2px 10px; }
 h2.title { font-size: 22px; font-weight: 800; margin: 4px 2px 4px; }
-p.lead { color: var(--text-muted); margin: 0 2px 18px; font-size: 14px; }
+p.lead { color: var(--text-muted); margin: 0 2px 18px; font-size: 15px; }
 
 /* --- Role landing ------------------------------------------------------- */
 .hero { text-align: center; padding: 40px 16px 10px; }
 .hero .logo { font-size: 52px; }
 .hero h1 { font-size: 24px; margin: 12px 0 6px; font-weight: 800; }
-.hero p { color: var(--text-muted); margin: 0 auto; max-width: 300px; font-size: 14px; }
+.hero p { color: var(--text-muted); margin: 0 auto; max-width: 300px; font-size: 15px; }
 .role-grid { display: grid; gap: 12px; padding: 20px 16px; }
 .role-btn {
   display: flex; align-items: center; gap: 14px; text-align: left;
@@ -79,8 +79,8 @@ p.lead { color: var(--text-muted); margin: 0 2px 18px; font-size: 14px; }
 }
 .role-btn:active { transform: scale(.99); }
 .role-btn .emoji { font-size: 30px; flex: none; width: 44px; text-align: center; }
-.role-btn .rt { font-size: 17px; font-weight: 700; }
-.role-btn .rd { font-size: 13px; color: var(--text-muted); }
+.role-btn .rt { font-size: 18px; font-weight: 700; }
+.role-btn .rd { font-size: 14px; color: var(--text-muted); }
 .role-btn .arrow { margin-left: auto; color: var(--text-muted); font-size: 20px; }
 
 /* --- Vehicle type grid -------------------------------------------------- */
@@ -95,33 +95,33 @@ p.lead { color: var(--text-muted); margin: 0 2px 18px; font-size: 14px; }
 .type-card:active { transform: scale(.99); }
 .type-card .ico { font-size: 32px; flex: none; }
 .type-card .tn-wrap { flex: 1 1 0; min-width: 0; }
-.type-card .tn { font-weight: 700; font-size: 16px; }
-.type-card .ts { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+.type-card .tn { font-weight: 700; font-size: 17px; }
+.type-card .ts { font-size: 14px; color: var(--text-muted); margin-top: 2px; }
 
 /* --- Rule / route lists ------------------------------------------------- */
 .rule-list, .route-list { list-style: none; margin: 0; padding: 0; }
 .rule-list li {
   display: flex; gap: 11px; padding: 11px 0; border-bottom: 1px solid var(--border);
-  font-size: 15.5px; line-height: 1.5;
+  font-size: 16.5px; line-height: 1.5;
 }
 .rule-list li:last-child { border-bottom: 0; }
 .rule-list li .n {
   flex: none; width: 22px; height: 22px; border-radius: 50%;
   background: var(--danger-bg); color: var(--danger);
-  font-size: 12px; font-weight: 700; display: grid; place-items: center; margin-top: 1px;
+  font-size: 13px; font-weight: 700; display: grid; place-items: center; margin-top: 1px;
 }
-.rules-head { font-size: 16px; font-weight: 800; padding: 12px 14px; border-radius: 10px;
+.rules-head { font-size: 17px; font-weight: 800; padding: 12px 14px; border-radius: 10px;
   margin: 4px 2px 12px; line-height: 1.35; }
 .rules-head.req { background: var(--danger-bg); color: var(--danger); border: 1px solid #f4bcbc; }
 .rules-head.other { background: var(--warn-bg); color: #b45309; border: 1px solid #f2ce7e; }
 .route-summary {
   background: var(--surface-2); border: 1px dashed var(--border);
-  border-radius: 10px; padding: 12px 14px; font-weight: 600; font-size: 14px;
+  border-radius: 10px; padding: 12px 14px; font-weight: 600; font-size: 15px;
   margin-bottom: 12px;
 }
 .route-list { counter-reset: step; }
 .route-list li {
-  position: relative; padding: 6px 0 16px 30px; font-size: 14px;
+  position: relative; padding: 6px 0 16px 30px; font-size: 15px;
   border-left: 2px solid var(--border); margin-left: 11px;
 }
 .route-list li:last-child { border-left-color: transparent; padding-bottom: 0; }
@@ -129,21 +129,21 @@ p.lead { color: var(--text-muted); margin: 0 2px 18px; font-size: 14px; }
   counter-increment: step; content: counter(step);
   position: absolute; left: -12px; top: 2px; width: 22px; height: 22px;
   border-radius: 50%; background: var(--primary); color: #fff;
-  font-size: 12px; font-weight: 700; display: grid; place-items: center;
+  font-size: 13px; font-weight: 700; display: grid; place-items: center;
 }
 
 /* --- Forms -------------------------------------------------------------- */
 label.field { display: block; margin-bottom: 14px; }
-label.field .lb { font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block; }
+label.field .lb { font-size: 14px; font-weight: 600; margin-bottom: 6px; display: block; }
 label.field .req { color: var(--danger); }
 input[type=text], input[type=tel], input[type=password], input[type=datetime-local], textarea, select {
-  width: 100%; padding: 13px 14px; font-size: 16px; color: var(--text);
+  width: 100%; padding: 13px 14px; font-size: 17px; color: var(--text);
   border: 1px solid var(--border); border-radius: 11px; background: var(--surface-2);
   font-family: inherit;
 }
 /* 라벨(항목명)과 입력칸을 좌우로 나란히 */
 .field-h { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-.field-h .lb { width: 92px; flex: none; margin: 0; font-size: 13px; font-weight: 600; line-height: 1.25; word-break: keep-all; }
+.field-h .lb { width: 92px; flex: none; margin: 0; font-size: 14px; font-weight: 600; line-height: 1.25; word-break: keep-all; }
 .field-h > input, .field-h > select { flex: 1 1 0; min-width: 0; }
 .req { color: var(--danger); }
 input:focus, textarea:focus, select:focus {
@@ -157,7 +157,7 @@ textarea { min-height: 72px; resize: vertical; }
   background: var(--warn-bg); border-radius: 11px; cursor: pointer; margin-top: 4px;
 }
 .agree input { margin-top: 3px; width: 20px; height: 20px; flex: none; }
-.agree span { font-size: 14px; font-weight: 600; color: #92400e; }
+.agree span { font-size: 15px; font-weight: 600; color: #92400e; }
 
 /* --- Document upload ---------------------------------------------------- */
 .doc-item {
@@ -166,23 +166,23 @@ textarea { min-height: 72px; resize: vertical; }
 }
 .doc-item:last-child { border-bottom: 0; }
 .doc-item .dl-wrap { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.doc-item .dl { font-size: 14px; font-weight: 600; }
-.doc-item .badge { font-size: 11px; padding: 2px 7px; border-radius: 6px; font-weight: 700; flex: none; }
+.doc-item .dl { font-size: 15px; font-weight: 600; }
+.doc-item .badge { font-size: 12px; padding: 2px 7px; border-radius: 6px; font-weight: 700; flex: none; }
 .badge.required { background: var(--danger-bg); color: var(--danger); }
 .badge.optional { background: var(--border); color: var(--text-muted); }
 .doc-item .up { flex: none; margin-left: 10px; }
 .file-btn {
-  font-size: 13px; font-weight: 600; padding: 8px 12px; border-radius: 9px; white-space: nowrap;
+  font-size: 14px; font-weight: 600; padding: 8px 12px; border-radius: 9px; white-space: nowrap;
   border: 1px solid var(--primary); color: var(--primary); background: #fff; cursor: pointer;
 }
 .file-btn.has { background: var(--success-bg); border-color: var(--success); color: var(--success); }
-.form-dl { font-size: 12px; font-weight: 700; color: var(--primary); text-decoration: none;
+.form-dl { font-size: 13px; font-weight: 700; color: var(--primary); text-decoration: none;
   background: var(--surface-2); border: 1px solid var(--border); padding: 3px 8px; border-radius: 7px; white-space: nowrap; }
 .doc-item input[type=file] { display: none; }
 
 /* --- Buttons ------------------------------------------------------------ */
 .btn {
-  display: block; width: 100%; padding: 15px; font-size: 16px; font-weight: 700;
+  display: block; width: 100%; padding: 15px; font-size: 17px; font-weight: 700;
   border-radius: 12px; border: 0; cursor: pointer; text-align: center;
   font-family: inherit;
 }
@@ -212,7 +212,7 @@ textarea { min-height: 72px; resize: vertical; }
 }
 .status-pill {
   display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px;
-  border-radius: 999px; font-size: 13px; font-weight: 700;
+  border-radius: 999px; font-size: 14px; font-weight: 700;
 }
 .status-pill.pending { background: var(--warn-bg); color: var(--warn); }
 .status-pill.approved { background: var(--success-bg); color: var(--success); }
@@ -222,7 +222,7 @@ textarea { min-height: 72px; resize: vertical; }
 .tabs { display: flex; gap: 8px; padding: 12px 16px 0; }
 .tab {
   flex: 1; padding: 10px; border-radius: 10px; border: 1px solid var(--border);
-  background: var(--surface); font-size: 13px; font-weight: 700; cursor: pointer;
+  background: var(--surface); font-size: 14px; font-weight: 700; cursor: pointer;
   color: var(--text-muted);
 }
 .tab.active { background: #1e293b; color: #fff; border-color: #1e293b; }
@@ -230,23 +230,23 @@ textarea { min-height: 72px; resize: vertical; }
 .req-card { background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--radius); padding: 14px; margin-bottom: 12px; box-shadow: var(--shadow); }
 .req-card .rh { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-.req-card .veh { font-weight: 800; font-size: 16px; }
-.req-card .meta { font-size: 13px; color: var(--text-muted); }
-.req-card .row { display: flex; justify-content: space-between; font-size: 14px; padding: 3px 0; }
+.req-card .veh { font-weight: 800; font-size: 17px; }
+.req-card .meta { font-size: 14px; color: var(--text-muted); }
+.req-card .row { display: flex; justify-content: space-between; font-size: 15px; padding: 3px 0; }
 .req-card .row .k { color: var(--text-muted); }
 .req-card .docs { margin: 8px 0; display: flex; flex-wrap: wrap; gap: 6px; }
 .req-card .docs a {
-  font-size: 12px; padding: 5px 9px; background: var(--surface-2);
+  font-size: 13px; padding: 5px 9px; background: var(--surface-2);
   border: 1px solid var(--border); border-radius: 8px; color: var(--primary);
   text-decoration: none; font-weight: 600;
 }
-.empty { text-align: center; color: var(--text-muted); padding: 50px 16px; font-size: 14px; }
+.empty { text-align: center; color: var(--text-muted); padding: 50px 16px; font-size: 15px; }
 
 /* 직원 상세: 서류 사진 바로 표시 (외곽 박스 없이 각 서류를 전체폭 크게) */
 .doc-thumbs { display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; }
 .doc-thumb-item { border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
   background: var(--surface); box-shadow: var(--shadow); }
-.doc-thumb-item .lbl { font-size: 13px; font-weight: 700; padding: 9px 12px; color: var(--text-muted);
+.doc-thumb-item .lbl { font-size: 14px; font-weight: 700; padding: 9px 12px; color: var(--text-muted);
   border-bottom: 1px solid var(--border); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .doc-thumb-item img { width: 100%; display: block; height: auto; background: #fff; cursor: zoom-in; }
 .doc-thumb-item a.pdf { display: block; padding: 40px 8px; text-align: center; color: var(--primary);
@@ -261,7 +261,7 @@ textarea { min-height: 72px; resize: vertical; }
   cursor: pointer; z-index: 301; }
 
 /* --- 커스텀 달력(방문 예정 일시) ---------------------------------------- */
-.datebtn { width: 100%; text-align: left; padding: 13px 14px; font-size: 16px; color: var(--text);
+.datebtn { width: 100%; text-align: left; padding: 13px 14px; font-size: 17px; color: var(--text);
   border: 1px solid var(--border); border-radius: 11px; background: var(--surface-2); cursor: pointer; font-family: inherit; }
 .datebtn::after { content: '📅'; float: right; opacity: .7; }
 .modal-backdrop { position: fixed; inset: 0; background: rgba(15,23,42,.5); z-index: 200;
@@ -273,17 +273,17 @@ textarea { min-height: 72px; resize: vertical; }
 .cal-nav { background: var(--surface-2); border: 1px solid var(--border); color: var(--text);
   width: 38px; height: 38px; border-radius: 10px; font-size: 20px; cursor: pointer; display: grid; place-items: center; }
 .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
-.cal-wd { text-align: center; font-size: 12px; font-weight: 700; padding: 4px 0 8px; color: var(--text-muted); }
+.cal-wd { text-align: center; font-size: 13px; font-weight: 700; padding: 4px 0 8px; color: var(--text-muted); }
 .cal-wd.sun { color: var(--danger); } .cal-wd.sat { color: #2563eb; }
 .cal-cell { aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center;
-  border: 0; background: transparent; border-radius: 10px; font-size: 15px; color: var(--text); cursor: pointer; }
+  border: 0; background: transparent; border-radius: 10px; font-size: 16px; color: var(--text); cursor: pointer; }
 .cal-cell.sun, .cal-cell.hol { color: var(--danger); }
 .cal-cell.sat { color: #2563eb; }
 .cal-cell.today { outline: 2px solid var(--primary); outline-offset: -2px; font-weight: 700; }
 .cal-cell.sel { background: var(--primary); color: #fff !important; font-weight: 800; }
 .cal-cell:disabled { color: #cbd5e1; cursor: default; }
 .cal-time { display: flex; align-items: center; gap: 8px; margin: 16px 2px; }
-.cal-time .lb { font-size: 14px; font-weight: 700; }
+.cal-time .lb { font-size: 15px; font-weight: 700; }
 .cal-time select { flex: 1; }
 .cal-actions { display: flex; gap: 10px; }
 .cal-actions .btn { flex: 1; }
@@ -291,34 +291,34 @@ textarea { min-height: 72px; resize: vertical; }
 .toast {
   position: fixed; left: 50%; bottom: 30px; transform: translateX(-50%);
   background: #0f172a; color: #fff; padding: 12px 20px; border-radius: 999px;
-  font-size: 14px; font-weight: 600; z-index: 100; box-shadow: 0 6px 20px rgba(0,0,0,.3);
+  font-size: 15px; font-weight: 600; z-index: 100; box-shadow: 0 6px 20px rgba(0,0,0,.3);
   max-width: 90%;
 }
 
 /* --- Auth / profile / admin additions ----------------------------------- */
 .appbar .link-btn { margin-left: auto; background: rgba(255,255,255,.14); border: 0;
-  color: #fff; font-size: 13px; font-weight: 600; padding: 7px 12px; border-radius: 8px; cursor: pointer; }
-.switch { text-align: center; color: var(--text-muted); font-size: 14px; margin-top: 16px; }
+  color: #fff; font-size: 14px; font-weight: 600; padding: 7px 12px; border-radius: 8px; cursor: pointer; }
+.switch { text-align: center; color: var(--text-muted); font-size: 15px; margin-top: 16px; }
 .switch a { color: var(--primary); font-weight: 700; cursor: pointer; }
-.hint { text-align: center; color: var(--text-muted); font-size: 13px; margin-top: 16px; }
+.hint { text-align: center; color: var(--text-muted); font-size: 14px; margin-top: 16px; }
 .rule-list li .n.other { background: var(--surface-2); color: var(--text-muted); }
 .agree.soft { background: var(--surface-2); }
 .agree.soft span { color: var(--text); }
 
-.card .row { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; padding: 3px 0; }
+.card .row { display: flex; justify-content: space-between; gap: 12px; font-size: 15px; padding: 3px 0; }
 .card .row .k { color: var(--text-muted); flex: none; }
 .card .row span:last-child { text-align: right; }
-.big-cta { font-size: 17px; padding: 17px; margin-bottom: 16px; }
+.big-cta { font-size: 18px; padding: 17px; margin-bottom: 16px; }
 .profile-card { padding: 14px 16px; }
 .profile-card .section-title { margin: 0 0 8px; display: flex; justify-content: space-between; }
-.link-inline, .link-inline:visited { color: var(--primary); font-weight: 700; cursor: pointer; font-size: 12px; }
-.muted { color: var(--text-muted); font-size: 14px; padding: 8px 2px; }
+.link-inline, .link-inline:visited { color: var(--primary); font-weight: 700; cursor: pointer; font-size: 13px; }
+.muted { color: var(--text-muted); font-size: 15px; padding: 8px 2px; }
 .mini-card { display: block; width: 100%; text-align: left; background: var(--surface);
   border: 1px solid var(--border); border-radius: 12px; padding: 13px 14px; margin-bottom: 10px;
   box-shadow: var(--shadow); color: var(--text); cursor: pointer; }
 .mini-card .mc-top { display: flex; align-items: center; justify-content: space-between; }
-.mini-card .veh { font-weight: 700; font-size: 15px; }
-.mini-card .meta { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+.mini-card .veh { font-weight: 700; font-size: 16px; }
+.mini-card .meta { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
 
 .type-card { position: relative; }
 .my-tag { position: absolute; top: 8px; right: 8px; background: var(--primary); color: #fff;
@@ -326,11 +326,11 @@ textarea { min-height: 72px; resize: vertical; }
 
 .admin-bar { display: flex; align-items: center; gap: 10px; padding: 10px 16px 0; }
 .admin-bar .link-btn { margin-left: auto; background: var(--surface); border: 1px solid var(--border);
-  color: var(--primary); font-size: 13px; font-weight: 700; padding: 8px 12px; border-radius: 9px; cursor: pointer; }
-.role-badge { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px;
+  color: var(--primary); font-size: 14px; font-weight: 700; padding: 8px 12px; border-radius: 9px; cursor: pointer; }
+.role-badge { font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 999px;
   background: var(--border); color: var(--text-muted); }
 .role-badge.admin { background: #1e293b; color: #fff; }
-.retention-note { font-size: 12px; color: var(--text-muted); background: var(--surface-2);
+.retention-note { font-size: 13px; color: var(--text-muted); background: var(--surface-2);
   border: 1px solid var(--border); border-radius: 10px; padding: 9px 12px; margin: 0 0 12px; }
 
 @media (prefers-color-scheme: dark) {
