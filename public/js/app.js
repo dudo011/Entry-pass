@@ -337,7 +337,7 @@
           <div class="route-summary">${esc(t.route.summary)}</div>
           <ul class="route-list">${steps}</ul>
         </div>
-        <div class="sticky-cta"><button class="btn btn-primary" data-nav="driverDocs">다음 · 서류 제출</button></div>
+        <div class="sticky-cta"><button class="btn btn-primary" data-nav="driverDocs">${t.requiredDocuments.length ? '다음 · 서류 제출' : '다음 · 출입 신청'}</button></div>
       </div>`;
   }
 
@@ -345,22 +345,22 @@
     const t = state.selectedType;
     const u = state.user;
     const f = state.form;
+    const hasDocs = t.requiredDocuments.length > 0;
     // 저장된 기본정보로 프리필
     const val = (k, dflt) => esc(f[k] !== undefined ? f[k] : dflt);
     const docs = t.requiredDocuments.map((d) => {
       const has = state.files[d.key];
       return `<div class="doc-item">
-        <span class="dl">${esc(d.label)}</span>
-        <span class="badge ${d.required ? 'required' : 'optional'}">${d.required ? '필수' : '선택'}</span>
+        <span class="dl-wrap"><span class="dl">${esc(d.label)}</span><span class="badge ${d.required ? 'required' : 'optional'}">${d.required ? '필수' : '선택'}</span></span>
         <span class="up"><label class="file-btn ${has ? 'has' : ''}">
           ${has ? '✓ 첨부 · ' + (has.size / 1048576).toFixed(1) + 'MB' : '파일 선택'}
           <input type="file" data-doc="${d.key}" accept="image/*,application/pdf"></label></span>
       </div>`;
     }).join('');
-    return appbar(t.name, '서류 제출 및 신청', { back: true }) + stepBar(state.safetyPages.length + 1, safetyTotal()) + `
+    return appbar(t.name, hasDocs ? '서류 제출 및 신청' : '출입 신청 정보', { back: true }) + stepBar(state.safetyPages.length + 1, safetyTotal()) + `
       <div class="screen">
-        <div class="section-title">📎 필요 서류</div>
-        <div class="card">${docs}</div>
+        ${hasDocs ? `<div class="section-title">📎 필요 서류 (모두 필수)</div>
+        <div class="card">${docs}</div>` : ''}
         <div class="section-title">📝 신청 정보</div>
         <div class="card">
           <label class="field"><span class="lb">기사명 <span class="req">*</span></span>

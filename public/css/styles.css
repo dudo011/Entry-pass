@@ -165,13 +165,14 @@ textarea { min-height: 72px; resize: vertical; }
   border-bottom: 1px solid var(--border);
 }
 .doc-item:last-child { border-bottom: 0; }
+.doc-item .dl-wrap { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .doc-item .dl { font-size: 14px; font-weight: 600; }
-.doc-item .badge { font-size: 11px; padding: 2px 7px; border-radius: 6px; font-weight: 700; }
+.doc-item .badge { font-size: 11px; padding: 2px 7px; border-radius: 6px; font-weight: 700; flex: none; }
 .badge.required { background: var(--danger-bg); color: var(--danger); }
 .badge.optional { background: var(--border); color: var(--text-muted); }
-.doc-item .up { margin-left: auto; }
+.doc-item .up { flex: none; margin-left: 10px; }
 .file-btn {
-  font-size: 13px; font-weight: 600; padding: 8px 12px; border-radius: 9px;
+  font-size: 13px; font-weight: 600; padding: 8px 12px; border-radius: 9px; white-space: nowrap;
   border: 1px solid var(--primary); color: var(--primary); background: #fff; cursor: pointer;
 }
 .file-btn.has { background: var(--success-bg); border-color: var(--success); color: var(--success); }

@@ -37,6 +37,14 @@ const EXTRA_CONSTRUCTION_PCBS = [
   '인양물 작업전 해지장치 등 고정장치 확인, 작업 중 하부 출입금지',
 ];
 
+// 공사업체(배전공사)·PCBs처리용역·불용품매각 차량 제출 서류 (사진/PDF 업로드)
+const WORK_DOCS = [
+  { key: 'workPlan', label: '작업계획서', required: true },
+  { key: 'safetyChecklist', label: '작업안전 체크리스트', required: true },
+  { key: 'tbm', label: '작업 전 안전점검(TBM) 회의록', required: true },
+  { key: 'sitePhoto', label: '차량·운전자 현장사진', required: true },
+];
+
 export default [
   {
     id: 'transport',
@@ -55,12 +63,7 @@ export default [
         '유도원 지시에 따라 지정 베이에 정차',
       ],
     },
-    requiredDocuments: [
-      { key: 'license', label: '운전면허증', required: true },
-      { key: 'insurance', label: '차량 보험증권', required: true },
-      { key: 'contract', label: '용역계약 확인서', required: true },
-      { key: 'safetyEdu', label: '안전교육 이수증', required: false },
-    ],
+    requiredDocuments: [], // 물자수송용역: 서류 제출 없음
   },
   {
     id: 'construction',
@@ -78,13 +81,7 @@ export default [
         '현장 관리자 확인 후 지정 위치에 주차',
       ],
     },
-    requiredDocuments: [
-      { key: 'license', label: '운전면허증', required: true },
-      { key: 'insurance', label: '차량 보험증권', required: true },
-      { key: 'workPermit', label: '공사계약서/작업허가서', required: true },
-      { key: 'safetyEdu', label: '안전보건교육 이수증', required: true },
-      { key: 'workPlan', label: '유해위험작업 작업계획서', required: false },
-    ],
+    requiredDocuments: [...WORK_DOCS],
   },
   {
     id: 'delivery',
@@ -102,11 +99,7 @@ export default [
         'A동 하역장 빈 베이에 정차 후 하역',
       ],
     },
-    requiredDocuments: [
-      { key: 'license', label: '운전면허증', required: true },
-      { key: 'insurance', label: '차량 보험증권', required: true },
-      { key: 'delivery', label: '납품(거래) 명세서', required: true },
-    ],
+    requiredDocuments: [], // 기자재납품: 서류 제출 없음
   },
   {
     id: 'scrap',
@@ -124,11 +117,7 @@ export default [
         '계량대에서 계근 후 정문 반출확인 절차 진행',
       ],
     },
-    requiredDocuments: [
-      { key: 'license', label: '운전면허증', required: true },
-      { key: 'insurance', label: '차량 보험증권', required: true },
-      { key: 'saleContract', label: '매각(낙찰) 계약서/반출증', required: true },
-    ],
+    requiredDocuments: [...WORK_DOCS],
   },
   {
     id: 'pcbs',
@@ -146,12 +135,6 @@ export default [
         '계량 후 위험물 전용 게이트로 반출',
       ],
     },
-    requiredDocuments: [
-      { key: 'license', label: '운전면허증', required: true },
-      { key: 'hazmat', label: '위험물/폐기물 운반차량 서류', required: true },
-      { key: 'wasteContract', label: '폐기물 처리 용역계약서', required: true },
-      { key: 'manifest', label: '폐기물 인계서(올바로)', required: true },
-      { key: 'msds', label: 'MSDS(물질안전보건자료)', required: false },
-    ],
+    requiredDocuments: [...WORK_DOCS],
   },
 ];
