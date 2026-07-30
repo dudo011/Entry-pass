@@ -20,6 +20,27 @@
   margin-left: auto !important;
 }
 
+/* 로그인 화면: 아이디·비밀번호 라벨을 크게, 입력칸은 짧게 */
+#app:has(#a_loginId):has(#a_password):not(:has(#a_password2)) .card > .field-h {
+  gap: 14px !important;
+}
+
+#app:has(#a_loginId):has(#a_password):not(:has(#a_password2)) .card > .field-h .lb {
+  width: 112px !important;
+  min-width: 112px !important;
+  flex: 0 0 112px !important;
+  font-size: 19px !important;
+  font-weight: 700 !important;
+  line-height: 1.25 !important;
+}
+
+#app:has(#a_loginId):has(#a_password):not(:has(#a_password2)) .card > .field-h > input {
+  flex: 0 1 68% !important;
+  width: 68% !important;
+  max-width: 68% !important;
+  margin-left: auto !important;
+}
+
 @media (max-width: 390px) {
   #app:has(#a_password2) .card > .field-h {
     gap: 8px !important;
@@ -37,5 +58,22 @@
     flex-basis: 80% !important;
     width: 80% !important;
     max-width: 80% !important;
+  }
+
+  #app:has(#a_loginId):has(#a_password):not(:has(#a_password2)) .card > .field-h {
+    gap: 10px !important;
+  }
+
+  #app:has(#a_loginId):has(#a_password):not(:has(#a_password2)) .card > .field-h .lb {
+    width: 102px !important;
+    min-width: 102px !important;
+    flex-basis: 102px !important;
+    font-size: 18px !important;
+  }
+
+  #app:has(#a_loginId):has(#a_password):not(:has(#a_password2)) .card > .field-h > input {
+    flex-basis: 66% !important;
+    width: 66% !important;
+    max-width: 66% !important;
   }
 }
