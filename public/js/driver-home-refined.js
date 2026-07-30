@@ -2,6 +2,7 @@
   const TOKEN_KEY = 'ep_token';
   const USER_CACHE_KEY = 'ep_user_cache';
   const REQUEST_CACHE_KEY = 'ep_my_requests_session';
+  const HOME_CACHE_KEY = 'ep_my_requests_token_cache';
   const esc = (value) => String(value == null ? '' : value).replace(/[&<>"]/g, (ch) =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
 
@@ -14,7 +15,22 @@
   };
   const cacheRequests = (requests) => {
     if (!Array.isArray(requests)) return;
-    try { sessionStorage.setItem(REQUEST_CACHE_KEY, JSON.stringify(requests)); } catch { /* noop */ }
+    try {
+      sessionStorage.setItem(REQUEST_CACHE_KEY, JSON.stringify(requests));
+      localStorage.setItem(HOME_CACHE_KEY, JSON.stringify({
+        token: localStorage.getItem(TOKEN_KEY) || '',
+        requests,
+      }));
+    } catch { /* noop */ }
+  };
+  const readHomeCache = () => {
+    try {
+      const cached = JSON.parse(localStorage.getItem(HOME_CACHE_KEY) || 'null');
+      const token = localStorage.getItem(TOKEN_KEY) || '';
+      return cached?.token === token && Array.isArray(cached.requests) ? cached.requests : [];
+    } catch {
+      return [];
+    }
   };
 
   const style = document.createElement('style');
@@ -68,6 +84,45 @@
     const today = new Date();
     const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
     return key < todayKey;
+  }
+
+  function statusLabel(status) {
+    if (status === 'approved') return '승인 완료';
+    if (status === 'rejected') return '반려';
+    return '승인 대기 중';
+  }
+
+  function cachedListHtml(requests) {
+    if (!requests.length) return '<div class="empty">아직 신청 내역이 없습니다.</div>';
+    return requests.map((request) => `
+      <button class="mini-card ${isPastVisit(request.visitAt) ? 'visit-expired' : ''}" data-open="${esc(request.id)}" data-cached-request="true" data-visit-refined="true">
+        <div class="mc-top"><span class="veh">${esc(formatVisitDate(request.visitAt))}</span>
+          <span class="status-pill ${esc(request.status)}">${statusLabel(request.status)}</span></div>
+        <div class="meta">${esc(request.passNo)} · ${new Date(request.createdAt).toLocaleString('ko-KR', { dateStyle: 'short', timeStyle: 'short' })}</div>
+      </button>`).join('');
+  }
+
+  function showCachedRequests(list) {
+    if (!list || list.dataset.cachedRequestShown === 'true') return;
+    const requests = readHomeCache();
+    if (!requests.length || !list.textContent?.includes('불러오는 중')) return;
+    list.className = '';
+    list.innerHTML = cachedListHtml(requests);
+    list.dataset.cachedRequestShown = 'true';
+    list.addEventListener('click', (event) => {
+      const cachedCard = event.target.closest('[data-cached-request="true"]');
+      if (!cachedCard) return;
+      event.preventDefault();
+      const id = String(cachedCard.dataset.open || '');
+      let attempts = 0;
+      const openLiveCard = () => {
+        const liveCard = [...list.querySelectorAll('.mini-card[data-open]:not([data-cached-request="true"])')]
+          .find((card) => String(card.dataset.open) === id);
+        if (liveCard) return liveCard.click();
+        if (++attempts < 40) setTimeout(openLiveCard, 50);
+      };
+      openLiveCard();
+    });
   }
 
   async function getCurrentUser() {
@@ -161,6 +216,7 @@
     const appbar = document.querySelector('#app > .appbar');
     if (!homeButton || !list || !appbar) return;
 
+    showCachedRequests(list);
     document.querySelector('#app .profile-card')?.remove();
 
     if (appbar.dataset.driverHomeRefined !== 'true') {
