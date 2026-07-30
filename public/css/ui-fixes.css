@@ -1,0 +1,151 @@
+/* 2026-07-30 UI 보정: 안전수칙 한 화면, 가로형 폼, 승인·반려 버튼 */
+
+/* 회원가입·로그인·회원정보: 작은 화면에서도 라벨과 입력칸을 한 줄로 유지 */
+.field-h,
+.field-h.profile-field-h {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 10px !important;
+  margin-bottom: 10px !important;
+}
+
+.field-h .lb,
+.field-h.profile-field-h .lb {
+  width: 92px !important;
+  min-width: 92px !important;
+  flex: 0 0 92px !important;
+  margin: 0 !important;
+  font-size: 15px !important;
+  line-height: 1.25 !important;
+  word-break: keep-all !important;
+}
+
+.field-h > input,
+.field-h > select,
+.field-h > .datebtn,
+.field-h.profile-field-h > input,
+.field-h.profile-field-h > select {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+}
+
+/* 안전수칙: 일반적인 갤럭시 세로 화면에서 스크롤 없이 보이도록 세로 여백 압축 */
+#app:has(> .steps + .screen > .rules-head) > .appbar {
+  min-height: 64px !important;
+  padding: max(12px, env(safe-area-inset-top)) 16px 12px !important;
+}
+
+#app:has(> .steps + .screen > .rules-head) .vehicle-appbar-icon,
+#app:has(> .steps + .screen > .rules-head) .safety-appbar-icon {
+  font-size: 30px !important;
+}
+
+#app:has(> .steps + .screen > .rules-head) .vehicle-appbar-title h1,
+#app:has(> .steps + .screen > .rules-head) .safety-appbar-title h1 {
+  font-size: 24px !important;
+}
+
+#app:has(> .steps + .screen > .rules-head) > .steps {
+  padding: 10px 14px 2px !important;
+}
+
+#app > .steps + .screen:has(> .rules-head) {
+  padding: 8px 14px calc(8px + env(safe-area-inset-bottom)) !important;
+}
+
+#app > .steps + .screen:has(> .rules-head) > .rules-head {
+  margin: 0 0 8px !important;
+  padding: 8px 12px !important;
+  border-radius: 11px !important;
+  font-size: 17px !important;
+  line-height: 1.3 !important;
+}
+
+#app > .steps + .screen:has(> .rules-head) > .card {
+  margin-bottom: 8px !important;
+  padding: 2px 14px !important;
+  border-radius: 14px !important;
+}
+
+#app > .steps + .screen:has(> .rules-head) .rule-list li {
+  gap: 9px !important;
+  padding: 9px 0 !important;
+  font-size: 18px !important;
+  line-height: 1.42 !important;
+}
+
+#app > .steps + .screen:has(> .rules-head) .rule-list li .n,
+#app > .steps + .screen:has(> .rules-head) .rule-list li .n.other {
+  width: 24px !important;
+  height: 24px !important;
+  margin-top: 1px !important;
+  font-size: 13px !important;
+}
+
+#app > .steps + .screen:has(> .rules-head) > .agree {
+  gap: 10px !important;
+  margin: 0 0 8px !important;
+  padding: 9px 11px !important;
+  border-radius: 12px !important;
+}
+
+#app > .steps + .screen:has(> .rules-head) > .agree input {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+#app > .steps + .screen:has(> .rules-head) > .agree span {
+  font-size: 16px !important;
+  line-height: 1.4 !important;
+}
+
+#app > .steps + .screen:has(> .rules-head) > .sticky-cta {
+  padding: 6px 0 calc(2px + env(safe-area-inset-bottom)) !important;
+}
+
+#app > .steps + .screen:has(> .rules-head) #rulesNext {
+  min-height: 50px !important;
+  border-radius: 14px !important;
+  font-size: 17px !important;
+}
+
+/* 직원 대기 상세: 반려와 승인을 항상 한 줄에 동일 폭으로 배치 */
+.screen > .sticky-cta > .btn-row {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: stretch !important;
+  gap: 10px !important;
+}
+
+.screen > .sticky-cta > .btn-row > .btn {
+  display: block !important;
+  width: auto !important;
+  min-width: 0 !important;
+  flex: 1 1 0 !important;
+}
+
+@media (max-width: 390px) {
+  .field-h,
+  .field-h.profile-field-h {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+
+  .field-h .lb,
+  .field-h.profile-field-h .lb {
+    width: 84px !important;
+    min-width: 84px !important;
+    flex-basis: 84px !important;
+    font-size: 14px !important;
+  }
+
+  .field-h > input,
+  .field-h > select,
+  .field-h > .datebtn {
+    min-height: 50px !important;
+    padding: 11px 12px !important;
+    font-size: 16px !important;
+  }
+}
