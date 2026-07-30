@@ -1,12 +1,15 @@
 /* 2026-07-30 화면 높이·차량 유형 배치·하단 버튼 위치 통일 */
 
-/* 차량 유형 선택 헤더를 안전수칙 화면 헤더와 같은 높이로 통일 */
-.appbar.vehicle-type-appbar {
+/* 차량 유형 선택부터 출입 신청까지 헤더 높이 통일 */
+.appbar.vehicle-type-appbar,
+.appbar.application-flow-appbar,
+.appbar.vehicle-flow-appbar.application-flow-appbar {
   min-height: 68px !important;
   padding: max(14px, env(safe-area-inset-top)) 18px 14px !important;
 }
 
-.appbar.vehicle-type-appbar h1 {
+.appbar.vehicle-type-appbar h1,
+.appbar.application-flow-appbar h1 {
   font-size: 26px !important;
   line-height: 1.2 !important;
 }
@@ -21,7 +24,7 @@
   display: grid !important;
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   column-gap: 14px !important;
-  row-gap: 28px !important;
+  row-gap: 24px !important;
   align-items: stretch !important;
 }
 
@@ -30,9 +33,9 @@
 .vehicle-type-grid-refined > .type-card:nth-child(n+3) {
   grid-column: auto !important;
   width: 100% !important;
-  min-height: 180px !important;
-  padding: 16px 9px 15px !important;
-  gap: 11px !important;
+  min-height: 164px !important;
+  padding: 10px 8px !important;
+  gap: 8px !important;
 }
 
 /* 가운데 한 개 */
@@ -42,12 +45,12 @@
   width: calc((100% - 14px) / 2) !important;
 }
 
-/* 모든 차량 아이콘을 같은 영역과 크기로 표시 */
+/* 모든 아이콘 영역을 동일하게 유지 */
 .vehicle-type-grid-refined .ico,
 .vehicle-type-grid-refined > .type-card:nth-child(n+3) .ico {
   width: 100% !important;
   height: 88px !important;
-  font-size: 56px !important;
+  font-size: 60px !important;
 }
 
 .vehicle-type-grid-refined .vehicle-type-image {
@@ -57,13 +60,20 @@
   object-fit: contain !important;
 }
 
-.vehicle-type-grid-refined .tn,
-.vehicle-type-grid-refined > .type-card:nth-child(n+3) .tn {
-  font-size: 17px !important;
-  line-height: 1.25 !important;
+/* 세 번째 기자재 납품 아이콘만 실제 차량 이미지 크기를 키움 */
+.vehicle-type-grid-refined > .type-card:nth-child(3) .ico {
+  font-size: 78px !important;
 }
 
-/* 안전수칙 1/2를 기준으로 안전수칙·기타수칙·동선 화면의 버튼 위치 통일 */
+/* 카드 아래 명칭 가독성 확대 */
+.vehicle-type-grid-refined .tn,
+.vehicle-type-grid-refined > .type-card:nth-child(n+3) .tn {
+  font-size: 19px !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+}
+
+/* 안전수칙 1/2를 기준으로 안전수칙·기타수칙·동선·출입신청 버튼 위치 통일 */
 #app > .steps + .screen:has(> .sticky-cta) {
   min-height: calc(100dvh - 68px - 25px) !important;
   display: flex !important;
@@ -80,15 +90,14 @@
 @media (max-width: 390px) {
   .type-grid.vehicle-type-grid-refined {
     column-gap: 10px !important;
-    row-gap: 24px !important;
+    row-gap: 20px !important;
   }
 
   .vehicle-type-grid-refined > .type-card,
   .vehicle-type-grid-refined > .type-card:nth-child(-n+2),
   .vehicle-type-grid-refined > .type-card:nth-child(n+3) {
-    min-height: 168px !important;
-    padding-left: 6px !important;
-    padding-right: 6px !important;
+    min-height: 154px !important;
+    padding: 8px 6px !important;
   }
 
   .vehicle-type-grid-refined > .type-card:nth-child(3) {
@@ -105,8 +114,12 @@
     max-width: 145px !important;
   }
 
+  .vehicle-type-grid-refined > .type-card:nth-child(3) .ico {
+    font-size: 72px !important;
+  }
+
   .vehicle-type-grid-refined .tn,
   .vehicle-type-grid-refined > .type-card:nth-child(n+3) .tn {
-    font-size: 16px !important;
+    font-size: 18px !important;
   }
 }
