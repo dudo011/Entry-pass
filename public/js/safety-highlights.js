@@ -115,6 +115,10 @@
     const originalTitle = appbar.querySelector('h1')?.textContent?.trim() || '';
     const originalSub = appbar.querySelector('.sub')?.textContent?.trim() || '';
     const vehicleIcon = VEHICLE_ICONS[originalTitle];
+    const stopOnlyVehicle = originalTitle === '기자재 납품차량' || originalTitle === '불용품 매각차량';
+    const displaySub = stopOnlyVehicle
+      ? (originalSub.includes('기타') ? '출입차량 안전수칙(2)' : '출입차량 안전수칙(1)')
+      : originalSub;
 
     if (vehicleIcon && originalSub) {
       const logoutButton = appbar.querySelector('[data-logout]');
@@ -127,12 +131,13 @@
       icon.textContent = vehicleIcon;
 
       const heading = document.createElement('h1');
-      heading.textContent = originalSub;
+      heading.textContent = displaySub;
       title.append(icon, heading);
 
       appbar.replaceChildren(title);
       if (logoutButton) appbar.append(logoutButton);
       appbar.classList.add('vehicle-flow-appbar');
+      if (stopOnlyVehicle) appbar.dataset.stopOnlySafety = 'true';
     }
 
     appbar.dataset.uiNormalized = 'true';
@@ -180,7 +185,10 @@
     if (!notice || !card || !list || card.dataset.noticeMoved === 'true') return;
 
     const isRequired = notice.classList.contains('req');
-    notice.textContent = isRequired ? '위반시 “안전지도서” 발행' : '위반시 “안전계도서” 발행';
+    const stopOnlyVehicle = document.querySelector('#app > .appbar')?.dataset.stopOnlySafety === 'true';
+    notice.textContent = stopOnlyVehicle
+      ? '위반시 “작업중지”'
+      : (isRequired ? '위반시 “안전지도서” 발행' : '위반시 “안전계도서” 발행');
     notice.classList.add('rules-head-inline');
     card.insertBefore(notice, list);
     card.dataset.noticeMoved = 'true';
