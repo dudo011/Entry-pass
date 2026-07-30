@@ -3,6 +3,7 @@ import legacyApp from './worker.js';
 
 const app = new Hono();
 const MAX_DOC_BYTES = 5 * 1024 * 1024;
+const TEST_RESET_KEY = 'test-request-reset-20260731-01';
 const nowISO = () => new Date().toISOString();
 const randHex = (n) => [...crypto.getRandomValues(new Uint8Array(n))]
   .map((b) => b.toString(16).padStart(2, '0')).join('');
@@ -19,6 +20,21 @@ function base64FromBytes(bytes) {
 function validVisitDate(value) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(value || '').slice(0, 10));
 }
+
+async function resetTestRequestsOnce(env) {
+  await env.DB.batch([
+    env.DB.prepare('CREATE TABLE IF NOT EXISTS app_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)'),
+    env.DB.prepare("INSERT OR IGNORE INTO app_meta (key, value) VALUES (?, 'pending')").bind(TEST_RESET_KEY),
+    env.DB.prepare("DELETE FROM documents WHERE EXISTS (SELECT 1 FROM app_meta WHERE key = ? AND value = 'pending')").bind(TEST_RESET_KEY),
+    env.DB.prepare("DELETE FROM requests WHERE EXISTS (SELECT 1 FROM app_meta WHERE key = ? AND value = 'pending')").bind(TEST_RESET_KEY),
+    env.DB.prepare("UPDATE app_meta SET value = 'done' WHERE key = ? AND value = 'pending'").bind(TEST_RESET_KEY),
+  ]);
+}
+
+app.use('*', async (c, next) => {
+  await resetTestRequestsOnce(c.env);
+  await next();
+});
 
 async function getDriver(c) {
   const auth = c.req.header('Authorization') || '';
