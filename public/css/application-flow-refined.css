@@ -50,13 +50,24 @@
   line-height: 1.3 !important;
 }
 
-/* 방문일자·계약업체 입력 영역을 기존보다 약 15% 축소 */
+/* 방문일자·계약업체 입력 영역을 현재 크기에서 약 20% 추가 축소 */
 .application-form-card > .field-h > .datebtn,
 .application-form-card > .field-h > input {
-  flex: 0 1 85% !important;
-  width: 85% !important;
-  max-width: 85% !important;
+  flex: 0 1 68% !important;
+  width: 68% !important;
+  max-width: 68% !important;
   margin-left: auto !important;
+}
+
+/* 방문일자 버튼의 달력 아이콘 제거 */
+.application-form-card .datebtn::before,
+.application-form-card .datebtn::after {
+  display: none !important;
+  content: none !important;
+}
+
+.application-form-card .datebtn {
+  background-image: none !important;
 }
 
 /* 양식 버튼을 파일 선택 버튼 왼쪽에 같은 높이로 배치 */
