@@ -1,7 +1,30 @@
 (() => {
   const TOKEN_KEY = 'ep_token';
+  const USER_CACHE_KEY = 'ep_user_cache';
   const esc = (value) => String(value == null ? '' : value).replace(/[&<>"]/g, (ch) =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+
+  const readCachedUser = () => {
+    try { return JSON.parse(localStorage.getItem(USER_CACHE_KEY) || 'null'); } catch { return null; }
+  };
+  const cacheUser = (user) => {
+    if (!user) return;
+    try { localStorage.setItem(USER_CACHE_KEY, JSON.stringify(user)); } catch { /* noop */ }
+  };
+
+  const nativeFetch = window.fetch.bind(window);
+  window.fetch = async (input, init = {}) => {
+    const response = await nativeFetch(input, init);
+    const url = typeof input === 'string' ? input : input?.url || '';
+    if (/\/api\/auth\/(?:login|register|me|profile)(?:\?|$)/.test(url)) {
+      try {
+        const cloned = response.clone();
+        const data = await cloned.json();
+        if (response.ok && data?.user) cacheUser(data.user);
+      } catch { /* 기존 요청 처리 유지 */ }
+    }
+    return response;
+  };
 
   const style = document.createElement('style');
   style.textContent = `
@@ -56,10 +79,18 @@
     return key < todayKey;
   }
 
+  async function getCurrentUser() {
+    const cached = readCachedUser();
+    if (cached) return cached;
+    const { user } = await api('/auth/me');
+    cacheUser(user);
+    return user;
+  }
+
   async function openProfile() {
     if (document.querySelector('.driver-profile-overlay')) return;
     try {
-      const [{ user }, vehicleTypes] = await Promise.all([api('/auth/me'), api('/vehicle-types')]);
+      const [user, vehicleTypes] = await Promise.all([getCurrentUser(), api('/vehicle-types')]);
       const overlay = document.createElement('div');
       overlay.className = 'driver-profile-overlay';
       const options = vehicleTypes.map((type) =>
@@ -90,7 +121,7 @@
         if (!name || !phone) return toast('이름과 연락처를 입력해 주세요.');
         button.disabled = true;
         try {
-          await api('/auth/profile', {
+          const result = await api('/auth/profile', {
             method: 'PUT',
             body: JSON.stringify({
               password: password || undefined,
@@ -100,6 +131,7 @@
               company: overlay.querySelector('#profileCompany').value.trim(),
             }),
           });
+          cacheUser(result.user);
           toast('기본정보가 수정되었습니다.');
           close();
           setTimeout(() => location.reload(), 300);
@@ -113,7 +145,29 @@
     }
   }
 
+  function refineApplicationCompany() {
+    const companyInput = document.querySelector('#app #company');
+    if (!companyInput || companyInput.dataset.companyLinked === 'true') return;
+    const cached = readCachedUser();
+    if (cached?.company && !companyInput.value.trim()) {
+      companyInput.value = cached.company;
+      companyInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    companyInput.dataset.companyLinked = 'true';
+    if (!cached) {
+      api('/auth/me').then(({ user }) => {
+        cacheUser(user);
+        if (user?.company && !companyInput.value.trim()) {
+          companyInput.value = user.company;
+          companyInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      }).catch(() => {});
+    }
+  }
+
   async function refineHome() {
+    refineApplicationCompany();
+
     const homeButton = document.querySelector('#app [data-nav="driverTypes"]');
     const list = document.getElementById('myList');
     const appbar = document.querySelector('#app > .appbar');
@@ -122,6 +176,11 @@
     document.querySelector('#app .profile-card')?.remove();
 
     if (appbar.dataset.driverHomeRefined !== 'true') {
+      const cached = readCachedUser();
+      const heading = appbar.querySelector('h1');
+      if (heading) heading.textContent = cached?.loginId || cached?.defaultVehicleNumber || '차량번호(ID)';
+      appbar.querySelector('.sub')?.remove();
+
       const logout = appbar.querySelector('[data-logout]');
       const actions = document.createElement('div');
       actions.className = 'driver-home-actions';
@@ -133,13 +192,14 @@
       actions.append(edit);
       if (logout) actions.append(logout);
       appbar.append(actions);
-      appbar.querySelector('.sub')?.remove();
       appbar.dataset.driverHomeRefined = 'true';
-      try {
-        const { user } = await api('/auth/me');
-        const heading = appbar.querySelector('h1');
-        if (heading) heading.textContent = user.loginId || user.defaultVehicleNumber || '차량 아이디';
-      } catch { /* 로그인 상태 확인은 기존 앱에 맡김 */ }
+
+      if (!cached) {
+        api('/auth/me').then(({ user }) => {
+          cacheUser(user);
+          if (heading) heading.textContent = user.loginId || user.defaultVehicleNumber || '차량번호(ID)';
+        }).catch(() => {});
+      }
     }
 
     const cards = [...list.querySelectorAll('.mini-card[data-open]:not([data-visit-refined])')];
@@ -163,7 +223,7 @@
   let timer = null;
   const schedule = () => {
     clearTimeout(timer);
-    timer = setTimeout(refineHome, 30);
+    timer = setTimeout(refineHome, 0);
   };
   new MutationObserver(schedule).observe(app, { childList: true, subtree: true });
   schedule();
