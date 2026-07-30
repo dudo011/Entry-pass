@@ -31,7 +31,7 @@
       display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
       grid-template-rows:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)!important;
       grid-auto-flow:row!important;grid-auto-columns:unset!important;grid-auto-rows:unset!important;
-      column-gap:10px!important;row-gap:16px!important;align-content:stretch!important
+      column-gap:10px!important;row-gap:20px!important;align-content:stretch!important
     }
     #app .visit-purpose-grid .type-card{
       grid-column:auto!important;grid-row:auto!important;grid-area:auto!important;
@@ -69,14 +69,14 @@
     #app .visit-purpose-grid .my-tag{top:8px!important;right:8px!important;font-size:12px!important;padding:5px 8px!important}
     @media(max-height:760px){
       #app .screen:has(> .visit-purpose-grid){height:calc(100dvh - 170px)!important;padding:8px 14px 12px!important}
-      #app .visit-purpose-grid{column-gap:8px!important;row-gap:12px!important}
+      #app .visit-purpose-grid{column-gap:8px!important;row-gap:16px!important}
       #app .visit-purpose-grid .type-card{padding:7px 6px!important;gap:5px!important;border-radius:17px!important}
       #app .visit-purpose-grid .ico{height:min(9.5vh,68px)!important;min-height:46px!important}
       #app .visit-purpose-grid .tn{font-size:16px!important}
     }
     @media(max-width:390px){
       #app .screen:has(> .visit-purpose-grid){padding-inline:12px!important}
-      #app .visit-purpose-grid{column-gap:8px!important;row-gap:14px!important}
+      #app .visit-purpose-grid{column-gap:8px!important;row-gap:18px!important}
       #app .visit-purpose-grid .tn{font-size:16px!important}
       #app .visit-purpose-grid .tn .purpose-sub{font-size:.7em}
     }
