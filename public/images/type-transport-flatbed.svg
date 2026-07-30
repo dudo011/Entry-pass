@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" role="img" aria-labelledby="title desc">
+  <title id="title">일반 화물차</title>
+  <desc id="desc">뚜껑이 없는 적재함을 가진 일반 화물차</desc>
+  <defs>
+    <linearGradient id="cab" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f8fafc"/>
+      <stop offset="1" stop-color="#cbd5e1"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#334155" stroke-width="5" stroke-linejoin="round">
+    <path fill="url(#cab)" d="M28 91h74v51H22v-34l17-35h46l17 18z"/>
+    <path fill="#7dd3fc" d="M43 79h35l14 22H35z"/>
+    <path fill="#e2e8f0" d="M102 92h190v50H102z"/>
+    <path fill="#f8fafc" d="M108 99h178v28H108z"/>
+    <path fill="#94a3b8" d="M105 139h188v12H105z"/>
+    <path fill="#f59e0b" d="M22 113h13v17H22z" stroke-width="3"/>
+    <circle cx="69" cy="148" r="25" fill="#1e293b"/>
+    <circle cx="69" cy="148" r="12" fill="#cbd5e1"/>
+    <circle cx="245" cy="148" r="25" fill="#1e293b"/>
+    <circle cx="245" cy="148" r="12" fill="#cbd5e1"/>
+  </g>
+</svg>
