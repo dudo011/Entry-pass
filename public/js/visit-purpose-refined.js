@@ -12,8 +12,54 @@
 
   const style = document.createElement('style');
   style.textContent = `
-    #app .visit-purpose-grid .tn{white-space:normal!important;line-height:1.25!important}
-    #app .visit-purpose-grid .tn .purpose-sub{display:block;margin-top:4px;font-size:.78em;line-height:1.25}
+    #app .screen:has(> .visit-purpose-grid){
+      height:calc(100dvh - 184px)!important;
+      min-height:0!important;
+      padding:10px 16px 12px!important;
+      overflow:hidden!important
+    }
+    #app .visit-purpose-grid{
+      width:100%!important;height:100%!important;margin:0!important;
+      display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+      grid-template-rows:repeat(3,minmax(0,1fr))!important;
+      gap:10px!important;align-content:stretch!important
+    }
+    #app .visit-purpose-grid .type-card{
+      width:100%!important;min-width:0!important;min-height:0!important;height:auto!important;
+      margin:0!important;padding:10px 8px!important;border-radius:20px!important;
+      display:flex!important;flex-direction:column!important;align-items:center!important;
+      justify-content:center!important;gap:7px!important
+    }
+    #app .visit-purpose-grid .ico{
+      width:100%!important;height:min(12.5vh,94px)!important;min-height:58px!important;
+      display:flex!important;align-items:center!important;justify-content:center!important;
+      font-size:min(9vh,62px)!important;line-height:1!important
+    }
+    #app .visit-purpose-grid .vehicle-type-image{
+      display:block!important;width:92%!important;height:100%!important;object-fit:contain!important
+    }
+    #app .visit-purpose-grid .tn-wrap{width:100%!important;min-height:0!important}
+    #app .visit-purpose-grid .tn{
+      white-space:normal!important;line-height:1.15!important;font-size:18px!important;
+      font-weight:800!important;word-break:keep-all!important
+    }
+    #app .visit-purpose-grid .tn .purpose-sub{
+      display:block;margin-top:3px;font-size:.72em;line-height:1.18;white-space:nowrap
+    }
+    #app .visit-purpose-grid .my-tag{top:8px!important;right:8px!important;font-size:12px!important;padding:5px 8px!important}
+    @media(max-height:760px){
+      #app .screen:has(> .visit-purpose-grid){height:calc(100dvh - 170px)!important;padding-top:7px!important}
+      #app .visit-purpose-grid{gap:7px!important}
+      #app .visit-purpose-grid .type-card{padding:7px 6px!important;gap:4px!important;border-radius:17px!important}
+      #app .visit-purpose-grid .ico{height:min(10.5vh,72px)!important;min-height:48px!important}
+      #app .visit-purpose-grid .tn{font-size:16px!important}
+    }
+    @media(max-width:390px){
+      #app .screen:has(> .visit-purpose-grid){padding-inline:12px!important}
+      #app .visit-purpose-grid{gap:8px!important}
+      #app .visit-purpose-grid .tn{font-size:16px!important}
+      #app .visit-purpose-grid .tn .purpose-sub{font-size:.7em}
+    }
   `;
   document.head.appendChild(style);
 
