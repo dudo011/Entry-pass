@@ -33,19 +33,46 @@
 /* 안전수칙 본문 여백은 기존 가독성 중심 설정을 유지하고, 상단 헤더만 소폭 축소 */
 #app:has(> .steps + .screen > .rules-head) > .appbar,
 #app:has(> .steps + .screen > .rules-head) > .appbar.vehicle-flow-appbar,
-#app:has(> .steps + .screen > .rules-head) > .appbar.safety-compact-appbar {
+#app:has(> .steps + .screen > .rules-head) > .appbar.safety-compact-appbar,
+#app:has(> .steps + .screen > .card > .rules-head-inline) > .appbar,
+#app:has(> .steps + .screen > .card > .rules-head-inline) > .appbar.vehicle-flow-appbar,
+#app:has(> .steps + .screen > .card > .rules-head-inline) > .appbar.safety-compact-appbar {
   min-height: 68px !important;
   padding: max(14px, env(safe-area-inset-top)) 18px 14px !important;
 }
 
 #app:has(> .steps + .screen > .rules-head) .vehicle-appbar-icon,
-#app:has(> .steps + .screen > .rules-head) .safety-appbar-icon {
+#app:has(> .steps + .screen > .rules-head) .safety-appbar-icon,
+#app:has(> .steps + .screen > .card > .rules-head-inline) .vehicle-appbar-icon,
+#app:has(> .steps + .screen > .card > .rules-head-inline) .safety-appbar-icon {
   font-size: 32px !important;
 }
 
 #app:has(> .steps + .screen > .rules-head) .vehicle-appbar-title h1,
-#app:has(> .steps + .screen > .rules-head) .safety-appbar-title h1 {
+#app:has(> .steps + .screen > .rules-head) .safety-appbar-title h1,
+#app:has(> .steps + .screen > .card > .rules-head-inline) .vehicle-appbar-title h1,
+#app:has(> .steps + .screen > .card > .rules-head-inline) .safety-appbar-title h1 {
   font-size: 26px !important;
+}
+
+/* 안전지도서·안전계도서 안내를 본문 카드 안의 첫 항목 위에 배치 */
+#app > .steps + .screen > .card > .rules-head-inline {
+  margin: 0 !important;
+  padding: 14px 8px 13px !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--danger) !important;
+  text-align: center !important;
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  line-height: 1.35 !important;
+  letter-spacing: 0 !important;
+}
+
+#app > .steps + .screen > .card:has(> .rules-head-inline) {
+  padding-top: 0 !important;
 }
 
 /* 직원 대기 상세: 반려와 승인을 항상 한 줄에 동일 폭으로 배치 */
