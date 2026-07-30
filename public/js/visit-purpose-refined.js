@@ -8,6 +8,14 @@
     pcbs: ['PCBs처리용역'],
   };
   const ORDER = ['construction', 'pickup', 'transport', 'delivery', 'scrap', 'pcbs'];
+  const POSITION = {
+    construction: [1, 1],
+    pickup: [1, 2],
+    transport: [2, 1],
+    delivery: [2, 2],
+    scrap: [3, 1],
+    pcbs: [3, 2],
+  };
   const CONSTRUCTION_IMAGE = '/images/type-construction-crane-truck.svg';
 
   const style = document.createElement('style');
@@ -20,16 +28,25 @@
     }
     #app .visit-purpose-grid{
       width:100%!important;height:100%!important;margin:0!important;
-      display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
-      grid-template-rows:repeat(3,minmax(0,1fr))!important;
+      display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+      grid-template-rows:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)!important;
+      grid-auto-flow:row!important;grid-auto-columns:unset!important;grid-auto-rows:unset!important;
       gap:10px!important;align-content:stretch!important
     }
     #app .visit-purpose-grid .type-card{
-      width:100%!important;min-width:0!important;min-height:0!important;height:auto!important;
+      grid-column:auto!important;grid-row:auto!important;grid-area:auto!important;
+      width:100%!important;max-width:none!important;min-width:0!important;
+      min-height:0!important;height:100%!important;max-height:none!important;
       margin:0!important;padding:10px 8px!important;border-radius:20px!important;
       display:flex!important;flex-direction:column!important;align-items:center!important;
       justify-content:center!important;gap:7px!important
     }
+    #app .visit-purpose-grid .type-card[data-type="construction"]{grid-row:1!important;grid-column:1!important}
+    #app .visit-purpose-grid .type-card[data-type="pickup"]{grid-row:1!important;grid-column:2!important}
+    #app .visit-purpose-grid .type-card[data-type="transport"]{grid-row:2!important;grid-column:1!important}
+    #app .visit-purpose-grid .type-card[data-type="delivery"]{grid-row:2!important;grid-column:2!important}
+    #app .visit-purpose-grid .type-card[data-type="scrap"]{grid-row:3!important;grid-column:1!important}
+    #app .visit-purpose-grid .type-card[data-type="pcbs"]{grid-row:3!important;grid-column:2!important}
     #app .visit-purpose-grid .ico{
       width:100%!important;height:min(12.5vh,94px)!important;min-height:58px!important;
       display:flex!important;align-items:center!important;justify-content:center!important;
@@ -90,6 +107,12 @@
           sub.textContent = parts[1];
           name.append(sub);
         }
+      }
+
+      const position = POSITION[id];
+      if (position) {
+        card.style.setProperty('grid-row', String(position[0]), 'important');
+        card.style.setProperty('grid-column', String(position[1]), 'important');
       }
 
       if (id === 'pickup') {
