@@ -58,14 +58,12 @@
     const appbar = document.querySelector('#app > .appbar');
     if (!appbar || appbar.dataset.uiNormalized === 'true') return;
 
-    // 모바일 시스템 뒤로가기를 사용하므로 앱 내부 뒤로가기 버튼은 전 화면에서 제거합니다.
     appbar.querySelector('.back')?.remove();
 
     const originalTitle = appbar.querySelector('h1')?.textContent?.trim() || '';
     const originalSub = appbar.querySelector('.sub')?.textContent?.trim() || '';
     const vehicleIcon = VEHICLE_ICONS[originalTitle];
 
-    // 차량 신청 흐름은 차량 아이콘 + 현재 화면 제목의 한 줄 헤더로 통일합니다.
     if (vehicleIcon && originalSub) {
       const logoutButton = appbar.querySelector('[data-logout]');
       const title = document.createElement('div');
@@ -88,9 +86,29 @@
     appbar.dataset.uiNormalized = 'true';
   }
 
+  function suppressPasswordManagerWarning() {
+    document.querySelectorAll('#a_password, #a_password2').forEach((input) => {
+      input.setAttribute('autocomplete', 'off');
+      input.setAttribute('autocorrect', 'off');
+      input.setAttribute('autocapitalize', 'none');
+      input.setAttribute('spellcheck', 'false');
+      input.setAttribute('data-lpignore', 'true');
+      input.setAttribute('data-1p-ignore', 'true');
+    });
+  }
+
+  function normalizeProfileFields() {
+    ['p_name', 'p_phone', 'p_vtype'].forEach((id) => {
+      const field = document.getElementById(id)?.closest('label.field');
+      if (field) field.classList.add('field-h', 'profile-field-h');
+    });
+  }
+
   function applyUiEnhancements() {
     normalizeAppbar();
     applySafetyHighlights();
+    suppressPasswordManagerWarning();
+    normalizeProfileFields();
   }
 
   const app = document.getElementById('app');
