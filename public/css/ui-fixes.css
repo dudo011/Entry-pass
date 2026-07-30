@@ -75,6 +75,36 @@
   padding-top: 0 !important;
 }
 
+/* 필수/기타 안전수칙 화면의 다음 버튼은 화면 하단에 배치 */
+#app > .steps + .screen:has(> .card > .rules-head-inline) {
+  min-height: calc(100dvh - 68px - 25px) !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+#app > .steps + .screen:has(> .card > .rules-head-inline) > .sticky-cta {
+  margin-top: auto !important;
+}
+
+/* 안전수칙 및 동의 문구 강조 */
+.rule-highlight,
+.agreement-highlight {
+  color: var(--primary) !important;
+  font-weight: 800 !important;
+}
+
+#app > .steps + .screen:has(> .card > .rules-head-inline) > .agree span {
+  font-size: 19px !important;
+  line-height: 1.55 !important;
+  font-weight: 600 !important;
+}
+
+#app > .steps + .screen:has(> .card > .rules-head-inline) > .agree span br {
+  display: block;
+  content: '';
+  margin-top: 2px;
+}
+
 /* 직원 대기 상세: 반려와 승인을 항상 한 줄에 동일 폭으로 배치 */
 .screen > .sticky-cta > .btn-row {
   display: flex !important;
@@ -112,5 +142,9 @@
     min-height: 50px !important;
     padding: 11px 12px !important;
     font-size: 16px !important;
+  }
+
+  #app > .steps + .screen:has(> .card > .rules-head-inline) > .agree span {
+    font-size: 18px !important;
   }
 }
