@@ -18,10 +18,11 @@
     const url = typeof input === 'string' ? input : input?.url || '';
     if (/\/api\/auth\/(?:login|register|me|profile)(?:\?|$)/.test(url)) {
       try {
-        const cloned = response.clone();
-        const data = await cloned.json();
+        const data = await response.clone().json();
         if (response.ok && data?.user) cacheUser(data.user);
       } catch { /* 기존 요청 처리 유지 */ }
+    } else if (/\/api\/auth\/logout(?:\?|$)/.test(url) && response.ok) {
+      localStorage.removeItem(USER_CACHE_KEY);
     }
     return response;
   };
@@ -148,21 +149,15 @@
   function refineApplicationCompany() {
     const companyInput = document.querySelector('#app #company');
     if (!companyInput || companyInput.dataset.companyLinked === 'true') return;
-    const cached = readCachedUser();
-    if (cached?.company && !companyInput.value.trim()) {
-      companyInput.value = cached.company;
-      companyInput.dispatchEvent(new Event('input', { bubbles: true }));
-    }
     companyInput.dataset.companyLinked = 'true';
-    if (!cached) {
-      api('/auth/me').then(({ user }) => {
-        cacheUser(user);
-        if (user?.company && !companyInput.value.trim()) {
-          companyInput.value = user.company;
-          companyInput.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-      }).catch(() => {});
-    }
+
+    const cached = readCachedUser();
+    if (cached?.company && !companyInput.value.trim()) companyInput.value = cached.company;
+
+    api('/auth/me').then(({ user }) => {
+      cacheUser(user);
+      if (user?.company && !companyInput.value.trim()) companyInput.value = user.company;
+    }).catch(() => {});
   }
 
   async function refineHome() {
@@ -220,10 +215,14 @@
 
   const app = document.getElementById('app');
   if (!app) return;
-  let timer = null;
+  let scheduled = false;
   const schedule = () => {
-    clearTimeout(timer);
-    timer = setTimeout(refineHome, 0);
+    if (scheduled) return;
+    scheduled = true;
+    queueMicrotask(() => {
+      scheduled = false;
+      refineHome();
+    });
   };
   new MutationObserver(schedule).observe(app, { childList: true, subtree: true });
   schedule();
