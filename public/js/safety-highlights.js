@@ -86,6 +86,20 @@
     appbar.dataset.uiNormalized = 'true';
   }
 
+  function normalizeSafetyNotice() {
+    const screen = document.querySelector('#app > .steps + .screen');
+    const notice = screen?.querySelector(':scope > .rules-head');
+    const card = screen?.querySelector(':scope > .card');
+    const list = card?.querySelector('.rule-list');
+    if (!notice || !card || !list || card.dataset.noticeMoved === 'true') return;
+
+    const isRequired = notice.classList.contains('req');
+    notice.textContent = isRequired ? '위반시 안전지도서 발행' : '위반시 안전계도서 발행';
+    notice.classList.add('rules-head-inline');
+    card.insertBefore(notice, list);
+    card.dataset.noticeMoved = 'true';
+  }
+
   function suppressPasswordManagerWarning() {
     document.querySelectorAll('#a_password, #a_password2').forEach((input) => {
       input.setAttribute('autocomplete', 'off');
@@ -106,6 +120,7 @@
 
   function applyUiEnhancements() {
     normalizeAppbar();
+    normalizeSafetyNotice();
     applySafetyHighlights();
     suppressPasswordManagerWarning();
     normalizeProfileFields();
