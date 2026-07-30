@@ -50,6 +50,39 @@
   line-height: 1.3 !important;
 }
 
+/* 방문일자·계약업체 입력 영역을 기존보다 약 15% 축소 */
+.application-form-card > .field-h > .datebtn,
+.application-form-card > .field-h > input {
+  flex: 0 1 85% !important;
+  width: 85% !important;
+  max-width: 85% !important;
+  margin-left: auto !important;
+}
+
+/* 양식 버튼을 파일 선택 버튼 왼쪽에 같은 높이로 배치 */
+.application-form-card .doc-item .up {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+  flex-wrap: nowrap !important;
+}
+
+.application-form-card .doc-item .form-fill,
+.application-form-card .doc-item .form-dl,
+.application-form-card .doc-item .file-btn {
+  min-height: 44px !important;
+  height: 44px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  padding: 0 14px !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
 @media (max-width: 390px) {
   .flow-header-vehicle-image {
     width: 34px;
@@ -59,5 +92,18 @@
   .application-form-card .field-h .lb,
   .application-form-card .doc-item .dl {
     font-size: 16px !important;
+  }
+
+  .application-form-card .doc-item .up {
+    gap: 6px !important;
+  }
+
+  .application-form-card .doc-item .form-fill,
+  .application-form-card .doc-item .form-dl,
+  .application-form-card .doc-item .file-btn {
+    min-height: 42px !important;
+    height: 42px !important;
+    padding-left: 11px !important;
+    padding-right: 11px !important;
   }
 }
