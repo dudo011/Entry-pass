@@ -1,9 +1,18 @@
 (() => {
-  const HIGHLIGHTS = {
+  const REQUIRED_HIGHLIGHTS = {
     '1': ['안전모', '안전화'],
     '2': ['시동 정지', '파킹브레이크', '고임목'],
     '3': ['작업반경 내 출입 금지'],
     '5': ['안전대', '안전고리'],
+    '7': ['작업계획서', 'TBM'],
+    '8': ['아웃트리거'],
+    '9': ['해지장치'],
+  };
+
+  const OTHER_HIGHLIGHTS = {
+    '1': ['20km'],
+    '2': ['일단정지'],
+    '5': ['운전면허증, 화물운송종사자격증 소지'],
   };
 
   const VEHICLE_ICONS = {
@@ -14,7 +23,7 @@
     'PCBs처리용역 차량': '☣️',
   };
 
-  function appendHighlightedText(target, text, phrases) {
+  function appendHighlightedText(target, text, phrases, breakAfter) {
     let cursor = 0;
     const matches = [];
 
@@ -36,6 +45,29 @@
     });
 
     if (cursor < text.length) target.append(document.createTextNode(text.slice(cursor)));
+
+    if (breakAfter) {
+      const nodes = [...target.childNodes];
+      const fullText = target.textContent || '';
+      const breakIndex = fullText.indexOf(breakAfter) + breakAfter.length;
+      if (breakIndex > breakAfter.length - 1) {
+        let count = 0;
+        for (const node of nodes) {
+          const length = node.textContent?.length || 0;
+          if (count + length >= breakIndex) {
+            const localIndex = breakIndex - count;
+            if (node.nodeType === Node.TEXT_NODE && localIndex < length) {
+              const remainder = node.splitText(localIndex);
+              target.insertBefore(document.createElement('br'), remainder);
+            } else {
+              target.insertBefore(document.createElement('br'), node.nextSibling);
+            }
+            break;
+          }
+          count += length;
+        }
+      }
+    }
   }
 
   function applySafetyHighlights() {
@@ -44,12 +76,19 @@
 
       const number = item.querySelector('.n')?.textContent?.trim();
       const textElement = item.querySelector('.n + span');
-      const phrases = HIGHLIGHTS[number];
+      const card = item.closest('.card');
+      const isOther = !!card?.querySelector('.rules-head-inline.other');
+      const phrases = (isOther ? OTHER_HIGHLIGHTS : REQUIRED_HIGHLIGHTS)[number];
       if (!textElement || !phrases) return;
 
       const text = textElement.textContent || '';
       textElement.replaceChildren();
-      appendHighlightedText(textElement, text, phrases);
+      appendHighlightedText(
+        textElement,
+        text,
+        phrases,
+        !isOther && number === '9' ? '고정장치 확인,' : null,
+      );
       item.dataset.highlighted = 'true';
     });
   }
@@ -100,6 +139,31 @@
     card.dataset.noticeMoved = 'true';
   }
 
+  function normalizeAgreementText() {
+    const agreeText = document.querySelector('#agreeChk + span');
+    if (!agreeText || agreeText.dataset.normalized === 'true') return;
+
+    agreeText.replaceChildren(
+      document.createTextNode('위 '),
+      makeEmphasis('안전수칙'),
+      document.createTextNode('을 모두 '),
+      makeEmphasis('확인'),
+      document.createTextNode('하였으며,'),
+      document.createElement('br'),
+      document.createTextNode('이를 준수할 것에 '),
+      makeEmphasis('동의'),
+      document.createTextNode('합니다.'),
+    );
+    agreeText.dataset.normalized = 'true';
+  }
+
+  function makeEmphasis(text) {
+    const strong = document.createElement('strong');
+    strong.className = 'agreement-highlight';
+    strong.textContent = text;
+    return strong;
+  }
+
   function suppressPasswordManagerWarning() {
     document.querySelectorAll('#a_password, #a_password2').forEach((input) => {
       input.setAttribute('autocomplete', 'off');
@@ -121,6 +185,7 @@
   function applyUiEnhancements() {
     normalizeAppbar();
     normalizeSafetyNotice();
+    normalizeAgreementText();
     applySafetyHighlights();
     suppressPasswordManagerWarning();
     normalizeProfileFields();
