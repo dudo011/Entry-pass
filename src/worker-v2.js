@@ -83,6 +83,16 @@ app.put('/api/requests/:id', async (c) => {
   const purpose = String(form.get('purpose') ?? row.purpose ?? '').trim();
   if (!validVisitDate(visitAt)) return c.json({ error: '출입날짜를 선택해 주세요.' }, 400);
 
+  const files = form.getAll('documents').filter((file) => file && typeof file !== 'string' && file.name);
+  const preparedFiles = [];
+  for (const file of files) {
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    if (bytes.byteLength > MAX_DOC_BYTES) {
+      return c.json({ error: `${file.name} 파일은 5MB를 초과할 수 없습니다.` }, 400);
+    }
+    preparedFiles.push({ file, bytes });
+  }
+
   const changes = [];
   const addChange = (field, label, before, after) => {
     if (String(before ?? '') !== String(after ?? '')) changes.push({ field, label, before: before ?? '', after: after ?? '' });
@@ -91,14 +101,13 @@ app.put('/api/requests/:id', async (c) => {
   addChange('company', '소속업체', row.company || '', company);
   addChange('purpose', '방문목적', row.purpose || '', purpose);
 
-  const files = form.getAll('documents').filter((file) => file && typeof file !== 'string' && file.name);
-  if (files.length) {
+  if (preparedFiles.length) {
     const oldDocs = await c.env.DB.prepare('SELECT label FROM documents WHERE request_id = ?').bind(id).all();
     changes.push({
       field: 'documents',
       label: '제출서류',
       before: (oldDocs.results || []).map((d) => d.label).join(', ') || '없음',
-      after: files.map((file) => file.name).join(', '),
+      after: preparedFiles.map(({ file }) => file.name).join(', '),
     });
   }
 
@@ -121,13 +130,9 @@ app.put('/api/requests/:id', async (c) => {
      WHERE id=?`)
     .bind(visitAt, company, purpose, JSON.stringify(history), id).run();
 
-  if (files.length) {
+  if (preparedFiles.length) {
     await c.env.DB.prepare('DELETE FROM documents WHERE request_id = ?').bind(id).run();
-    for (const file of files) {
-      const bytes = new Uint8Array(await file.arrayBuffer());
-      if (bytes.byteLength > MAX_DOC_BYTES) {
-        return c.json({ error: `${file.name} 파일은 5MB를 초과할 수 없습니다.` }, 400);
-      }
+    for (const { file, bytes } of preparedFiles) {
       await c.env.DB.prepare(
         `INSERT INTO documents (id, request_id, label, content_type, data, size, created_at, retain_until)
          VALUES (?,?,?,?,?,?,?,?)`)
