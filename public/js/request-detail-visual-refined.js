@@ -35,10 +35,7 @@
 
     const rows = card.querySelectorAll(':scope > .result-detail');
     const dateRow = rows[1];
-    const purposeRow = card.querySelector('.result-purpose');
-
-    if (purposeRow) purposeRow.classList.add('result-purpose-emphasized');
-    if (!dateRow) return;
+    if (!dateRow || dateRow.dataset.weekdayApplied === 'true') return;
 
     const match = dateRow.textContent.trim().match(/^(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})\.(?:\s*\([일월화수목금토]\))?$/);
     if (!match) return;
