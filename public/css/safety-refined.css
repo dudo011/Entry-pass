@@ -18,20 +18,20 @@
   background: #F8FAFC;
   color: #0F172A;
   font-family: Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  padding-top: 20px;
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
 }
 
 #app > .steps + .screen:has(> .rules-head) > .rules-head {
-  margin: 0 0 16px;
-  padding: 14px 16px;
+  margin: 0 0 8px;
+  padding: 9px 12px;
   border: 0;
-  border-radius: 14px;
+  border-radius: 12px;
   background: #FEF2F2;
   color: #DC2626;
   font-size: 19px;
   font-weight: 800;
-  line-height: 1.4;
-  letter-spacing: -0.01em;
+  line-height: 1.35;
+  letter-spacing: -0.05em;
 }
 
 #app > .steps + .screen:has(> .rules-head) > .rules-head.req,
@@ -42,23 +42,23 @@
 }
 
 #app > .steps + .screen:has(> .rules-head) > .card {
-  margin-bottom: 18px;
-  padding: 8px 20px;
+  margin-bottom: 8px;
+  padding: 3px 12px;
   background: #FFFFFF;
   border: 0;
-  border-radius: 18px;
+  border-radius: 16px;
   box-shadow: 0 10px 25px rgba(0,0,0,0.06);
 }
 
 #app > .steps + .screen:has(> .rules-head) .rule-list li {
-  gap: 14px;
-  padding: 18px 0;
+  gap: 9px;
+  padding: 9px 0;
   border-bottom: 1px solid #E2E8F0;
   color: #0F172A;
   font-size: 18px;
   font-weight: 600;
   line-height: 1.55;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.05em;
 }
 
 #app > .steps + .screen:has(> .rules-head) .rule-list li:last-child {
@@ -67,44 +67,46 @@
 
 #app > .steps + .screen:has(> .rules-head) .rule-list li .n,
 #app > .steps + .screen:has(> .rules-head) .rule-list li .n.other {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   margin-top: 1px;
   background: #EF4444;
   color: #FFFFFF;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
 }
 
 #app > .steps + .screen:has(> .rules-head) > .agree {
   margin-top: 0;
-  margin-bottom: 8px;
-  padding: 15px 16px;
+  margin-bottom: 4px;
+  padding: 9px 11px;
   background: #FFFFFF;
   border: 1px solid #E2E8F0;
-  border-radius: 14px;
+  border-radius: 12px;
 }
 
 #app > .steps + .screen:has(> .rules-head) > .agree span {
   color: #0F172A;
   font-size: 17px;
   font-weight: 600;
-  line-height: 1.5;
+  line-height: 1.45;
+  letter-spacing: -0.05em;
 }
 
 #app > .steps + .screen:has(> .rules-head) > .sticky-cta {
-  padding-top: 16px;
+  padding: 6px 0 calc(2px + env(safe-area-inset-bottom));
   background: linear-gradient(to top, #F8FAFC 72%, transparent);
 }
 
 #app > .steps + .screen:has(> .rules-head) #rulesNext {
   min-height: 56px;
-  padding: 0 18px;
+  padding: 0 14px;
   border-radius: 16px;
   background: #2563EB;
   color: #FFFFFF;
   font-size: 18px;
   font-weight: 700;
+  letter-spacing: -0.05em;
 }
 
 #app > .steps + .screen:has(> .rules-head) #rulesNext:disabled {
