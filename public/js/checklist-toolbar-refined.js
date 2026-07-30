@@ -1,8 +1,8 @@
 (() => {
   const style = document.createElement('style');
   style.textContent = `
-    #app .annot-tools .swatches{display:none!important}
-    #app .annot-hint{
+    .annot-tools .swatches{display:none!important}
+    .annot-hint{
       font-size:18px!important;
       line-height:1.45!important;
       font-weight:700!important;
@@ -10,17 +10,15 @@
       padding-bottom:max(12px,env(safe-area-inset-bottom))!important
     }
     @media(max-width:390px){
-      #app .annot-hint{font-size:17px!important}
+      .annot-hint{font-size:17px!important}
     }
   `;
   document.head.appendChild(style);
 
   function refineChecklistToolbar() {
-    document.querySelectorAll('#app .annot-tools .swatches').forEach((swatches) => swatches.remove());
+    document.querySelectorAll('.annot-tools .swatches').forEach((swatches) => swatches.remove());
   }
 
-  const app = document.getElementById('app');
-  if (!app) return;
-  new MutationObserver(refineChecklistToolbar).observe(app, { childList: true, subtree: true });
+  new MutationObserver(refineChecklistToolbar).observe(document.body, { childList: true, subtree: true });
   refineChecklistToolbar();
 })();
