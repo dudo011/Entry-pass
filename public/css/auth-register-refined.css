@@ -1,0 +1,41 @@
+/* 회원가입 화면 전용 보정 */
+#app:has(#a_password2) .card > .field-h {
+  gap: 12px !important;
+}
+
+#app:has(#a_password2) .card > .field-h .lb {
+  width: 104px !important;
+  min-width: 104px !important;
+  flex: 0 0 104px !important;
+  font-size: 17px !important;
+  font-weight: 700 !important;
+  line-height: 1.25 !important;
+}
+
+#app:has(#a_password2) .card > .field-h > input,
+#app:has(#a_password2) .card > .field-h > select {
+  flex: 0 1 82% !important;
+  width: 82% !important;
+  max-width: 82% !important;
+  margin-left: auto !important;
+}
+
+@media (max-width: 390px) {
+  #app:has(#a_password2) .card > .field-h {
+    gap: 8px !important;
+  }
+
+  #app:has(#a_password2) .card > .field-h .lb {
+    width: 92px !important;
+    min-width: 92px !important;
+    flex-basis: 92px !important;
+    font-size: 16px !important;
+  }
+
+  #app:has(#a_password2) .card > .field-h > input,
+  #app:has(#a_password2) .card > .field-h > select {
+    flex-basis: 80% !important;
+    width: 80% !important;
+    max-width: 80% !important;
+  }
+}
