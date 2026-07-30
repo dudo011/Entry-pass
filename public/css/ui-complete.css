@@ -1,0 +1,188 @@
+/* Entry-pass 전체 화면 최종 UI 레이어 */
+:root {
+  --bg: #F8FAFC;
+  --surface: #FFFFFF;
+  --surface-2: #F1F5F9;
+  --border: #E2E8F0;
+  --text: #0F172A;
+  --text-muted: #64748B;
+  --primary: #2563EB;
+  --primary-dark: #1D4ED8;
+  --success: #16A34A;
+  --success-bg: #F0FDF4;
+  --danger: #DC2626;
+  --danger-bg: #FEF2F2;
+  --warn: #D97706;
+  --warn-bg: #FFFBEB;
+  --header: #0F172A;
+  --radius: 16px;
+  --radius-sm: 12px;
+  --shadow: 0 10px 25px rgba(15,23,42,.07);
+  --screen-x: 16px;
+}
+
+html, body { background: var(--bg); }
+body, button, input, select, textarea { font-family: Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important; letter-spacing: 0 !important; }
+body { color: var(--text); font-size: 17px; line-height: 1.5; }
+#app { min-height: 100dvh; background: var(--bg); }
+
+/* 모든 앱 헤더: 내부 뒤로가기 제거, 한 줄 중심 구조 */
+.appbar {
+  min-height: 76px !important;
+  padding: max(18px, env(safe-area-inset-top)) 20px 18px !important;
+  background: var(--header) !important;
+  box-shadow: none !important;
+  gap: 12px !important;
+}
+.appbar .back { display: none !important; }
+.appbar > div { min-width: 0; flex: 1; }
+.appbar h1 { margin: 0 !important; color: #fff; font-size: 26px !important; font-weight: 800 !important; line-height: 1.2 !important; }
+.appbar .sub { margin-top: 4px !important; color: #CBD5E1 !important; opacity: 1 !important; font-size: 16px !important; font-weight: 600 !important; line-height: 1.3 !important; }
+.appbar .link-btn { min-height: 42px; padding: 9px 13px !important; border-radius: 12px !important; background: rgba(255,255,255,.10) !important; font-weight: 700 !important; }
+
+/* 차량 신청 플로우 헤더 */
+.appbar.vehicle-flow-appbar { min-height: 76px !important; }
+.vehicle-appbar-title { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.vehicle-appbar-icon { flex: none; font-size: 34px; line-height: 1; }
+.vehicle-appbar-title h1 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* 진행 표시 */
+.steps { gap: 8px !important; padding: 16px var(--screen-x) 4px !important; background: var(--bg) !important; }
+.steps .dot { height: 5px !important; border-radius: 999px !important; background: #E2E8F0 !important; }
+.steps .dot.done { background: var(--primary) !important; }
+
+.screen { padding: 18px var(--screen-x) calc(28px + env(safe-area-inset-bottom)) !important; }
+.section-title { margin: 4px 2px 12px !important; color: var(--text) !important; font-size: 20px !important; font-weight: 800 !important; line-height: 1.35 !important; }
+h2.title { font-size: 26px !important; font-weight: 800 !important; }
+p.lead { font-size: 17px !important; line-height: 1.55 !important; }
+
+/* 카드 */
+.card, .req-card, .mini-card, .doc-thumb-item {
+  border: 0 !important;
+  border-radius: var(--radius) !important;
+  background: var(--surface) !important;
+  box-shadow: var(--shadow) !important;
+}
+.card { padding: 17px !important; margin-bottom: 17px !important; }
+.card .row, .req-card .row { padding: 7px 0 !important; gap: 14px !important; font-size: 17px !important; line-height: 1.45 !important; }
+.card .row .k, .req-card .row .k { color: var(--text-muted) !important; font-weight: 600 !important; }
+.card .row span:last-child, .req-card .row span:last-child { font-weight: 650; }
+
+/* 랜딩 */
+.hero { padding: 52px 18px 16px !important; }
+.hero .logo { font-size: 60px !important; }
+.hero h1 { margin: 18px 0 8px !important; font-size: 29px !important; font-weight: 800 !important; }
+.hero p { margin-top: 18px !important; padding: 15px 18px !important; border: 1px solid #DBEAFE !important; border-radius: 16px !important; background: #EFF6FF !important; font-size: 18px !important; font-weight: 650 !important; }
+.role-grid { gap: 14px !important; padding: 18px var(--screen-x) !important; }
+.role-btn { min-height: 90px !important; padding: 18px 17px !important; border: 0 !important; border-radius: var(--radius) !important; box-shadow: var(--shadow) !important; }
+.role-btn .emoji { width: 48px !important; font-size: 35px !important; }
+.role-btn .rt { font-size: 21px !important; font-weight: 800 !important; }
+.role-btn .rd { font-size: 16px !important; font-weight: 550 !important; color: var(--text-muted) !important; }
+
+/* 차량 선택 */
+.type-grid { gap: 13px !important; }
+.type-card { min-height: 80px !important; padding: 16px !important; border: 0 !important; border-left: 5px solid var(--tc, var(--primary)) !important; border-radius: var(--radius) !important; box-shadow: var(--shadow) !important; }
+.type-card .ico { width: 44px !important; font-size: 35px !important; text-align: center; }
+.type-card .tn { font-size: 20px !important; font-weight: 750 !important; }
+.my-tag { border-radius: 999px !important; }
+
+/* 입력 폼 */
+label.field { margin-bottom: 15px !important; }
+.field-h { gap: 12px !important; margin-bottom: 14px !important; }
+.field-h .lb { width: 98px !important; flex: none; font-size: 16px !important; font-weight: 700 !important; }
+label.field .lb { margin-bottom: 7px !important; font-size: 16px !important; font-weight: 700 !important; }
+input[type=text], input[type=tel], input[type=password], input[type=date], input[type=datetime-local], textarea, select, .datebtn {
+  min-height: 56px !important;
+  padding: 13px 14px !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 13px !important;
+  background: #fff !important;
+  color: var(--text) !important;
+  font-size: 18px !important;
+  font-weight: 550 !important;
+  box-shadow: 0 1px 2px rgba(15,23,42,.03) !important;
+}
+input:focus, textarea:focus, select:focus, .datebtn:focus-visible { border-color: var(--primary) !important; box-shadow: 0 0 0 4px rgba(37,99,235,.12) !important; outline: none !important; }
+.hint, .switch, .muted, .empty { font-size: 16px !important; color: var(--text-muted) !important; }
+
+/* 버튼 */
+.btn { min-height: 56px !important; padding: 0 17px !important; border-radius: 16px !important; font-size: 18px !important; font-weight: 750 !important; }
+.btn-primary { background: var(--primary) !important; color: #fff !important; }
+.btn-primary:disabled { background: #94A3B8 !important; }
+.btn-primary:active:not(:disabled) { background: var(--primary-dark) !important; transform: translateY(1px); }
+.btn-ghost { border: 1px solid var(--border) !important; background: #fff !important; }
+.big-cta { min-height: 62px !important; margin-bottom: 18px !important; font-size: 20px !important; }
+.sticky-cta { position: sticky !important; bottom: 0; z-index: 8; margin-top: auto; padding: 14px 0 calc(6px + env(safe-area-inset-bottom)) !important; background: linear-gradient(to top, var(--bg) 76%, transparent) !important; }
+
+/* 안전수칙 */
+.rules-head { margin: 2px 0 14px !important; padding: 13px 15px !important; border: 0 !important; border-radius: 14px !important; font-size: 19px !important; font-weight: 800 !important; line-height: 1.4 !important; }
+.rules-head.req, .rules-head.other { background: var(--danger-bg) !important; color: var(--danger) !important; }
+.rule-list li { gap: 12px !important; padding: 16px 0 !important; font-size: 19px !important; font-weight: 600 !important; line-height: 1.55 !important; }
+.rule-list li .n, .rule-list li .n.other { width: 27px !important; height: 27px !important; margin-top: 2px !important; background: #EF4444 !important; color: #fff !important; font-size: 14px !important; font-weight: 800 !important; }
+.rule-highlight { color: var(--primary) !important; font-weight: 750 !important; }
+.agree { gap: 13px !important; padding: 14px !important; border: 1px solid var(--border) !important; border-radius: 14px !important; background: #fff !important; }
+.agree input { width: 22px !important; height: 22px !important; }
+.agree span { color: var(--text) !important; font-size: 17px !important; font-weight: 600 !important; line-height: 1.5 !important; }
+
+/* 차량 동선 */
+.route-summary { margin-bottom: 16px !important; padding: 15px 16px !important; border: 1px solid #DBEAFE !important; border-radius: 14px !important; background: #EFF6FF !important; font-size: 18px !important; font-weight: 700 !important; line-height: 1.5 !important; }
+.route-list li { min-height: 58px !important; padding: 9px 0 18px 38px !important; margin-left: 13px !important; border-left: 3px solid #DBEAFE !important; font-size: 18px !important; font-weight: 600 !important; line-height: 1.55 !important; }
+.route-list li:last-child { border-left-color: transparent !important; }
+.route-list li::before { left: -15px !important; top: 5px !important; width: 28px !important; height: 28px !important; background: var(--primary) !important; font-size: 15px !important; font-weight: 800 !important; }
+
+/* 제출서류 */
+.doc-item { gap: 12px !important; padding: 14px 0 !important; }
+.doc-item .dl { font-size: 17px !important; font-weight: 700 !important; }
+.doc-item .dl-note, .doc-item .badge { font-size: 14px !important; border-radius: 8px !important; }
+.file-btn { min-height: 44px !important; display: inline-flex !important; align-items: center; padding: 9px 12px !important; border-radius: 11px !important; font-size: 15px !important; font-weight: 700 !important; }
+.form-fill, .form-dl { min-height: 34px; display: inline-flex; align-items: center; border-radius: 9px !important; }
+
+/* 기사 홈·이력 */
+.profile-card { padding: 17px !important; }
+.profile-card .section-title { margin: 0 0 10px !important; }
+.mini-card { min-height: 78px; padding: 15px 16px !important; margin-bottom: 12px !important; }
+.mini-card .veh { font-size: 18px !important; font-weight: 800 !important; }
+.mini-card .meta { margin-top: 7px !important; font-size: 15px !important; color: var(--text-muted) !important; }
+
+/* 상태·결과 */
+.result { padding: 18px 4px 24px !important; text-align: center; }
+.result .big-ico { font-size: 66px !important; }
+.result h2 { margin: 15px 0 7px !important; font-size: 26px !important; font-weight: 800 !important; }
+.result p { font-size: 16px !important; }
+.passno { padding: 10px 18px !important; border: 0 !important; border-radius: 13px !important; box-shadow: var(--shadow-soft) !important; font-size: 23px !important; }
+.status-pill { padding: 7px 12px !important; border-radius: 999px !important; font-size: 15px !important; font-weight: 750 !important; }
+
+/* 직원 화면 */
+.tabs { gap: 9px !important; padding: 15px var(--screen-x) 2px !important; }
+.tab { min-height: 46px !important; padding: 10px 8px !important; border: 1px solid var(--border) !important; border-radius: 12px !important; background: #fff !important; font-size: 16px !important; font-weight: 700 !important; }
+.tab.active { background: var(--header) !important; border-color: var(--header) !important; color: #fff !important; }
+.req-card { padding: 16px !important; margin-bottom: 13px !important; }
+.req-card .veh { font-size: 19px !important; font-weight: 800 !important; }
+.req-card .meta { font-size: 15px !important; }
+.req-card .docs a { min-height: 36px; display: inline-flex; align-items: center; border-radius: 9px !important; }
+.date-range { gap: 10px !important; }
+.stat-summary { padding: 5px 2px 14px !important; }
+.link-btn2 { min-height: 42px !important; border-radius: 11px !important; }
+
+/* 달력·모달·토스트 */
+.modal-backdrop { background: rgba(15,23,42,.58) !important; }
+.cal-sheet { border-radius: 24px 24px 0 0 !important; padding: 20px 18px calc(20px + env(safe-area-inset-bottom)) !important; }
+.cal-head .mtitle { font-size: 21px !important; font-weight: 800 !important; }
+.cal-nav { width: 42px !important; height: 42px !important; border-radius: 12px !important; }
+.cal-cell { font-size: 17px !important; border-radius: 11px !important; }
+.toast { max-width: calc(100% - 32px) !important; bottom: calc(24px + env(safe-area-inset-bottom)) !important; padding: 13px 18px !important; border-radius: 14px !important; font-size: 16px !important; }
+
+/* 넓은 화면 */
+@media (min-width: 600px) {
+  body { background: #E2E8F0; }
+  #app { box-shadow: 0 0 40px rgba(15,23,42,.10); }
+}
+
+@media (max-width: 390px) {
+  :root { --screen-x: 14px; }
+  .appbar { padding-left: 16px !important; padding-right: 16px !important; }
+  .appbar h1 { font-size: 24px !important; }
+  .vehicle-appbar-icon { font-size: 31px; }
+  .field-h { align-items: stretch !important; flex-direction: column !important; gap: 7px !important; }
+  .field-h .lb { width: auto !important; }
+}
