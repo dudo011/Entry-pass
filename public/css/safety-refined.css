@@ -18,6 +18,35 @@
   font-family: Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+/* 필수 안전수칙 화면만: 차량 아이콘 + 제목 한 줄, 앱 내부 뒤로가기 버튼 없음 */
+#app:has(> .steps + .screen > .rules-head.req) > .appbar.safety-compact-appbar {
+  min-height: 0;
+  padding: 18px 20px;
+  align-items: center;
+}
+
+#app:has(> .steps + .screen > .rules-head.req) .safety-appbar-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+#app:has(> .steps + .screen > .rules-head.req) .safety-appbar-icon {
+  flex: 0 0 auto;
+  font-size: 34px;
+  line-height: 1;
+}
+
+#app:has(> .steps + .screen > .rules-head.req) .safety-appbar-title h1 {
+  margin: 0;
+  color: #FFFFFF;
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
 #app:has(> .steps + .screen > .rules-head) > .steps {
   flex: 0 0 auto;
 }
@@ -44,7 +73,7 @@
   font-size: 19px;
   font-weight: 800;
   line-height: 1.35;
-  letter-spacing: -0.05em;
+  letter-spacing: 0;
 }
 
 #app > .steps + .screen:has(> .rules-head) > .rules-head.req,
@@ -72,7 +101,7 @@
   font-size: 19px;
   font-weight: 600;
   line-height: 1.55;
-  letter-spacing: -0.05em;
+  letter-spacing: 0;
 }
 
 #app > .steps + .screen:has(> .rules-head) .rule-list li:last-child {
@@ -110,7 +139,7 @@
   font-size: 17px;
   font-weight: 600;
   line-height: 1.45;
-  letter-spacing: -0.05em;
+  letter-spacing: 0;
 }
 
 #app > .steps + .screen:has(> .rules-head) > .sticky-cta {
@@ -128,7 +157,7 @@
   color: #FFFFFF;
   font-size: 18px;
   font-weight: 700;
-  letter-spacing: -0.05em;
+  letter-spacing: 0;
 }
 
 #app > .steps + .screen:has(> .rules-head) #rulesNext:disabled {
