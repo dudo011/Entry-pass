@@ -90,6 +90,14 @@
       card.remove();
     });
 
+    mergedCard.querySelectorAll('.doc-item').forEach((item) => {
+      const uploadArea = item.querySelector('.up');
+      const formButton = item.querySelector('.form-fill, .form-dl');
+      if (uploadArea && formButton && !uploadArea.contains(formButton)) {
+        uploadArea.insertBefore(formButton, uploadArea.firstChild);
+      }
+    });
+
     screen.dataset.formMerged = 'true';
   }
 
