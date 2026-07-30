@@ -116,7 +116,8 @@
     const originalSub = appbar.querySelector('.sub')?.textContent?.trim() || '';
     const vehicleIcon = VEHICLE_ICONS[originalTitle];
     const stopOnlyVehicle = originalTitle === '기자재 납품차량' || originalTitle === '불용품 매각차량';
-    const displaySub = stopOnlyVehicle
+    const isSafetyPage = originalSub.includes('필수 안전수칙') || originalSub.includes('기타 안전수칙');
+    const displaySub = stopOnlyVehicle && isSafetyPage
       ? (originalSub.includes('기타') ? '출입차량 안전수칙(2)' : '출입차량 안전수칙(1)')
       : originalSub;
 
@@ -137,7 +138,7 @@
       appbar.replaceChildren(title);
       if (logoutButton) appbar.append(logoutButton);
       appbar.classList.add('vehicle-flow-appbar');
-      if (stopOnlyVehicle) appbar.dataset.stopOnlySafety = 'true';
+      if (stopOnlyVehicle && isSafetyPage) appbar.dataset.stopOnlySafety = 'true';
     }
 
     appbar.dataset.uiNormalized = 'true';
@@ -194,6 +195,17 @@
     card.dataset.noticeMoved = 'true';
   }
 
+  function normalizeContinuousSafetyNumbers() {
+    const appbar = document.querySelector('#app > .appbar');
+    if (appbar?.dataset.stopOnlySafety !== 'true') return;
+
+    const heading = appbar.querySelector('h1')?.textContent?.trim() || '';
+    const start = heading === '출입차량 안전수칙(2)' ? 7 : 1;
+    document.querySelectorAll('#app .rule-list li .n').forEach((number, index) => {
+      number.textContent = String(start + index);
+    });
+  }
+
   function normalizeAgreementText() {
     const agreeText = document.querySelector('#agreeChk + span');
     if (!agreeText || agreeText.dataset.normalized === 'true') return;
@@ -243,6 +255,7 @@
     normalizeSafetyNotice();
     normalizeAgreementText();
     applySafetyHighlights();
+    normalizeContinuousSafetyNumbers();
     suppressPasswordManagerWarning();
     normalizeProfileFields();
   }
