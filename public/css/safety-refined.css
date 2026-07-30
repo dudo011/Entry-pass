@@ -6,15 +6,27 @@
  * 다른 화면의 공통 컴포넌트에는 영향을 주지 않습니다.
  */
 #app:has(> .steps + .screen > .rules-head) {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
   background: #F8FAFC;
 }
 
 #app:has(> .steps + .screen > .rules-head) > .appbar {
+  flex: 0 0 auto;
   background: #0F172A;
   font-family: Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+#app:has(> .steps + .screen > .rules-head) > .steps {
+  flex: 0 0 auto;
+}
+
 #app > .steps + .screen:has(> .rules-head) {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   background: #F8FAFC;
   color: #0F172A;
   font-family: Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -22,6 +34,7 @@
 }
 
 #app > .steps + .screen:has(> .rules-head) > .rules-head {
+  flex: 0 0 auto;
   margin: 0 0 14px;
   padding: 11px 14px;
   border: 0;
@@ -42,6 +55,7 @@
 }
 
 #app > .steps + .screen:has(> .rules-head) > .card {
+  flex: 0 0 auto;
   margin-bottom: 16px;
   padding: 6px 15px;
   background: #FFFFFF;
@@ -77,8 +91,9 @@
 }
 
 #app > .steps + .screen:has(> .rules-head) > .agree {
+  flex: 0 0 auto;
   margin-top: 0;
-  margin-bottom: 10px;
+  margin-bottom: 14px;
   padding: 11px 13px;
   background: #FFFFFF;
   border: 1px solid #E2E8F0;
@@ -94,6 +109,8 @@
 }
 
 #app > .steps + .screen:has(> .rules-head) > .sticky-cta {
+  flex: 0 0 auto;
+  margin-top: auto;
   padding: 10px 0 calc(4px + env(safe-area-inset-bottom));
   background: linear-gradient(to top, #F8FAFC 72%, transparent);
 }
