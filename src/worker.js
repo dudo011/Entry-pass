@@ -63,6 +63,25 @@ function addYears(iso, years) {
   return d.toISOString();
 }
 
+function visitDateCode(value) {
+  const key = String(value || '').slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(key)) return null;
+  return key.slice(2).replaceAll('-', '');
+}
+
+async function nextPassNo(env, vehicleTypeId, visitAt) {
+  const typeIndex = vehicleTypes.findIndex((type) => type.id === vehicleTypeId);
+  const letter = String.fromCharCode(65 + Math.max(0, typeIndex));
+  const dateCode = visitDateCode(visitAt);
+  if (!dateCode) throw new Error('출입날짜 형식이 올바르지 않습니다.');
+  const prefix = `${letter}-${dateCode}-`;
+  const latest = await env.DB.prepare(
+    'SELECT pass_no FROM requests WHERE pass_no LIKE ? ORDER BY pass_no DESC LIMIT 1')
+    .bind(`${prefix}%`).first();
+  const lastSequence = latest?.pass_no ? Number(String(latest.pass_no).split('-').at(-1)) || 0 : 0;
+  return `${prefix}${String(lastSequence + 1).padStart(3, '0')}`;
+}
+
 const publicUser = (u) => ({
   id: u.id, role: u.role, staffRole: u.staff_role, loginId: u.login_id, name: u.name,
   phone: u.phone, company: u.company, defaultVehicleNumber: u.default_vehicle_number,
@@ -140,12 +159,11 @@ app.post('/api/auth/register', async (c) => {
 
   const { salt, hash } = await hashPassword(b.password);
   const id = randHex(8);
-  // 아이디를 차량번호로 사용 (기사가 여러 업체 스팟 소속이라 소속업체는 회원가입에서 제외)
   await c.env.DB.prepare(
     `INSERT INTO users (id, role, login_id, name, salt, hash, phone, company,
       default_vehicle_number, default_vehicle_type_id, created_at)
      VALUES (?,?,?,?,?,?,?,?,?,?,?)`)
-    .bind(id, 'driver', b.loginId, b.name, salt, hash, b.phone, '',
+    .bind(id, 'driver', b.loginId, b.name, salt, hash, b.phone, b.company || '',
       b.loginId, b.defaultVehicleTypeId || '', nowISO()).run();
 
   const token = randHex(24);
@@ -177,16 +195,31 @@ app.get('/api/auth/me', requireAuth(), (c) => c.json({ user: publicUser(c.get('u
 app.put('/api/auth/profile', requireAuth('driver'), async (c) => {
   const b = await c.req.json().catch(() => ({}));
   const u = c.get('user');
+  if (!b.name || !b.phone) return c.json({ error: '이름과 연락처를 입력해 주세요.' }, 400);
+  if (b.password && String(b.password).length < 4) {
+    return c.json({ error: '비밀번호는 4자 이상이어야 합니다.' }, 400);
+  }
+
   const fields = {
-    name: b.name ?? u.name, phone: b.phone ?? u.phone, company: b.company ?? u.company,
-    default_vehicle_number: b.defaultVehicleNumber ?? u.default_vehicle_number,
+    name: b.name ?? u.name,
+    phone: b.phone ?? u.phone,
+    company: b.company ?? u.company,
     default_vehicle_type_id: b.defaultVehicleTypeId ?? u.default_vehicle_type_id,
   };
-  await c.env.DB.prepare(
-    `UPDATE users SET name=?, phone=?, company=?, default_vehicle_number=?, default_vehicle_type_id=?
-     WHERE id=?`)
-    .bind(fields.name, fields.phone, fields.company, fields.default_vehicle_number,
-      fields.default_vehicle_type_id, u.id).run();
+
+  if (b.password) {
+    const { salt, hash } = await hashPassword(String(b.password));
+    await c.env.DB.prepare(
+      `UPDATE users SET name=?, phone=?, company=?, default_vehicle_type_id=?, salt=?, hash=?
+       WHERE id=?`)
+      .bind(fields.name, fields.phone, fields.company, fields.default_vehicle_type_id,
+        salt, hash, u.id).run();
+  } else {
+    await c.env.DB.prepare(
+      `UPDATE users SET name=?, phone=?, company=?, default_vehicle_type_id=? WHERE id=?`)
+      .bind(fields.name, fields.phone, fields.company, fields.default_vehicle_type_id, u.id).run();
+  }
+
   const user = await c.env.DB.prepare('SELECT * FROM users WHERE id = ?').bind(u.id).first();
   return c.json({ user: publicUser(user) });
 });
@@ -208,6 +241,9 @@ app.post('/api/requests', requireAuth('driver'), async (c) => {
   if (!get('driverName') || !get('phone') || !get('vehicleNumber')) {
     return c.json({ error: '기사명, 연락처, 차량번호는 필수입니다.' }, 400);
   }
+  if (!visitDateCode(get('visitAt'))) {
+    return c.json({ error: '출입날짜를 선택해 주세요.' }, 400);
+  }
   if (String(get('agreedRequired')) !== 'true') {
     return c.json({ error: '필수 안전수칙 동의가 필요합니다.' }, 400);
   }
@@ -216,7 +252,7 @@ app.post('/api/requests', requireAuth('driver'), async (c) => {
   const created = nowISO();
   const retainUntil = addYears(created, RETENTION_YEARS);
   const id = randHex(8);
-  const passNo = 'EP-' + Date.now().toString().slice(-8);
+  const passNo = await nextPassNo(c.env, vType.id, get('visitAt'));
   const history = JSON.stringify([{ at: created, action: 'created', by: user.name }]);
 
   await c.env.DB.prepare(
@@ -263,7 +299,7 @@ app.get('/api/requests/export.csv', requireStaff('admin'), async (c) => {
     'reviewed_at', 'reject_reason', 'retain_until'];
   const esc = (v) => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
   const body = (rows.results || []).map((r) => cols.map((k) => esc(r[k])).join(',')).join('\n');
-  const csv = '﻿' + cols.join(',') + '\n' + body;
+  const csv = '\ufeff' + cols.join(',') + '\n' + body;
   return new Response(csv, {
     headers: {
       'Content-Type': 'text/csv; charset=utf-8',
