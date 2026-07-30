@@ -67,6 +67,22 @@ async function shapeRequest(env, row) {
   };
 }
 
+// 승인 대기 중인 신청만 운전기사가 직접 삭제할 수 있다.
+app.delete('/api/requests/:id', async (c) => {
+  const user = await getDriver(c);
+  if (!user) return c.json({ error: '로그인이 필요합니다.' }, 401);
+
+  const id = c.req.param('id');
+  const row = await c.env.DB.prepare('SELECT * FROM requests WHERE id = ?').bind(id).first();
+  if (!row) return c.json({ error: '신청을 찾을 수 없습니다.' }, 404);
+  if (row.driver_user_id !== user.id) return c.json({ error: '권한이 없습니다.' }, 403);
+  if (row.status !== 'pending') return c.json({ error: '승인 대기 중인 신청만 삭제할 수 있습니다.' }, 409);
+
+  await c.env.DB.prepare('DELETE FROM documents WHERE request_id = ?').bind(id).run();
+  await c.env.DB.prepare('DELETE FROM requests WHERE id = ?').bind(id).run();
+  return c.json({ ok: true, id });
+});
+
 // 운전기사가 기존 신청을 수정하면 승인 상태를 다시 '대기'로 전환하고 변경 이력을 남긴다.
 app.put('/api/requests/:id', async (c) => {
   const user = await getDriver(c);
