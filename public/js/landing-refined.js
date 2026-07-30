@@ -33,27 +33,35 @@
   document.head.appendChild(style);
 
   function apply() {
+    const app = document.getElementById('app');
+    if (!app) return;
+
     const hero = document.querySelector('#app > .hero');
     const grid = document.querySelector('#app > .role-grid');
-    if (!hero || !grid) {
-      document.getElementById('app')?.classList.remove('landing-refined');
-      return;
+    if (hero && grid) {
+      app.classList.add('landing-refined');
+
+      const message = hero.querySelector('p');
+      if (message && message.dataset.landingRefined !== 'true') {
+        message.innerHTML = '출입 전 안전수칙을 확인하고<br><span class="pre-approval">사전 승인</span>을 받으세요.';
+        message.dataset.landingRefined = 'true';
+      }
+
+      const driver = grid.querySelector('[data-role="driver"]');
+      const driverTitle = driver?.querySelector('.rt');
+      if (driverTitle) driverTitle.textContent = '차량기사';
+      grid.querySelectorAll('.arrow').forEach((arrow) => arrow.remove());
+    } else {
+      app.classList.remove('landing-refined');
     }
 
-    const app = document.getElementById('app');
-    app.classList.add('landing-refined');
-
-    const message = hero.querySelector('p');
-    if (message && message.dataset.landingRefined !== 'true') {
-      message.innerHTML = '출입 전 안전수칙을 확인하고<br><span class="pre-approval">사전 승인</span>을 받으세요.';
-      message.dataset.landingRefined = 'true';
+    const loginId = document.getElementById('a_loginId');
+    const password = document.getElementById('a_password');
+    const password2 = document.getElementById('a_password2');
+    const appbarTitle = document.querySelector('#app > .appbar h1');
+    if (loginId && password && !password2 && appbarTitle?.textContent?.trim() === '운전기사') {
+      appbarTitle.textContent = '차량 기사';
     }
-
-    const driver = grid.querySelector('[data-role="driver"]');
-    const driverTitle = driver?.querySelector('.rt');
-    if (driverTitle) driverTitle.textContent = '차량기사';
-
-    grid.querySelectorAll('.arrow').forEach((arrow) => arrow.remove());
   }
 
   const app = document.getElementById('app');
