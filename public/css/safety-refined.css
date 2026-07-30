@@ -18,12 +18,12 @@
   background: #F8FAFC;
   color: #0F172A;
   font-family: Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+  padding: 12px 14px calc(12px + env(safe-area-inset-bottom));
 }
 
 #app > .steps + .screen:has(> .rules-head) > .rules-head {
-  margin: 0 0 8px;
-  padding: 9px 12px;
+  margin: 0 0 14px;
+  padding: 11px 14px;
   border: 0;
   border-radius: 12px;
   background: #FEF2F2;
@@ -42,8 +42,8 @@
 }
 
 #app > .steps + .screen:has(> .rules-head) > .card {
-  margin-bottom: 8px;
-  padding: 3px 12px;
+  margin-bottom: 16px;
+  padding: 6px 15px;
   background: #FFFFFF;
   border: 0;
   border-radius: 16px;
@@ -51,8 +51,8 @@
 }
 
 #app > .steps + .screen:has(> .rules-head) .rule-list li {
-  gap: 9px;
-  padding: 9px 0;
+  gap: 10px;
+  padding: 11px 0;
   border-bottom: 1px solid #E2E8F0;
   color: #0F172A;
   font-size: 18px;
@@ -78,8 +78,8 @@
 
 #app > .steps + .screen:has(> .rules-head) > .agree {
   margin-top: 0;
-  margin-bottom: 4px;
-  padding: 9px 11px;
+  margin-bottom: 10px;
+  padding: 11px 13px;
   background: #FFFFFF;
   border: 1px solid #E2E8F0;
   border-radius: 12px;
@@ -94,7 +94,7 @@
 }
 
 #app > .steps + .screen:has(> .rules-head) > .sticky-cta {
-  padding: 6px 0 calc(2px + env(safe-area-inset-bottom));
+  padding: 10px 0 calc(4px + env(safe-area-inset-bottom));
   background: linear-gradient(to top, #F8FAFC 72%, transparent);
 }
 
