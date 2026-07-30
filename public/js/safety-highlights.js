@@ -1,9 +1,17 @@
 (() => {
   const HIGHLIGHTS = {
     '1': ['안전모', '안전화'],
-    '2': ['파킹브레이크', '고임목'],
+    '2': ['시동 정지', '파킹브레이크', '고임목'],
     '3': ['작업반경 내 출입 금지'],
     '5': ['안전대', '안전고리'],
+  };
+
+  const VEHICLE_ICONS = {
+    '물자수송용역 차량': '🚛',
+    '공사업체 차량': '🏗️',
+    '기자재 납품차량': '🚚',
+    '불용품 매각차량': '♻️',
+    'PCBs처리용역 차량': '☣️',
   };
 
   function appendHighlightedText(target, text, phrases) {
@@ -47,10 +55,40 @@
     });
   }
 
+  function applyRequiredSafetyHeader() {
+    const requiredHead = document.querySelector('.steps + .screen > .rules-head.req');
+    const appbar = document.querySelector('#app > .appbar');
+    if (!requiredHead || !appbar || appbar.dataset.safetyCompact === 'true') return;
+
+    const vehicleName = appbar.querySelector('h1')?.textContent?.trim() || '';
+    const icon = VEHICLE_ICONS[vehicleName] || '🚚';
+
+    const title = document.createElement('div');
+    title.className = 'safety-appbar-title';
+
+    const iconElement = document.createElement('span');
+    iconElement.className = 'safety-appbar-icon';
+    iconElement.setAttribute('aria-hidden', 'true');
+    iconElement.textContent = icon;
+
+    const textElement = document.createElement('h1');
+    textElement.textContent = '필수 안전수칙';
+
+    title.append(iconElement, textElement);
+    appbar.replaceChildren(title);
+    appbar.classList.add('safety-compact-appbar');
+    appbar.dataset.safetyCompact = 'true';
+  }
+
+  function applySafetyEnhancements() {
+    applySafetyHighlights();
+    applyRequiredSafetyHeader();
+  }
+
   const app = document.getElementById('app');
   if (!app) return;
 
-  const observer = new MutationObserver(applySafetyHighlights);
+  const observer = new MutationObserver(applySafetyEnhancements);
   observer.observe(app, { childList: true, subtree: true });
-  applySafetyHighlights();
+  applySafetyEnhancements();
 })();
