@@ -39,43 +39,30 @@ const EXTRA_CONSTRUCTION_PCBS = [
 ];
 
 // 공사업체(배전공사)·PCBs처리용역·불용품매각 차량 제출 서류 (사진/PDF 업로드)
-// formUrl 이 있으면 앱에서 빈 양식을 내려받을 수 있습니다. (양식 파일은 public/forms/ 에 추가)
 const WORK_DOCS = [
   { key: 'workPlan', label: '작업계획서', required: true },
   { key: 'tbm', label: 'TBM 회의록', required: true },
-  // focus: 양식 작성 화면을 처음 열 때 확대해서 보여줄 영역(이미지 대비 비율).
-  //   위험성 체크리스트는 오른쪽 중간의 【핵심 Check Point】 박스부터 보이도록 초점.
   { key: 'safetyChecklist', label: '위험성 체크리스트', required: true,
     formImage: '/forms/work-plan.png', formUrl: '/forms/work-plan.pdf',
     focus: { x: 0.355, y: 0.325, w: 0.645 } },
-  // 현장사진은 자재센터 출입 후 등록하므로 신청 시에는 선택(없어도 신청 가능)
   { key: 'sitePhoto', label: '차량·운전자 현장사진', required: false, note: '자재센터 출입 후 등록' },
 ];
 
+const TRANSPORT_ROUTE = {
+  summary: '정문 → 계량대 → 지정 상하차장',
+  steps: [
+    '정문 차단기에서 QR/승인번호 확인 후 진입',
+    '계량대에서 계근 후 대기',
+    '내부 순환도로를 따라 지정 상하차장으로 이동',
+    '유도원 지시에 따라 지정 베이에 정차',
+  ],
+};
+
 export default [
   {
-    id: 'transport',
-    name: '물자수송용역 차량',
-    subtitle: '연간 물자수송 용역계약 차량',
-    icon: '🚛',
-    color: '#2563eb',
-    requiredSafetyRules: [...COMMON_REQUIRED],
-    otherSafetyRules: [...COMMON_OTHER],
-    route: {
-      summary: '정문 → 계량대 → 지정 상하차장',
-      steps: [
-        '정문 차단기에서 QR/승인번호 확인 후 진입',
-        '계량대에서 계근 후 대기',
-        '내부 순환도로를 따라 지정 상하차장으로 이동',
-        '유도원 지시에 따라 지정 베이에 정차',
-      ],
-    },
-    requiredDocuments: [], // 물자수송용역: 서류 제출 없음
-  },
-  {
     id: 'construction',
-    name: '공사업체 차량',
-    subtitle: '공사·정비 용역 수행 차량',
+    name: '공사업체 (자재 환입 및 수령)',
+    subtitle: '자재 환입과 수령을 함께 하는 공사업체 차량',
     icon: '🏗️',
     color: '#d97706',
     requiredSafetyRules: [...COMMON_REQUIRED, ...EXTRA_CONSTRUCTION_PCBS],
@@ -89,6 +76,28 @@ export default [
       ],
     },
     requiredDocuments: [...WORK_DOCS],
+  },
+  {
+    id: 'pickup',
+    name: '공사업체 (자재 수령)',
+    subtitle: '환입 없이 자재만 수령하는 공사업체 차량',
+    icon: '🏗️',
+    color: '#f59e0b',
+    requiredSafetyRules: [...COMMON_REQUIRED],
+    otherSafetyRules: [...COMMON_OTHER],
+    route: { ...TRANSPORT_ROUTE },
+    requiredDocuments: [],
+  },
+  {
+    id: 'transport',
+    name: '물자수송용역 차량',
+    subtitle: '연간 물자수송 용역계약 차량',
+    icon: '🚛',
+    color: '#2563eb',
+    requiredSafetyRules: [...COMMON_REQUIRED],
+    otherSafetyRules: [...COMMON_OTHER],
+    route: { ...TRANSPORT_ROUTE },
+    requiredDocuments: [],
   },
   {
     id: 'delivery',
@@ -106,7 +115,7 @@ export default [
         'A동 하역장 빈 베이에 정차 후 하역',
       ],
     },
-    requiredDocuments: [], // 기자재납품: 서류 제출 없음
+    requiredDocuments: [],
   },
   {
     id: 'scrap',
