@@ -1,6 +1,7 @@
 (() => {
   const TOKEN_KEY = 'ep_token';
   const USER_CACHE_KEY = 'ep_user_cache';
+  const REQUEST_CACHE_KEY = 'ep_my_requests_session';
   const esc = (value) => String(value == null ? '' : value).replace(/[&<>"]/g, (ch) =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
 
@@ -11,20 +12,9 @@
     if (!user) return;
     try { localStorage.setItem(USER_CACHE_KEY, JSON.stringify(user)); } catch { /* noop */ }
   };
-
-  const nativeFetch = window.fetch.bind(window);
-  window.fetch = async (input, init = {}) => {
-    const response = await nativeFetch(input, init);
-    const url = typeof input === 'string' ? input : input?.url || '';
-    if (/\/api\/auth\/(?:login|register|me|profile)(?:\?|$)/.test(url)) {
-      try {
-        const data = await response.clone().json();
-        if (response.ok && data?.user) cacheUser(data.user);
-      } catch { /* 기존 요청 처리 유지 */ }
-    } else if (/\/api\/auth\/logout(?:\?|$)/.test(url) && response.ok) {
-      localStorage.removeItem(USER_CACHE_KEY);
-    }
-    return response;
+  const cacheRequests = (requests) => {
+    if (!Array.isArray(requests)) return;
+    try { sessionStorage.setItem(REQUEST_CACHE_KEY, JSON.stringify(requests)); } catch { /* noop */ }
   };
 
   const style = document.createElement('style');
@@ -81,11 +71,15 @@
   }
 
   async function getCurrentUser() {
-    const cached = readCachedUser();
-    if (cached) return cached;
-    const { user } = await api('/auth/me');
-    cacheUser(user);
-    return user;
+    try {
+      const { user } = await api('/auth/me');
+      cacheUser(user);
+      return user;
+    } catch (error) {
+      const cached = readCachedUser();
+      if (cached) return cached;
+      throw error;
+    }
   }
 
   async function openProfile() {
@@ -154,8 +148,7 @@
     const cached = readCachedUser();
     if (cached?.company && !companyInput.value.trim()) companyInput.value = cached.company;
 
-    api('/auth/me').then(({ user }) => {
-      cacheUser(user);
+    getCurrentUser().then((user) => {
       if (user?.company && !companyInput.value.trim()) companyInput.value = user.company;
     }).catch(() => {});
   }
@@ -171,9 +164,7 @@
     document.querySelector('#app .profile-card')?.remove();
 
     if (appbar.dataset.driverHomeRefined !== 'true') {
-      const cached = readCachedUser();
       const heading = appbar.querySelector('h1');
-      if (heading) heading.textContent = cached?.loginId || cached?.defaultVehicleNumber || '차량번호(ID)';
       appbar.querySelector('.sub')?.remove();
 
       const logout = appbar.querySelector('[data-logout]');
@@ -189,18 +180,20 @@
       appbar.append(actions);
       appbar.dataset.driverHomeRefined = 'true';
 
-      if (!cached) {
-        api('/auth/me').then(({ user }) => {
-          cacheUser(user);
-          if (heading) heading.textContent = user.loginId || user.defaultVehicleNumber || '차량번호(ID)';
-        }).catch(() => {});
-      }
+      getCurrentUser().then((user) => {
+        if (heading) heading.textContent = user.loginId || user.defaultVehicleNumber || '차량번호(ID)';
+      }).catch(() => {
+        const cached = readCachedUser();
+        if (heading) heading.textContent = cached?.loginId || cached?.defaultVehicleNumber || '차량번호(ID)';
+      });
     }
 
     const cards = [...list.querySelectorAll('.mini-card[data-open]:not([data-visit-refined])')];
-    if (!cards.length) return;
+    if (!cards.length || list.dataset.requestRefining === 'true') return;
+    list.dataset.requestRefining = 'true';
     try {
       const requests = await api('/my/requests');
+      cacheRequests(requests);
       const byId = new Map(requests.map((request) => [String(request.id), request]));
       cards.forEach((card) => {
         const request = byId.get(String(card.dataset.open));
@@ -211,6 +204,7 @@
         card.dataset.visitRefined = 'true';
       });
     } catch { /* 기존 목록 표시 유지 */ }
+    finally { list.dataset.requestRefining = 'false'; }
   }
 
   const app = document.getElementById('app');
