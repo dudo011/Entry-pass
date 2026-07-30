@@ -1,4 +1,5 @@
 (() => {
+  const TOKEN_KEY = 'ep_token';
   const REQUEST_CACHE_KEY = 'ep_my_requests_cache';
 
   const esc = (value) => String(value == null ? '' : value).replace(/[&<>"]/g, (ch) =>
@@ -80,6 +81,19 @@
   }
 
   const previousFetch = window.fetch.bind(window);
+
+  async function prefetchRequests(token) {
+    if (!token) return;
+    try {
+      const response = await previousFetch('/api/my/requests', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) return;
+      const requests = await response.json();
+      saveRequests(requests);
+    } catch { /* 홈의 기존 요청이 다시 시도 */ }
+  }
+
   window.fetch = async (input, init = {}) => {
     const response = await previousFetch(input, init);
     const url = typeof input === 'string' ? input : input?.url || '';
@@ -89,6 +103,16 @@
         const requests = await response.clone().json();
         saveRequests(requests);
       } catch { /* 기존 응답 유지 */ }
+    } else if (/\/api\/auth\/(?:login|register)(?:\?|$)/.test(url) && response.ok) {
+      try {
+        const data = await response.clone().json();
+        if (data?.user?.role === 'driver' && data?.token) await prefetchRequests(data.token);
+      } catch { /* 로그인 응답 유지 */ }
+    } else if (/\/api\/auth\/me(?:\?|$)/.test(url) && response.ok && !readRequests().length) {
+      try {
+        const data = await response.clone().json();
+        if (data?.user?.role === 'driver') await prefetchRequests(localStorage.getItem(TOKEN_KEY));
+      } catch { /* 인증 응답 유지 */ }
     } else if (/\/api\/requests(?:\?|$)/.test(url) && String(init.method || 'GET').toUpperCase() === 'POST' && response.ok) {
       clearRequests();
     } else if (/\/api\/auth\/logout(?:\?|$)/.test(url) && response.ok) {
