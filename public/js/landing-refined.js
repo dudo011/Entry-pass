@@ -50,7 +50,7 @@
 
       const driver = grid.querySelector('[data-role="driver"]');
       const driverTitle = driver?.querySelector('.rt');
-      if (driverTitle) driverTitle.textContent = '차량기사';
+      if (driverTitle) driverTitle.textContent = '계약업체';
       grid.querySelectorAll('.arrow').forEach((arrow) => arrow.remove());
     } else {
       app.classList.remove('landing-refined');
@@ -60,8 +60,9 @@
     const password = document.getElementById('a_password');
     const password2 = document.getElementById('a_password2');
     const appbarTitle = document.querySelector('#app > .appbar h1');
-    if (loginId && password && !password2 && appbarTitle?.textContent?.trim() === '운전기사') {
-      appbarTitle.textContent = '차량 기사';
+    const currentTitle = appbarTitle?.textContent?.trim();
+    if (loginId && password && !password2 && ['운전기사', '차량 기사', '차량기사'].includes(currentTitle)) {
+      appbarTitle.textContent = '계약업체';
     }
   }
 
