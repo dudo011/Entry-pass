@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 190" role="img" aria-labelledby="title desc">
+  <title id="title">크레인 장착 화물차</title>
+  <desc id="desc">적재함과 차량용 크레인이 설치된 공사업체 화물차</desc>
+  <defs>
+    <linearGradient id="cab" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f8fafc"/>
+      <stop offset="1" stop-color="#cbd5e1"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#334155" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
+    <path fill="url(#cab)" d="M24 105h72v45H18v-29l16-33h45l17 17z"/>
+    <path fill="#7dd3fc" d="M38 94h34l14 20H31z"/>
+    <path fill="#e2e8f0" d="M156 105h158v45H156z"/>
+    <path fill="#f8fafc" d="M162 112h146v24H162z"/>
+    <path fill="#f59e0b" d="M105 91h42v57h-42z"/>
+    <path fill="#f59e0b" d="M118 92L143 28h26l-20 70z"/>
+    <path fill="#fbbf24" d="M154 28h126v20H154z"/>
+    <path fill="#f59e0b" d="M268 42h17v50h-17z"/>
+    <path d="M276 91v20"/>
+    <path d="M276 111c0 13-18 13-18 0 0-8 7-11 12-7" fill="none"/>
+    <path fill="#f59e0b" d="M18 124h13v16H18z" stroke-width="3"/>
+    <path d="M111 149v13M141 149v13"/>
+    <path d="M103 162h16M133 162h16"/>
+    <circle cx="63" cy="155" r="24" fill="#1e293b"/>
+    <circle cx="63" cy="155" r="11" fill="#cbd5e1"/>
+    <circle cx="220" cy="155" r="24" fill="#1e293b"/>
+    <circle cx="220" cy="155" r="11" fill="#cbd5e1"/>
+    <circle cx="285" cy="155" r="24" fill="#1e293b"/>
+    <circle cx="285" cy="155" r="11" fill="#cbd5e1"/>
+  </g>
+</svg>
