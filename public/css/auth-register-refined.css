@@ -23,6 +23,7 @@
 /* 로그인 화면: 아이디·비밀번호 라벨을 크게, 입력칸은 짧게 */
 #app:has(#a_loginId):has(#a_password):not(:has(#a_password2)) .card > .field-h {
   gap: 14px !important;
+  margin-bottom: 16px !important;
 }
 
 #app:has(#a_loginId):has(#a_password):not(:has(#a_password2)) .card > .field-h .lb {
@@ -39,6 +40,10 @@
   width: 68% !important;
   max-width: 68% !important;
   margin-left: auto !important;
+}
+
+#app:has(#a_loginId):has(#a_password):not(:has(#a_password2)) #a_submit {
+  margin-top: 6px !important;
 }
 
 @media (max-width: 390px) {
@@ -62,6 +67,7 @@
 
   #app:has(#a_loginId):has(#a_password):not(:has(#a_password2)) .card > .field-h {
     gap: 10px !important;
+    margin-bottom: 14px !important;
   }
 
   #app:has(#a_loginId):has(#a_password):not(:has(#a_password2)) .card > .field-h .lb {
@@ -75,5 +81,9 @@
     flex-basis: 66% !important;
     width: 66% !important;
     max-width: 66% !important;
+  }
+
+  #app:has(#a_loginId):has(#a_password):not(:has(#a_password2)) #a_submit {
+    margin-top: 5px !important;
   }
 }
