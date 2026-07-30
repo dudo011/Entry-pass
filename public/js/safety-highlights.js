@@ -23,6 +23,19 @@
     'PCBs처리용역 차량': '☣️',
   };
 
+  const VEHICLE_TYPE_LABELS = {
+    transport: '물자수송용역',
+    construction: '공사업체',
+    delivery: '기자재 납품',
+    scrap: '불용품 매각',
+    pcbs: 'PCBs처리용역',
+  };
+
+  const VEHICLE_TYPE_IMAGES = {
+    transport: '/images/type-transport-flatbed.svg',
+    construction: '/images/type-construction-crane-truck.svg',
+  };
+
   function appendHighlightedText(target, text, phrases, breakAfter) {
     let cursor = 0;
     const matches = [];
@@ -125,6 +138,40 @@
     appbar.dataset.uiNormalized = 'true';
   }
 
+  function normalizeVehicleTypeScreen() {
+    const grid = document.querySelector('#app .type-grid');
+    if (!grid || grid.dataset.vehicleGridNormalized === 'true') return;
+
+    const appbar = document.querySelector('#app > .appbar');
+    if (appbar?.querySelector('h1')?.textContent?.trim() === '차량 유형 선택') {
+      appbar.querySelector('.sub')?.remove();
+      appbar.classList.add('vehicle-type-appbar');
+    }
+
+    grid.classList.add('vehicle-type-grid-refined');
+
+    grid.querySelectorAll('.type-card[data-type]').forEach((card) => {
+      const typeId = card.dataset.type;
+      const iconBox = card.querySelector('.ico');
+      const name = card.querySelector('.tn');
+
+      card.classList.add('vehicle-type-card-refined');
+      card.style.removeProperty('--tc');
+
+      if (name && VEHICLE_TYPE_LABELS[typeId]) name.textContent = VEHICLE_TYPE_LABELS[typeId];
+
+      if (iconBox && VEHICLE_TYPE_IMAGES[typeId]) {
+        const image = document.createElement('img');
+        image.className = 'vehicle-type-image';
+        image.src = VEHICLE_TYPE_IMAGES[typeId];
+        image.alt = VEHICLE_TYPE_LABELS[typeId] || '';
+        iconBox.replaceChildren(image);
+      }
+    });
+
+    grid.dataset.vehicleGridNormalized = 'true';
+  }
+
   function normalizeSafetyNotice() {
     const screen = document.querySelector('#app > .steps + .screen');
     const notice = screen?.querySelector(':scope > .rules-head');
@@ -184,6 +231,7 @@
 
   function applyUiEnhancements() {
     normalizeAppbar();
+    normalizeVehicleTypeScreen();
     normalizeSafetyNotice();
     normalizeAgreementText();
     applySafetyHighlights();
