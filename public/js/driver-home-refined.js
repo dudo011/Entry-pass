@@ -142,15 +142,18 @@
       } catch { /* 로그인 상태 확인은 기존 앱에 맡김 */ }
     }
 
+    const cards = [...list.querySelectorAll('.mini-card[data-open]:not([data-visit-refined])')];
+    if (!cards.length) return;
     try {
       const requests = await api('/my/requests');
       const byId = new Map(requests.map((request) => [String(request.id), request]));
-      list.querySelectorAll('.mini-card[data-open]').forEach((card) => {
+      cards.forEach((card) => {
         const request = byId.get(String(card.dataset.open));
         if (!request) return;
         const label = card.querySelector('.veh');
         if (label) label.textContent = formatVisitDate(request.visitAt);
         card.classList.toggle('visit-expired', isPastVisit(request.visitAt));
+        card.dataset.visitRefined = 'true';
       });
     } catch { /* 기존 목록 표시 유지 */ }
   }
