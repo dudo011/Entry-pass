@@ -24,7 +24,6 @@
     });
 
     matches.sort((a, b) => a.index - b.index);
-
     matches.forEach(({ index, phrase }) => {
       if (index < cursor) return;
       if (index > cursor) target.append(document.createTextNode(text.slice(cursor, index)));
@@ -55,40 +54,49 @@
     });
   }
 
-  function applyRequiredSafetyHeader() {
-    const requiredHead = document.querySelector('.steps + .screen > .rules-head.req');
+  function normalizeAppbar() {
     const appbar = document.querySelector('#app > .appbar');
-    if (!requiredHead || !appbar || appbar.dataset.safetyCompact === 'true') return;
+    if (!appbar || appbar.dataset.uiNormalized === 'true') return;
 
-    const vehicleName = appbar.querySelector('h1')?.textContent?.trim() || '';
-    const icon = VEHICLE_ICONS[vehicleName] || '🚚';
+    // 모바일 시스템 뒤로가기를 사용하므로 앱 내부 뒤로가기 버튼은 전 화면에서 제거합니다.
+    appbar.querySelector('.back')?.remove();
 
-    const title = document.createElement('div');
-    title.className = 'safety-appbar-title';
+    const originalTitle = appbar.querySelector('h1')?.textContent?.trim() || '';
+    const originalSub = appbar.querySelector('.sub')?.textContent?.trim() || '';
+    const vehicleIcon = VEHICLE_ICONS[originalTitle];
 
-    const iconElement = document.createElement('span');
-    iconElement.className = 'safety-appbar-icon';
-    iconElement.setAttribute('aria-hidden', 'true');
-    iconElement.textContent = icon;
+    // 차량 신청 흐름은 차량 아이콘 + 현재 화면 제목의 한 줄 헤더로 통일합니다.
+    if (vehicleIcon && originalSub) {
+      const logoutButton = appbar.querySelector('[data-logout]');
+      const title = document.createElement('div');
+      title.className = 'vehicle-appbar-title';
 
-    const textElement = document.createElement('h1');
-    textElement.textContent = '필수 안전수칙';
+      const icon = document.createElement('span');
+      icon.className = 'vehicle-appbar-icon';
+      icon.setAttribute('aria-hidden', 'true');
+      icon.textContent = vehicleIcon;
 
-    title.append(iconElement, textElement);
-    appbar.replaceChildren(title);
-    appbar.classList.add('safety-compact-appbar');
-    appbar.dataset.safetyCompact = 'true';
+      const heading = document.createElement('h1');
+      heading.textContent = originalSub;
+      title.append(icon, heading);
+
+      appbar.replaceChildren(title);
+      if (logoutButton) appbar.append(logoutButton);
+      appbar.classList.add('vehicle-flow-appbar');
+    }
+
+    appbar.dataset.uiNormalized = 'true';
   }
 
-  function applySafetyEnhancements() {
+  function applyUiEnhancements() {
+    normalizeAppbar();
     applySafetyHighlights();
-    applyRequiredSafetyHeader();
   }
 
   const app = document.getElementById('app');
   if (!app) return;
 
-  const observer = new MutationObserver(applySafetyEnhancements);
+  const observer = new MutationObserver(applyUiEnhancements);
   observer.observe(app, { childList: true, subtree: true });
-  applySafetyEnhancements();
+  applyUiEnhancements();
 })();
