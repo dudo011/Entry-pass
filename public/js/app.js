@@ -483,14 +483,14 @@
 
     const cardInner = isReg ? `
       ${fld('계약(차량) 유형', `<select id="a_vtype">${typeOpts}</select>`)}
-      ${fld('아이디(차량번호)', '<input type="text" id="a_loginId" autocomplete="username" placeholder="예: 12가3456">')}
+      ${fld('차량번호(ID)', '<input type="text" id="a_loginId" autocomplete="username" placeholder="예: 12가3456">')}
       ${fld('비밀번호', '<input type="password" id="a_password" autocomplete="new-password" placeholder="비밀번호">')}
       ${fld('비밀번호 확인', '<input type="password" id="a_password2" autocomplete="new-password" placeholder="다시 입력">')}
       ${fld('이름', '<input type="text" id="a_name" placeholder="홍길동">')}
       ${fld('연락처', '<input type="tel" id="a_phone" placeholder="010-0000-0000">')}
       <p class="hint" style="margin:2px 2px 12px;text-align:left">※ 아이디는 <b>차량번호</b>로 입력하세요. (소속업체는 출입 신청 시 입력)</p>
       <button class="btn btn-primary" id="a_submit">가입하고 시작</button>` : `
-      ${fld(isDriver ? '아이디(차량번호)' : '아이디', `<input type="text" id="a_loginId" autocomplete="username" placeholder="${isDriver ? '차량번호' : '아이디'}">`)}
+      ${fld(isDriver ? '차량번호(ID)' : '아이디', `<input type="text" id="a_loginId" autocomplete="username" placeholder="${isDriver ? '차량번호' : '아이디'}">`)}
       ${fld('비밀번호', '<input type="password" id="a_password" autocomplete="current-password" placeholder="비밀번호">')}
       <button class="btn btn-primary" id="a_submit">로그인</button>`;
 
@@ -508,7 +508,7 @@
     const v = (id) => (document.getElementById(id) || {}).value || '';
     const loginId = v('a_loginId').trim();
     const password = v('a_password');
-    if (!loginId || !password) return toast('아이디(차량번호)와 비밀번호를 입력하세요.');
+    if (!loginId || !password) return toast('차량번호(ID)와 비밀번호를 입력하세요.');
     const btn = document.getElementById('a_submit');
     btn.disabled = true;
     try {
@@ -627,19 +627,19 @@
       ? (page.reqTotal > 1 ? `필수 안전수칙 (${page.reqPage}/${page.reqTotal})` : '필수 안전수칙')
       : '기타 안전수칙';
     const headText = isReq ? '필수안전수칙 : 위반시 안전지도서' : '기타안전수칙 : 위반시 안전계도서';
-    const agreeText = isReq
-      ? '위 필수 안전수칙을 모두 확인하였으며 준수할 것에 동의합니다.'
-      : '위 기타 안전수칙을 확인하였습니다.';
+    // 동의는 마지막(기타 안전수칙) 페이지에서 필수·기타 전체를 한 번에 받습니다.
+    const showAgree = !isReq;
+    const agreeText = '위 필수·기타 안전수칙을 모두 확인하였으며 준수할 것에 동의합니다.';
     return appbar(t.name, sub, { back: true }) + stepBar(idx, safetyTotal()) + `
       <div class="screen">
         <div class="rules-head ${isReq ? 'req' : 'other'}">${headText}</div>
         <div class="card"><ul class="rule-list">${rules}</ul></div>
-        <label class="agree ${isReq ? '' : 'soft'}">
+        ${showAgree ? `<label class="agree">
           <input type="checkbox" id="agreeChk" ${checked ? 'checked' : ''}>
           <span>${agreeText}</span>
-        </label>
+        </label>` : ''}
         <div class="sticky-cta">
-          <button class="btn btn-primary" id="rulesNext" ${isReq && !checked ? 'disabled' : ''}>${nextLabel}</button>
+          <button class="btn btn-primary" id="rulesNext" ${showAgree && !checked ? 'disabled' : ''}>${nextLabel}</button>
         </div>
       </div>`;
   }
@@ -927,9 +927,13 @@
       const idx = state.safetyIndex;
       const page = state.safetyPages[idx];
       state.safetyAgree[idx] = chk.checked;
-      if (page && page.kind === 'other') state.agreedOther = chk.checked;
-      const nx = document.getElementById('rulesNext');
-      if (nx && page && page.kind === 'required') nx.disabled = !chk.checked;
+      // 마지막(기타) 페이지의 단일 동의로 필수·기타 전체 동의 처리 + 진행 게이트
+      if (page && page.kind === 'other') {
+        state.agreedOther = chk.checked;
+        state.agreedRequired = chk.checked;
+        const nx = document.getElementById('rulesNext');
+        if (nx) nx.disabled = !chk.checked;
+      }
     };
     const rulesNext = document.getElementById('rulesNext');
     if (rulesNext) rulesNext.onclick = () => {
