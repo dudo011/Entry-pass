@@ -12,21 +12,22 @@
       grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important;padding:20px 16px!important
     }
     #app.landing-refined .role-btn{
-      min-height:220px!important;padding:20px 10px!important;display:flex!important;flex-direction:column!important;
+      min-height:228px!important;padding:20px 10px!important;display:flex!important;flex-direction:column!important;
       justify-content:flex-start!important;align-items:center!important;gap:12px!important;text-align:center!important
     }
     #app.landing-refined .role-btn .emoji{
-      width:78px!important;height:78px!important;display:grid!important;place-items:center!important;
-      border-radius:18px!important;background:#eff6ff!important;font-size:42px!important
+      width:94px!important;height:94px!important;display:grid!important;place-items:center!important;
+      border-radius:20px!important;background:#eff6ff!important;font-size:52px!important
     }
     #app.landing-refined .role-btn > span:nth-child(2){display:block!important;width:100%}
-    #app.landing-refined .role-btn .rt{font-size:20px!important;line-height:1.3!important}
+    #app.landing-refined .role-btn .rt{font-size:23px!important;line-height:1.3!important}
     #app.landing-refined .role-btn .rd{display:block!important;margin-top:8px;font-size:15px!important;line-height:1.4!important}
     #app.landing-refined .role-btn .arrow{display:none!important}
     @media(max-width:390px){
       #app.landing-refined .role-grid{gap:9px!important;padding-inline:12px!important}
-      #app.landing-refined .role-btn{min-height:205px!important;padding-inline:8px!important}
-      #app.landing-refined .role-btn .rt{font-size:18px!important}
+      #app.landing-refined .role-btn{min-height:216px!important;padding-inline:8px!important}
+      #app.landing-refined .role-btn .emoji{width:88px!important;height:88px!important;font-size:49px!important}
+      #app.landing-refined .role-btn .rt{font-size:21px!important}
       #app.landing-refined .role-btn .rd{font-size:14px!important}
     }
   `;
