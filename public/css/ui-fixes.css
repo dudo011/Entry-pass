@@ -105,6 +105,106 @@
   margin-top: 2px;
 }
 
+/* 차량 유형 선택: 설명 없는 2 + 3 아이콘 그리드 */
+.appbar.vehicle-type-appbar {
+  min-height: 92px !important;
+  padding-bottom: 20px !important;
+}
+
+.appbar.vehicle-type-appbar h1 {
+  font-size: 28px !important;
+}
+
+#app:has(.vehicle-type-grid-refined) > .screen {
+  padding-top: 28px !important;
+  padding-bottom: calc(20px + env(safe-area-inset-bottom)) !important;
+}
+
+.type-grid.vehicle-type-grid-refined {
+  display: grid !important;
+  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  column-gap: 14px !important;
+  row-gap: 38px !important;
+  align-items: stretch !important;
+}
+
+.vehicle-type-grid-refined > .type-card {
+  position: relative !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 18px 10px 16px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 12px !important;
+  border: 0 !important;
+  border-left: 0 !important;
+  border-radius: 18px !important;
+  background: #fff !important;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, .07) !important;
+}
+
+.vehicle-type-grid-refined > .type-card:nth-child(-n+2) {
+  grid-column: span 3 !important;
+  min-height: 220px !important;
+}
+
+.vehicle-type-grid-refined > .type-card:nth-child(n+3) {
+  grid-column: span 2 !important;
+  min-height: 178px !important;
+}
+
+.vehicle-type-grid-refined .ico {
+  width: 100% !important;
+  height: 106px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 !important;
+  font-size: 58px !important;
+  line-height: 1 !important;
+}
+
+.vehicle-type-grid-refined > .type-card:nth-child(n+3) .ico {
+  height: 78px !important;
+  font-size: 50px !important;
+}
+
+.vehicle-type-grid-refined .vehicle-type-image {
+  display: block;
+  width: 100% !important;
+  max-width: 190px !important;
+  height: 100% !important;
+  object-fit: contain !important;
+}
+
+.vehicle-type-grid-refined .tn-wrap {
+  width: 100% !important;
+  min-width: 0 !important;
+  text-align: center !important;
+}
+
+.vehicle-type-grid-refined .tn {
+  font-size: 19px !important;
+  font-weight: 800 !important;
+  line-height: 1.25 !important;
+  word-break: keep-all !important;
+}
+
+.vehicle-type-grid-refined > .type-card:nth-child(n+3) .tn {
+  font-size: 16px !important;
+}
+
+.vehicle-type-grid-refined .my-tag {
+  position: absolute !important;
+  top: 12px !important;
+  right: 12px !important;
+  z-index: 2 !important;
+  padding: 5px 10px !important;
+  font-size: 13px !important;
+}
+
 /* 직원 대기 상세: 반려와 승인을 항상 한 줄에 동일 폭으로 배치 */
 .screen > .sticky-cta > .btn-row {
   display: flex !important;
@@ -146,5 +246,31 @@
 
   #app > .steps + .screen:has(> .card > .rules-head-inline) > .agree span {
     font-size: 18px !important;
+  }
+
+  .type-grid.vehicle-type-grid-refined {
+    column-gap: 10px !important;
+    row-gap: 32px !important;
+  }
+
+  .vehicle-type-grid-refined > .type-card {
+    padding-left: 7px !important;
+    padding-right: 7px !important;
+  }
+
+  .vehicle-type-grid-refined > .type-card:nth-child(-n+2) {
+    min-height: 202px !important;
+  }
+
+  .vehicle-type-grid-refined > .type-card:nth-child(n+3) {
+    min-height: 164px !important;
+  }
+
+  .vehicle-type-grid-refined .tn {
+    font-size: 18px !important;
+  }
+
+  .vehicle-type-grid-refined > .type-card:nth-child(n+3) .tn {
+    font-size: 15px !important;
   }
 }
