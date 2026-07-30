@@ -1,5 +1,6 @@
 (() => {
   const TOKEN_KEY = 'ep_token';
+  const REQUEST_CACHE_KEY = 'ep_my_requests_session';
   const esc = (value) => String(value == null ? '' : value).replace(/[&<>"]/g, (ch) =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
 
@@ -65,13 +66,29 @@
   `;
   document.head.appendChild(style);
 
+  function readCachedRequests() {
+    try {
+      const requests = JSON.parse(sessionStorage.getItem(REQUEST_CACHE_KEY) || '[]');
+      return Array.isArray(requests) ? requests : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function cacheRequests(requests) {
+    if (!Array.isArray(requests)) return;
+    try { sessionStorage.setItem(REQUEST_CACHE_KEY, JSON.stringify(requests)); } catch { /* noop */ }
+  }
+
   async function getMyRequests() {
     const token = localStorage.getItem(TOKEN_KEY);
     const response = await fetch('/api/my/requests', {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     if (!response.ok) throw new Error('신청 정보를 불러오지 못했습니다.');
-    return response.json();
+    const requests = await response.json();
+    cacheRequests(requests);
+    return requests;
   }
 
   function formatVisitDate(value) {
@@ -84,6 +101,21 @@
   function formatVehicleType(value) {
     const type = String(value || '').trim().replace(/\s*차량\s*$/, '').trim();
     return type ? `(${type})` : '(-)';
+  }
+
+  function renderResult(screen, request, icon, title) {
+    screen.className = 'screen driver-result-refined-screen';
+    screen.innerHTML = `
+      <div class="result-main-icon">${esc(icon)}</div>
+      <h2 class="result-main-title">${esc(title)}</h2>
+      <div class="result-detail-list">
+        <p class="result-detail">${esc(request.vehicleNumber || '-')}</p>
+        <p class="result-detail">${esc(formatVisitDate(request.visitAt))}</p>
+        <p class="result-detail">${esc(request.company || '-')}</p>
+        <p class="result-detail result-type">${esc(formatVehicleType(request.vehicleTypeName))}</p>
+      </div>`;
+    screen.dataset.resultRefined = 'true';
+    screen.dataset.resultRefining = 'false';
   }
 
   async function refineResult() {
@@ -99,22 +131,18 @@
     const icon = currentResult.querySelector('.big-ico')?.textContent?.trim() || '📨';
     const title = currentResult.querySelector('h2')?.textContent?.trim() || '신청이 접수되었습니다';
 
+    const cached = readCachedRequests();
+    const cachedRequest = cached.find((item) => String(item.passNo) === passNo);
+    if (cachedRequest) {
+      renderResult(screen, cachedRequest, icon, title);
+      return;
+    }
+
     try {
       const requests = await getMyRequests();
       const request = requests.find((item) => String(item.passNo) === passNo) || requests[0];
-      if (!request) return;
-
-      screen.className = 'screen driver-result-refined-screen';
-      screen.innerHTML = `
-        <div class="result-main-icon">${esc(icon)}</div>
-        <h2 class="result-main-title">${esc(title)}</h2>
-        <div class="result-detail-list">
-          <p class="result-detail">${esc(request.vehicleNumber || '-')}</p>
-          <p class="result-detail">${esc(formatVisitDate(request.visitAt))}</p>
-          <p class="result-detail">${esc(request.company || '-')}</p>
-          <p class="result-detail result-type">${esc(formatVehicleType(request.vehicleTypeName))}</p>
-        </div>`;
-      screen.dataset.resultRefined = 'true';
+      if (request) renderResult(screen, request, icon, title);
+      else screen.dataset.resultRefining = 'false';
     } catch {
       screen.dataset.resultRefining = 'false';
     }
@@ -122,10 +150,14 @@
 
   const app = document.getElementById('app');
   if (!app) return;
-  let timer = null;
+  let scheduled = false;
   const schedule = () => {
-    clearTimeout(timer);
-    timer = setTimeout(refineResult, 0);
+    if (scheduled) return;
+    scheduled = true;
+    queueMicrotask(() => {
+      scheduled = false;
+      refineResult();
+    });
   };
   new MutationObserver(schedule).observe(app, { childList: true, subtree: true });
   schedule();
