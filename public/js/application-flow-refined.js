@@ -72,7 +72,7 @@
 
   function normalizeApplicationForm() {
     const heading = document.querySelector('#app > .appbar h1')?.textContent?.trim();
-    if (heading !== '출입 신청') return;
+    if (heading !== '출입 신청' && heading !== '출입신청서 제출') return;
 
     const screen = document.querySelector('#app > .steps + .screen');
     if (!screen || screen.dataset.formMerged === 'true') return;
