@@ -1,6 +1,7 @@
 (() => {
   const TOKEN_KEY = 'ep_token';
   const REQUEST_CACHE_KEY = 'ep_my_requests_session';
+  const HOME_CACHE_KEY = 'ep_my_requests_token_cache';
   const esc = (value) => String(value == null ? '' : value).replace(/[&<>"]/g, (ch) =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
 
@@ -77,7 +78,13 @@
 
   function cacheRequests(requests) {
     if (!Array.isArray(requests)) return;
-    try { sessionStorage.setItem(REQUEST_CACHE_KEY, JSON.stringify(requests)); } catch { /* noop */ }
+    try {
+      sessionStorage.setItem(REQUEST_CACHE_KEY, JSON.stringify(requests));
+      localStorage.setItem(HOME_CACHE_KEY, JSON.stringify({
+        token: localStorage.getItem(TOKEN_KEY) || '',
+        requests,
+      }));
+    } catch { /* noop */ }
   }
 
   async function getMyRequests() {
@@ -135,10 +142,13 @@
     const cachedRequest = cached.find((item) => String(item.passNo) === passNo);
     if (cachedRequest) {
       renderResult(screen, cachedRequest, icon, title);
+      // 상세화면은 즉시 표시하되, 신청 완료·상태 변경분을 홈 캐시에도 백그라운드 반영한다.
+      getMyRequests().catch(() => {});
       return;
     }
 
     try {
+      // 새 신청 직후에는 최신 목록을 먼저 받아 sessionStorage와 localStorage를 동시에 갱신한다.
       const requests = await getMyRequests();
       const request = requests.find((item) => String(item.passNo) === passNo) || requests[0];
       if (request) renderResult(screen, request, icon, title);
