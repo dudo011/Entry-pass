@@ -7,6 +7,7 @@
     /^신청 정보 및 서류$/,
     /^출입 신청 정보$/,
     /^출입 신청$/,
+    /^출입신청서 제출$/,
   ];
 
   function normalizeFlowHeader() {
@@ -18,8 +19,8 @@
 
     const title = heading.textContent?.trim() || '';
 
-    if (title === '신청 정보 및 서류' || title === '출입 신청 정보') {
-      heading.textContent = '출입 신청';
+    if (title === '신청 정보 및 서류' || title === '출입 신청 정보' || title === '출입 신청') {
+      heading.textContent = '출입신청서 제출';
     }
 
     const normalizedTitle = heading.textContent?.trim() || '';
