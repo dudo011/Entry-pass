@@ -23,7 +23,7 @@
     #app .screen:has(> .visit-purpose-grid){
       height:calc(100dvh - 184px)!important;
       min-height:0!important;
-      padding:12px 16px 16px!important;
+      padding:32px 16px 16px!important;
       overflow:hidden!important
     }
     #app .visit-purpose-grid{
@@ -68,7 +68,7 @@
     }
     #app .visit-purpose-grid .my-tag{top:8px!important;right:8px!important;font-size:12px!important;padding:5px 8px!important}
     @media(max-height:760px){
-      #app .screen:has(> .visit-purpose-grid){height:calc(100dvh - 170px)!important;padding:8px 14px 12px!important}
+      #app .screen:has(> .visit-purpose-grid){height:calc(100dvh - 170px)!important;padding:24px 14px 12px!important}
       #app .visit-purpose-grid{column-gap:8px!important;row-gap:32px!important}
       #app .visit-purpose-grid .type-card{padding:7px 6px!important;gap:5px!important;border-radius:17px!important}
       #app .visit-purpose-grid .ico{height:min(8vh,58px)!important;min-height:42px!important}
