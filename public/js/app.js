@@ -551,7 +551,8 @@
   // ==== 기사 홈 (신규 신청 / 내 이력) ======================================
   function driverHome() {
     const u = state.user;
-    return appbar('출입 신청', `${u.name}님`, { logout: true }) + `
+    // 헤더를 처음부터 최종 형태(차량번호, 서브타이틀 없음)로 렌더 → 로딩 시 헤더 교체 깜빡임 방지
+    return appbar(u.defaultVehicleNumber || u.loginId, null, { logout: true }) + `
       <div class="screen">
         <button class="btn btn-primary big-cta" data-nav="driverTypes">＋ 새 출입 신청</button>
         <div class="profile-card card">
@@ -571,8 +572,14 @@
     box.className = '';
     box.innerHTML = state.myRequests.map((r) => {
       const st = statusInfo(r.status);
-      return `<button class="mini-card" data-open="${r.id}">
-        <div class="mc-top"><span class="veh">${esc(r.vehicleTypeName)}</span>
+      // 처음부터 최종 형태(출입날짜)로 렌더 + data-visit-refined 로 표시해
+      // driver-home-refined 가 다시 건드리지 않게 함 → '방문목적→출입날짜' 깜빡임 제거
+      const vk = String(r.visitAt || '').slice(0, 10);
+      const validDate = /^\d{4}-\d{2}-\d{2}$/.test(vk);
+      const isPast = validDate && vk < dateKey(new Date());
+      const vlabel = validDate ? `${vk.slice(0, 4)}. ${Number(vk.slice(5, 7))}. ${Number(vk.slice(8, 10))}` : '출입일자 미정';
+      return `<button class="mini-card${isPast ? ' visit-expired' : ''}" data-open="${r.id}" data-visit-refined="true">
+        <div class="mc-top"><span class="veh">${esc(vlabel)}</span>
           <span class="status-pill ${r.status}">${st.pill}</span></div>
         <div class="meta">${esc(r.passNo)} · ${new Date(r.createdAt).toLocaleString('ko-KR', { dateStyle: 'short', timeStyle: 'short' })}</div>
       </button>`;
