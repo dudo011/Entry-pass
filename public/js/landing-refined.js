@@ -50,7 +50,9 @@
 
       const driver = grid.querySelector('[data-role="driver"]');
       const driverTitle = driver?.querySelector('.rt');
-      if (driverTitle) driverTitle.textContent = '계약업체';
+      // 값이 같은데 다시 쓰면 텍스트노드가 교체되어 MutationObserver 가 재실행 → 무한 루프.
+      // 반드시 다를 때만 기록한다.
+      if (driverTitle && driverTitle.textContent !== '계약업체') driverTitle.textContent = '계약업체';
       grid.querySelectorAll('.arrow').forEach((arrow) => arrow.remove());
     } else {
       app.classList.remove('landing-refined');
@@ -61,7 +63,8 @@
     const password2 = document.getElementById('a_password2');
     const appbarTitle = document.querySelector('#app > .appbar h1');
     const currentTitle = appbarTitle?.textContent?.trim();
-    if (loginId && password && !password2 && ['운전기사', '차량 기사', '차량기사'].includes(currentTitle)) {
+    if (loginId && password && !password2 && ['운전기사', '차량 기사', '차량기사'].includes(currentTitle)
+        && appbarTitle.textContent !== '계약업체') {
       appbarTitle.textContent = '계약업체';
     }
   }

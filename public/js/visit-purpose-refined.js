@@ -96,6 +96,10 @@
 
     grid.classList.add('visit-purpose-grid');
 
+    // 카드 라벨 교체·재정렬은 그리드마다 1회만.
+    // 매 apply 마다 replaceChildren/append 하면 스스로 MutationObserver 를 재트리거해 무한 루프가 된다.
+    if (grid.dataset.visitPurposeApplied === 'true') return;
+
     const cards = new Map();
     grid.querySelectorAll('.type-card[data-type]').forEach((card) => {
       const id = card.dataset.type;
@@ -135,6 +139,7 @@
       const card = cards.get(id);
       if (card) grid.append(card);
     });
+    grid.dataset.visitPurposeApplied = 'true';
   }
 
   const app = document.getElementById('app');
