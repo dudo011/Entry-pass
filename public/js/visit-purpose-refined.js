@@ -31,7 +31,7 @@
       display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
       grid-template-rows:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)!important;
       grid-auto-flow:row!important;grid-auto-columns:unset!important;grid-auto-rows:unset!important;
-      column-gap:10px!important;row-gap:20px!important;align-content:stretch!important
+      column-gap:10px!important;row-gap:40px!important;align-content:stretch!important
     }
     #app .visit-purpose-grid .type-card{
       grid-column:auto!important;grid-row:auto!important;grid-area:auto!important;
@@ -48,9 +48,9 @@
     #app .visit-purpose-grid .type-card[data-type="scrap"]{grid-row:3!important;grid-column:1!important}
     #app .visit-purpose-grid .type-card[data-type="pcbs"]{grid-row:3!important;grid-column:2!important}
     #app .visit-purpose-grid .ico{
-      flex:0 0 auto!important;width:100%!important;height:min(11.5vh,88px)!important;min-height:54px!important;
+      flex:0 0 auto!important;width:100%!important;height:min(9.5vh,74px)!important;min-height:48px!important;
       margin:0!important;padding:0!important;display:flex!important;align-items:center!important;justify-content:center!important;
-      font-size:min(8.5vh,58px)!important;line-height:1!important
+      font-size:min(7.5vh,50px)!important;line-height:1!important
     }
     #app .visit-purpose-grid .vehicle-type-image{
       display:block!important;width:90%!important;height:100%!important;object-fit:contain!important
@@ -60,25 +60,25 @@
       display:flex!important;align-items:center!important;justify-content:center!important;text-align:center!important
     }
     #app .visit-purpose-grid .tn{
-      margin:0!important;white-space:normal!important;line-height:1.15!important;font-size:18px!important;
+      margin:0!important;white-space:normal!important;line-height:1.2!important;font-size:21px!important;
       font-weight:800!important;word-break:keep-all!important;text-align:center!important
     }
     #app .visit-purpose-grid .tn .purpose-sub{
-      display:block;margin-top:3px;font-size:.72em;line-height:1.18;white-space:nowrap
+      display:block;margin-top:3px;font-size:1em;line-height:1.2;white-space:normal
     }
     #app .visit-purpose-grid .my-tag{top:8px!important;right:8px!important;font-size:12px!important;padding:5px 8px!important}
     @media(max-height:760px){
       #app .screen:has(> .visit-purpose-grid){height:calc(100dvh - 170px)!important;padding:8px 14px 12px!important}
-      #app .visit-purpose-grid{column-gap:8px!important;row-gap:16px!important}
+      #app .visit-purpose-grid{column-gap:8px!important;row-gap:32px!important}
       #app .visit-purpose-grid .type-card{padding:7px 6px!important;gap:5px!important;border-radius:17px!important}
-      #app .visit-purpose-grid .ico{height:min(9.5vh,68px)!important;min-height:46px!important}
-      #app .visit-purpose-grid .tn{font-size:16px!important}
+      #app .visit-purpose-grid .ico{height:min(8vh,58px)!important;min-height:42px!important}
+      #app .visit-purpose-grid .tn{font-size:19px!important}
     }
     @media(max-width:390px){
       #app .screen:has(> .visit-purpose-grid){padding-inline:12px!important}
-      #app .visit-purpose-grid{column-gap:8px!important;row-gap:18px!important}
-      #app .visit-purpose-grid .tn{font-size:16px!important}
-      #app .visit-purpose-grid .tn .purpose-sub{font-size:.7em}
+      #app .visit-purpose-grid{column-gap:8px!important;row-gap:34px!important}
+      #app .visit-purpose-grid .tn{font-size:19px!important}
+      #app .visit-purpose-grid .tn .purpose-sub{font-size:1em}
     }
   `;
   document.head.appendChild(style);
