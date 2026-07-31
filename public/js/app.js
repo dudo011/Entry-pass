@@ -418,6 +418,7 @@
   function appbar(title, sub, opts = {}) {
     return `<div class="appbar">
       ${opts.back ? '<button class="back" data-histback>‹</button>' : ''}
+      ${opts.home ? '<button class="appbar-home" data-nav="driverHome" aria-label="홈">🏠</button>' : ''}
       <div><h1>${esc(title)}</h1>${sub ? `<div class="sub">${esc(sub)}</div>` : ''}</div>
       ${opts.logout ? `<button class="link-btn" data-logout>로그아웃</button>` : ''}
     </div>`;
@@ -708,7 +709,7 @@
   function driverResult() {
     const r = state.lastRequest;
     const st = statusInfo(r.status);
-    return appbar('신청 상세', null, { back: 'driverHome' }) + `
+    return appbar('신청 상세', null, { home: true }) + `
       <div class="screen">
         <div class="result">
           <div class="big-ico">${st.icon}</div>

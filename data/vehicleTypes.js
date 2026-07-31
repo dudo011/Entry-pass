@@ -41,7 +41,8 @@ const EXTRA_CONSTRUCTION_PCBS = [
 // 공사업체(배전공사)·PCBs처리용역·불용품매각 차량 제출 서류 (사진/PDF 업로드)
 const WORK_DOCS = [
   { key: 'workPlan', label: '작업계획서', required: true },
-  { key: 'tbm', label: 'TBM 회의록', required: true },
+  { key: 'tbm', label: 'TBM 회의록', required: true,
+    formImage: '/forms/tbm.png', formUrl: '/forms/tbm.pdf' },
   { key: 'safetyChecklist', label: '위험성 체크리스트', required: true,
     formImage: '/forms/work-plan.png', formUrl: '/forms/work-plan.pdf',
     focus: { x: 0.355, y: 0.325, w: 0.645 } },
@@ -76,17 +77,6 @@ export default [
       ],
     },
     requiredDocuments: [...WORK_DOCS],
-  },
-  {
-    id: 'pickup',
-    name: '공사업체 (자재 수령)',
-    subtitle: '환입 없이 자재만 수령하는 공사업체 차량',
-    icon: '🏗️',
-    color: '#f59e0b',
-    requiredSafetyRules: [...COMMON_REQUIRED],
-    otherSafetyRules: [...COMMON_OTHER],
-    route: { ...TRANSPORT_ROUTE },
-    requiredDocuments: [],
   },
   {
     id: 'transport',

@@ -1,22 +1,20 @@
 (() => {
   const LABELS = {
     construction: ['공사업체', '(자재 환입 및 수령)'],
-    pickup: ['공사업체', '(자재 수령)'],
     transport: ['물자수송용역'],
     delivery: ['기자재 납품'],
     scrap: ['불용품 매각'],
     pcbs: ['PCBs처리용역'],
   };
-  const ORDER = ['construction', 'pickup', 'transport', 'delivery', 'scrap', 'pcbs'];
+  // 5개 배치(2,2,1) — 6번째 칸은 빈 박스
+  const ORDER = ['construction', 'transport', 'delivery', 'scrap', 'pcbs'];
   const POSITION = {
     construction: [1, 1],
-    pickup: [1, 2],
-    transport: [2, 1],
-    delivery: [2, 2],
-    scrap: [3, 1],
-    pcbs: [3, 2],
+    transport: [1, 2],
+    delivery: [2, 1],
+    scrap: [2, 2],
+    pcbs: [3, 1],
   };
-  const CONSTRUCTION_IMAGE = '/images/type-construction-crane-truck.svg';
 
   const style = document.createElement('style');
   style.textContent = `
@@ -42,11 +40,14 @@
       justify-content:center!important;gap:8px!important
     }
     #app .visit-purpose-grid .type-card[data-type="construction"]{grid-row:1!important;grid-column:1!important}
-    #app .visit-purpose-grid .type-card[data-type="pickup"]{grid-row:1!important;grid-column:2!important}
-    #app .visit-purpose-grid .type-card[data-type="transport"]{grid-row:2!important;grid-column:1!important}
-    #app .visit-purpose-grid .type-card[data-type="delivery"]{grid-row:2!important;grid-column:2!important}
-    #app .visit-purpose-grid .type-card[data-type="scrap"]{grid-row:3!important;grid-column:1!important}
-    #app .visit-purpose-grid .type-card[data-type="pcbs"]{grid-row:3!important;grid-column:2!important}
+    #app .visit-purpose-grid .type-card[data-type="transport"]{grid-row:1!important;grid-column:2!important}
+    #app .visit-purpose-grid .type-card[data-type="delivery"]{grid-row:2!important;grid-column:1!important}
+    #app .visit-purpose-grid .type-card[data-type="scrap"]{grid-row:2!important;grid-column:2!important}
+    #app .visit-purpose-grid .type-card[data-type="pcbs"]{grid-row:3!important;grid-column:1!important}
+    #app .visit-purpose-grid .visit-purpose-empty{
+      grid-row:3!important;grid-column:2!important;min-height:0;
+      border-radius:20px;background:#fff;border:1px solid #eef1f5;box-shadow:0 6px 18px rgba(15,23,42,.06)
+    }
     #app .visit-purpose-grid .ico{
       flex:0 0 auto!important;width:100%!important;height:min(9.5vh,74px)!important;min-height:48px!important;
       margin:0!important;padding:0!important;display:flex!important;align-items:center!important;justify-content:center!important;
@@ -121,24 +122,20 @@
         card.style.setProperty('grid-row', String(position[0]), 'important');
         card.style.setProperty('grid-column', String(position[1]), 'important');
       }
-
-      if (id === 'pickup') {
-        const iconBox = card.querySelector('.ico');
-        if (iconBox && iconBox.dataset.pickupImageApplied !== 'true') {
-          const image = document.createElement('img');
-          image.className = 'vehicle-type-image';
-          image.src = CONSTRUCTION_IMAGE;
-          image.alt = '공사업체 자재 수령';
-          iconBox.replaceChildren(image);
-          iconBox.dataset.pickupImageApplied = 'true';
-        }
-      }
     });
 
     ORDER.forEach((id) => {
       const card = cards.get(id);
       if (card) grid.append(card);
     });
+
+    // 6번째 칸(3행 2열)은 빈 박스로 채워 2x3 균형 유지
+    if (!grid.querySelector('.visit-purpose-empty')) {
+      const empty = document.createElement('div');
+      empty.className = 'visit-purpose-empty';
+      empty.setAttribute('aria-hidden', 'true');
+      grid.append(empty);
+    }
     grid.dataset.visitPurposeApplied = 'true';
   }
 
