@@ -1,5 +1,6 @@
 (() => {
   const CONSTRUCTION_TITLES = new Set([
+    '공사업체',
     '공사업체 (자재 환입 및 수령)',
     '공사업체 (자재 수령)',
   ]);
