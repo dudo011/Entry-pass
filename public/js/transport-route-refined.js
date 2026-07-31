@@ -2,7 +2,7 @@
   const ROUTE_TITLE = '물자수송용역 차량';
   const ROUTE_SUBTITLE = '차량 동선 안내';
   const ROUTE_GUIDE = '정문 통과 후 직진, 전선 야적장 정차';
-  const ROUTE_IMAGE = '/routes/transport-route.svg';
+  const ROUTE_IMAGE = '/routes/transport-route.svg?v=20260801-62';
 
   const style = document.createElement('style');
   style.textContent = `
