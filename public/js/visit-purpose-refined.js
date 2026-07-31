@@ -1,6 +1,6 @@
 (() => {
   const LABELS = {
-    construction: ['공사업체', '(자재 환입 및 수령)'],
+    construction: ['공사업체'],
     transport: ['물자수송용역'],
     delivery: ['기자재 납품'],
     scrap: ['불용품 매각'],
