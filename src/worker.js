@@ -70,8 +70,11 @@ function visitDateCode(value) {
 }
 
 async function nextPassNo(env, vehicleTypeId, visitAt) {
+  // 신청번호 접두 알파벳은 방문 목적 순서(A~E)를 따른다.
+  // 각 차량유형에 passPrefix 를 명시(없으면 배열 순서로 대체).
   const typeIndex = vehicleTypes.findIndex((type) => type.id === vehicleTypeId);
-  const letter = String.fromCharCode(65 + Math.max(0, typeIndex));
+  const letter = vehicleTypes[typeIndex]?.passPrefix
+    || String.fromCharCode(65 + Math.max(0, typeIndex));
   const dateCode = visitDateCode(visitAt);
   if (!dateCode) throw new Error('출입날짜 형식이 올바르지 않습니다.');
   const prefix = `${letter}-${dateCode}-`;

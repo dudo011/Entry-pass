@@ -62,8 +62,9 @@ const TRANSPORT_ROUTE = {
 export default [
   {
     id: 'construction',
-    name: '공사업체 (자재 환입 및 수령)',
-    subtitle: '자재 환입과 수령을 함께 하는 공사업체 차량',
+    passPrefix: 'A',           // 신청번호 접두 알파벳(방문 목적 순서: A~E)
+    name: '공사업체',
+    subtitle: '공사업체 차량',
     icon: '🏗️',
     color: '#d97706',
     requiredSafetyRules: [...COMMON_REQUIRED, ...EXTRA_CONSTRUCTION_PCBS],
@@ -80,6 +81,7 @@ export default [
   },
   {
     id: 'transport',
+    passPrefix: 'B',
     name: '물자수송용역 차량',
     subtitle: '연간 물자수송 용역계약 차량',
     icon: '🚛',
@@ -91,6 +93,7 @@ export default [
   },
   {
     id: 'delivery',
+    passPrefix: 'C',
     name: '기자재 납품차량',
     subtitle: '기자재·부품 납품 차량',
     icon: '🚚',
@@ -109,6 +112,7 @@ export default [
   },
   {
     id: 'scrap',
+    passPrefix: 'D',
     name: '불용품 매각차량',
     subtitle: '불용·매각품 반출 차량',
     icon: '♻️',
@@ -127,6 +131,7 @@ export default [
   },
   {
     id: 'pcbs',
+    passPrefix: 'E',
     name: 'PCBs처리용역 차량',
     subtitle: 'PCBs 함유 폐기물 처리 용역 차량',
     icon: '☣️',
