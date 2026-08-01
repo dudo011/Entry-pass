@@ -1,6 +1,6 @@
 (() => {
   const ROUTE_GUIDE = '정문 통과 후 직진, 전선 야적장 정차';
-  const ROUTE_IMAGE = '/routes/transport-route.jpg?v=20260801-64';
+  const ROUTE_IMAGE = '/routes/transport-route.jpg?v=20260801-65';
 
   const style = document.createElement('style');
   style.textContent = `
