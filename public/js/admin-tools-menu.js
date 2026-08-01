@@ -4,7 +4,8 @@
 
   const TOKEN_KEY = 'ep_token';
   let currentUser = null;
-  let checkingUser = false;
+  let currentUserToken = '';
+  let currentUserPromise = null;
   let menuLayer = null;
   let closeCheckTimer = null;
 
@@ -15,6 +16,7 @@
     #app > .appbar .staff-role-manage-open{display:none!important}
     .admin-console-bar h1{font-size:23px!important;line-height:1.15!important;white-space:nowrap!important;letter-spacing:-.7px!important}
     .admin-console-bar .admin-tools-open{flex:none;order:2;margin-left:auto;margin-right:7px;min-height:42px;padding:0 12px;border:0;border-radius:11px;background:rgba(255,255,255,.14);color:#fff;font-size:14px;font-weight:900;white-space:nowrap;cursor:pointer;touch-action:manipulation}
+    .admin-console-bar .admin-tools-open[aria-busy="true"]{opacity:.72;cursor:wait}
     .admin-console-bar [data-logout]{order:3;margin-left:0!important;flex:none}
     .admin-tools-layer{position:fixed;inset:0;z-index:12000;background:#f8fafc;overflow:auto;overscroll-behavior:contain}
     .admin-tools-layer[hidden]{display:none!important}
@@ -28,6 +30,7 @@
     .admin-tools-icon{font-size:48px;line-height:1;margin-bottom:15px}
     .admin-tools-card strong{font-size:22px;line-height:1.25;letter-spacing:-.6px}
     .admin-tools-card span{margin-top:10px;color:#64748b;font-size:14px;line-height:1.5;word-break:keep-all}
+    .admin-tools-notice{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:15000;box-sizing:border-box;max-width:calc(100vw - 32px);padding:12px 18px;border-radius:12px;background:#0f172a;color:#fff;box-shadow:0 8px 24px rgba(15,23,42,.24);font-size:15px;font-weight:800;line-height:1.35;text-align:center;white-space:nowrap;pointer-events:none}
     .driver-manage-layer,.staff-manage-layer{z-index:13000!important}
     @media(max-width:390px){
       .admin-console-bar h1{font-size:20px!important}
@@ -37,33 +40,60 @@
       .admin-tools-icon{font-size:43px;margin-bottom:13px}
       .admin-tools-card strong{font-size:20px}
       .admin-tools-card span{font-size:13px}
+      .admin-tools-notice{font-size:14px;white-space:normal;width:max-content}
     }
   `;
   document.head.appendChild(style);
 
   const normalize = (value) => String(value || '').replace(/\s+/g, '');
 
-  async function getCurrentUser() {
-    if (currentUser) return currentUser;
-    if (checkingUser) return null;
-    const token = localStorage.getItem(TOKEN_KEY);
-    if (!token) return null;
+  function notify(message) {
+    document.querySelectorAll('.admin-tools-notice').forEach((node) => node.remove());
+    const node = document.createElement('div');
+    node.className = 'admin-tools-notice';
+    node.setAttribute('role', 'status');
+    node.textContent = message;
+    document.body.appendChild(node);
+    setTimeout(() => node.remove(), 2400);
+  }
 
-    checkingUser = true;
-    try {
-      const response = await fetch('/api/auth/me', {
-        headers: { Authorization: `Bearer ${token}` },
-        credentials: 'same-origin',
-      });
-      if (!response.ok) return null;
-      const data = await response.json().catch(() => ({}));
-      currentUser = data.user || null;
-      return currentUser;
-    } catch {
+  async function getCurrentUser() {
+    const token = localStorage.getItem(TOKEN_KEY) || '';
+    if (!token) {
+      currentUser = null;
+      currentUserToken = '';
+      currentUserPromise = null;
       return null;
-    } finally {
-      checkingUser = false;
     }
+
+    if (currentUser && currentUserToken === token) return currentUser;
+    if (currentUserPromise && currentUserToken === token) return currentUserPromise;
+
+    currentUser = null;
+    currentUserToken = token;
+    currentUserPromise = (async () => {
+      try {
+        const response = await fetch('/api/auth/me', {
+          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'same-origin',
+        });
+        if (!response.ok) return null;
+        const data = await response.json().catch(() => ({}));
+        if ((localStorage.getItem(TOKEN_KEY) || '') !== token) return null;
+        currentUser = data.user || null;
+        return currentUser;
+      } catch {
+        return null;
+      } finally {
+        if (currentUserToken === token) currentUserPromise = null;
+      }
+    })();
+
+    return currentUserPromise;
+  }
+
+  function isAdminUser(user) {
+    return user?.role === 'staff' && user?.staffRole === 'admin';
   }
 
   function isStaffConsole(appbar) {
@@ -92,7 +122,10 @@
     if (!menuLayer) return;
     const selector = kind === 'members' ? '.driver-manage-open' : '.staff-manage-open';
     const sourceButton = app.querySelector(`:scope > .appbar ${selector}`);
-    if (!sourceButton) return;
+    if (!sourceButton) {
+      notify('관리 기능을 불러오지 못했습니다. 화면을 새로고침해 주세요.');
+      return;
+    }
 
     history.pushState({ ...(history.state || {}), adminTools: 'management', adminToolKind: kind }, '');
     menuLayer.hidden = true;
@@ -146,17 +179,25 @@
     menuLayer.querySelector('[data-admin-tool="staff"]').onclick = () => openManagement('staff');
   }
 
-  async function enhanceHeader() {
+  async function handleAdminMode(button) {
+    if (button.getAttribute('aria-busy') === 'true') return;
+    button.setAttribute('aria-busy', 'true');
+    try {
+      const user = await getCurrentUser();
+      if (!isAdminUser(user)) {
+        notify('관리자 권한이 없습니다.');
+        return;
+      }
+      openMenu();
+    } finally {
+      button.removeAttribute('aria-busy');
+    }
+  }
+
+  function enhanceHeader() {
     const appbar = app.querySelector(':scope > .appbar');
     const logout = appbar?.querySelector('[data-logout]');
     if (!appbar || !logout || !isStaffConsole(appbar)) return;
-
-    const user = await getCurrentUser();
-    if (user?.role !== 'staff' || user?.staffRole !== 'admin') return;
-
-    const memberSource = appbar.querySelector('.driver-manage-open');
-    const staffSource = appbar.querySelector('.staff-manage-open');
-    if (!memberSource || !staffSource) return;
 
     appbar.classList.add('admin-console-bar');
     if (appbar.querySelector('.admin-tools-open')) return;
@@ -165,7 +206,7 @@
     button.type = 'button';
     button.className = 'admin-tools-open';
     button.textContent = '관리자모드';
-    button.onclick = openMenu;
+    button.onclick = () => handleAdminMode(button);
     appbar.insertBefore(button, logout);
   }
 
