@@ -74,33 +74,29 @@
 }
 
 /*
- * 모든 진행 화면의 하단 버튼 위치 통일
- * - 본문이 짧으면 남은 공간을 채워 버튼을 화면 하단으로 내림
- * - 본문이 길면 기존 문서 흐름을 유지해 불필요한 고정/겹침을 방지
- * - 버튼 자체의 sticky 동작을 해제해 화면별 위치 차이를 제거
+ * 모든 진행 화면의 하단 버튼 기준선 통일
+ * - 화면/콘텐츠 높이와 무관하게 같은 viewport 하단 기준 사용
+ * - 버튼 높이만큼 본문 하단 공간을 확보해 콘텐츠 겹침 방지
  */
 #app > .screen:has(> .sticky-cta) {
-  min-height: calc(100dvh - 68px) !important;
-  display: flex !important;
-  flex-direction: column !important;
   box-sizing: border-box !important;
-  padding-bottom: calc(8px + env(safe-area-inset-bottom)) !important;
-}
-
-/* 진행 표시줄이 있는 신청 단계 화면 */
-#app > .steps + .screen:has(> .sticky-cta) {
-  min-height: calc(100dvh - 68px - 25px) !important;
+  padding-bottom: calc(96px + env(safe-area-inset-bottom)) !important;
 }
 
 #app > .screen:has(> .sticky-cta) > .sticky-cta {
-  position: static !important;
-  bottom: auto !important;
-  margin-top: auto !important;
-  padding-top: 12px !important;
-  padding-bottom: calc(6px + env(safe-area-inset-bottom)) !important;
+  position: fixed !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: 0 !important;
+  transform: translateX(-50%) !important;
+  z-index: 40 !important;
+  width: min(calc(100vw - 32px), 488px) !important;
+  margin: 0 !important;
+  padding: 12px 0 calc(8px + env(safe-area-inset-bottom)) !important;
+  box-sizing: border-box !important;
+  background: linear-gradient(to top, var(--bg) 82%, rgba(248,250,252,.92) 92%, transparent) !important;
 }
 
-/* 하단 버튼 안의 실제 버튼 크기와 좌우 위치도 공통화 */
 #app > .screen:has(> .sticky-cta) > .sticky-cta > .btn {
   width: 100% !important;
   margin: 0 !important;
