@@ -12,7 +12,7 @@
 
 #app:has(#a_password2) .card > .field-h {
   gap: 12px !important;
-  min-height: 50px !important;
+  min-height: 52px !important;
   margin-bottom: 8px !important;
 }
 
@@ -30,9 +30,9 @@
   flex: 0 1 82% !important;
   width: 82% !important;
   max-width: 82% !important;
-  min-height: 48px !important;
-  padding-top: 9px !important;
-  padding-bottom: 9px !important;
+  min-height: 50px !important;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
   margin-left: auto !important;
 }
 
@@ -111,7 +111,7 @@
 
   #app:has(#a_password2) .card > .field-h {
     gap: 8px !important;
-    min-height: 46px !important;
+    min-height: 48px !important;
     margin-bottom: 6px !important;
   }
 
@@ -127,7 +127,9 @@
     flex-basis: 80% !important;
     width: 80% !important;
     max-width: 80% !important;
-    min-height: 44px !important;
+    min-height: 46px !important;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
     font-size: 16px !important;
   }
 
