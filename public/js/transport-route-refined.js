@@ -1,6 +1,6 @@
 (() => {
   const ROUTE_GUIDE = '정문 통과 후 직진, 전선 야적장 정차';
-  const ROUTE_IMAGE = '/routes/transport-route.svg?v=20260801-66';
+  const ROUTE_IMAGE = 'https://raw.githubusercontent.com/dudo011/Entry-pass/main/%EC%B0%A8%EB%9F%89%EB%8F%99%EC%84%A0(%EB%AC%BC%EC%9E%90%EC%88%98%EC%86%A1%EC%9A%A9%EC%97%AD).jpg?v=20260801-67';
 
   const style = document.createElement('style');
   style.textContent = `
