@@ -84,14 +84,5 @@ CREATE INDEX IF NOT EXISTS idx_documents_request ON documents(request_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_staff_app_status ON staff_applications(status);
 
--- 기존 운영 접근을 유지하기 위한 초기 직원 계정입니다.
--- 직원별 계정 전환을 완료한 뒤 공개 기본 계정은 다음 보안 단계에서 제거합니다.
-INSERT OR IGNORE INTO users (id, role, staff_role, login_id, name, salt, hash, created_at) VALUES
-  ('seed-admin', 'staff', 'admin', 'admin', '관리자',
-   'b06ceafd1991e424115f83c6e75f010a',
-   '63a225a2e5fdd5b600b08f7bc5ca3b7615e3ac77ade9a256e078f140f8d27012',
-   '2024-01-01T00:00:00.000Z'),
-  ('seed-staff', 'staff', 'approver', 'staff', '승인담당자',
-   '85d87261b675e88c11fc9a6028674cb0',
-   '9cfdfe4e74898a92b07b3932bae0028220d6d5cb42ae164d1778187a6f4526fe',
-   '2024-01-01T00:00:00.000Z');
+-- 직원 계정은 앱에서 본인이 가입 신청하고, 기존 관리자가 승인하여 생성합니다.
+-- 공개 저장소에는 기본 관리자·직원 계정이나 비밀번호 해시를 두지 않습니다.
