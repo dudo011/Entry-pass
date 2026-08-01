@@ -1,5 +1,5 @@
 (() => {
-  const CACHE_VERSION = '20260801-74';
+  const CACHE_VERSION = '20260801-75';
   const ROUTES = {
     transport: {
       image: `https://raw.githubusercontent.com/dudo011/Entry-pass/main/%EC%B0%A8%EB%9F%89%EB%8F%99%EC%84%A0(%EB%AC%BC%EC%9E%90%EC%88%98%EC%86%A1%EC%9A%A9%EC%97%AD).jpg?v=${CACHE_VERSION}`,
@@ -22,6 +22,13 @@
       alt: 'PCBs 처리용역 차량 동선 안내도',
     },
   };
+
+  // 앱 실행 직후 동선 이미지를 브라우저 캐시에 미리 적재한다.
+  Object.values(ROUTES).forEach((route) => {
+    const preloadImage = new Image();
+    preloadImage.decoding = 'async';
+    preloadImage.src = route.image;
+  });
 
   const style = document.createElement('style');
   style.textContent = `
@@ -126,6 +133,7 @@
     image.className = 'transport-route-map';
     image.src = route.image;
     image.alt = route.alt;
+    image.decoding = 'async';
 
     card.append(guide, image);
     screen.querySelectorAll(':scope > :not(.sticky-cta)').forEach((element) => element.remove());
