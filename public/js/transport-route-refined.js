@@ -1,8 +1,6 @@
 (() => {
-  const ROUTE_TITLE = '물자수송용역 차량';
-  const ROUTE_SUBTITLE = '차량 동선 안내';
   const ROUTE_GUIDE = '정문 통과 후 직진, 전선 야적장 정차';
-  const ROUTE_IMAGE = '/routes/transport-route.jpg?v=20260801-63';
+  const ROUTE_IMAGE = '/routes/transport-route.jpg?v=20260801-64';
 
   const style = document.createElement('style');
   style.textContent = `
@@ -41,15 +39,22 @@
   `;
   document.head.appendChild(style);
 
+  function isTransportRouteScreen(app) {
+    const heading = app.querySelector(':scope > .appbar h1')?.textContent?.trim() || '';
+    if (heading !== '차량 동선 안내') return false;
+
+    const transportIcon = app.querySelector(
+      ':scope > .appbar .flow-header-vehicle-image[src*="type-transport-flatbed"]'
+    );
+    return !!transportIcon;
+  }
+
   function refineTransportRoute() {
     const app = document.getElementById('app');
-    if (!app) return;
+    if (!app || !isTransportRouteScreen(app)) return;
 
-    const title = app.querySelector(':scope > .appbar h1')?.textContent?.trim();
-    const subtitle = app.querySelector(':scope > .appbar .sub')?.textContent?.trim();
-    const screen = app.querySelector(':scope > .screen');
-
-    if (title !== ROUTE_TITLE || subtitle !== ROUTE_SUBTITLE || !screen) return;
+    const screen = app.querySelector(':scope > .steps + .screen, :scope > .screen');
+    if (!screen) return;
     if (screen.dataset.transportRouteRefined === 'true') return;
 
     const cta = screen.querySelector('.sticky-cta');
@@ -67,6 +72,7 @@
 
   const app = document.getElementById('app');
   if (!app) return;
+
   let scheduled = false;
   const schedule = () => {
     if (scheduled) return;
@@ -77,6 +83,10 @@
     });
   };
 
-  new MutationObserver(schedule).observe(app, { childList: true, subtree: true });
+  new MutationObserver(schedule).observe(app, {
+    childList: true,
+    subtree: true,
+    characterData: true,
+  });
   schedule();
 })();
