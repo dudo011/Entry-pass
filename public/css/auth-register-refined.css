@@ -1,6 +1,6 @@
 /* 회원가입 화면 전용 보정 */
 #app:has(#a_password2) > .screen {
-  padding-top: 4px !important;
+  padding-top: 10px !important;
   padding-bottom: env(safe-area-inset-bottom) !important;
   overflow-y: hidden !important;
 }
@@ -101,7 +101,7 @@
 
 @media (max-width: 390px) {
   #app:has(#a_password2) > .screen {
-    padding-top: 2px !important;
+    padding-top: 10px !important;
     padding-bottom: env(safe-area-inset-bottom) !important;
   }
 
