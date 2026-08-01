@@ -1,5 +1,5 @@
 (() => {
-  const ROUTE_IMAGE = 'https://raw.githubusercontent.com/dudo011/Entry-pass/main/%EC%B0%A8%EB%9F%89%EB%8F%99%EC%84%A0(%EB%AC%BC%EC%9E%90%EC%88%98%EC%86%A1%EC%9A%A9%EC%97%AD).jpg?v=20260801-68';
+  const ROUTE_IMAGE = 'https://raw.githubusercontent.com/dudo011/Entry-pass/main/%EC%B0%A8%EB%9F%89%EB%8F%99%EC%84%A0(%EB%AC%BC%EC%9E%90%EC%88%98%EC%86%A1%EC%9A%A9%EC%97%AD).jpg?v=20260801-69';
 
   const style = document.createElement('style');
   style.textContent = `
@@ -7,8 +7,8 @@
       padding-top:14px!important
     }
     #app .transport-route-card{
-      margin:0 0 12px;
-      padding:20px 14px 12px;
+      margin:0 0 4px;
+      padding:28px 14px 12px;
       overflow:hidden;
       background:#fff;
       border:1px solid #dbe2ea;
@@ -16,7 +16,7 @@
       box-shadow:0 8px 24px rgba(15,23,42,.06)
     }
     #app .transport-route-guide{
-      margin:0 0 16px;
+      margin:0 0 24px;
       color:#0f172a;
       text-align:center;
       font-size:24px;
@@ -38,10 +38,11 @@
     }
     @media(max-width:390px){
       #app .transport-route-card{
-        padding:18px 12px 10px
+        margin-bottom:2px;
+        padding:24px 12px 10px
       }
       #app .transport-route-guide{
-        margin-bottom:14px;
+        margin-bottom:20px;
         font-size:21px
       }
     }
