@@ -24,6 +24,11 @@
     #app.landing-refined .role-btn .rt{font-size:23px!important;line-height:1.3!important}
     #app.landing-refined .role-btn .rd{display:block!important;margin-top:8px;font-size:15px!important;line-height:1.4!important}
     #app.landing-refined .role-btn .arrow{display:none!important}
+    .landing-notice-wrap{padding:0 16px 6px;text-align:center}
+    .landing-notice-btn{
+      width:100%;min-height:44px;padding:0 14px;border:1px solid var(--border,#e2e8f0);border-radius:12px;
+      background:#fff;color:var(--text,#0f172a);font-size:16px;font-weight:800;cursor:pointer
+    }
     .landing-privacy-footer{
       margin-top:auto;padding:4px 16px calc(12px + env(safe-area-inset-bottom));text-align:center;
       color:var(--text-muted,#64748b);font-size:14px;line-height:1.45
@@ -53,12 +58,26 @@
       #app.landing-refined .role-btn .emoji{width:84px!important;height:84px!important;font-size:47px!important}
       #app.landing-refined .role-btn .rt{font-size:21px!important}
       #app.landing-refined .role-btn .rd{font-size:14px!important}
+      .landing-notice-wrap{padding:0 12px 4px}
+      .landing-notice-btn{min-height:42px;font-size:15px}
       .landing-privacy-footer{padding-top:2px;padding-bottom:calc(8px + env(safe-area-inset-bottom));font-size:13px}
     }
   `;
   document.head.appendChild(style);
 
   const policyContent = {
+    notice: {
+      title: '유의사항',
+      body: `
+        <p>출입 신청 전 안전수칙과 차량 동선을 반드시 확인해 주세요.</p>
+        <h3>사전 승인</h3>
+        <p>출입 신청이 완료되어도 관리자의 승인이 있어야 출입할 수 있습니다.</p>
+        <h3>정보 확인</h3>
+        <p>차량번호, 방문일자, 소속업체 및 제출서류를 정확하게 입력해 주세요.</p>
+        <h3>현장 안전</h3>
+        <p>자재센터 내에서는 지정된 차량 동선과 현장 안내에 따라 이동해 주세요.</p>
+      `
+    },
     privacy: {
       title: '개인정보 처리방침',
       body: `
@@ -124,6 +143,14 @@
       if (driverTitle && driverTitle.textContent !== '계약업체') driverTitle.textContent = '계약업체';
       grid.querySelectorAll('.arrow').forEach((arrow) => arrow.remove());
 
+      if (!app.querySelector('.landing-notice-wrap')) {
+        const noticeWrap = document.createElement('div');
+        noticeWrap.className = 'landing-notice-wrap';
+        noticeWrap.innerHTML = '<button type="button" class="landing-notice-btn">유의사항</button>';
+        noticeWrap.querySelector('.landing-notice-btn').onclick = () => openPolicy('notice');
+        grid.insertAdjacentElement('afterend', noticeWrap);
+      }
+
       if (!app.querySelector('.landing-privacy-footer')) {
         const footer = document.createElement('footer');
         footer.className = 'landing-privacy-footer';
@@ -141,6 +168,7 @@
       }
     } else {
       app.classList.remove('landing-refined');
+      app.querySelector('.landing-notice-wrap')?.remove();
       app.querySelector('.landing-privacy-footer')?.remove();
     }
 
