@@ -1,5 +1,17 @@
 (() => {
-  const ROUTE_IMAGE = 'https://raw.githubusercontent.com/dudo011/Entry-pass/main/%EC%B0%A8%EB%9F%89%EB%8F%99%EC%84%A0(%EB%AC%BC%EC%9E%90%EC%88%98%EC%86%A1%EC%9A%A9%EC%97%AD).jpg?v=20260801-69';
+  const CACHE_VERSION = '20260801-70';
+  const ROUTES = {
+    transport: {
+      image: `https://raw.githubusercontent.com/dudo011/Entry-pass/main/%EC%B0%A8%EB%9F%89%EB%8F%99%EC%84%A0(%EB%AC%BC%EC%9E%90%EC%88%98%EC%86%A1%EC%9A%A9%EC%97%AD).jpg?v=${CACHE_VERSION}`,
+      guide: '정문 통과 후 직진, <strong>“전선 야적장”</strong> 정차',
+      alt: '물자수송용역 차량 동선 안내도',
+    },
+    construction: {
+      image: `https://raw.githubusercontent.com/dudo011/Entry-pass/main/%EC%B0%A8%EB%9F%89%EB%8F%99%EC%84%A0(%EA%B3%B5%EC%82%AC%EC%97%85%EC%B2%B4).jpg?v=${CACHE_VERSION}`,
+      guide: '정문 통과 후 <strong>“3창고”</strong> 왼쪽 정차',
+      alt: '공사업체 차량 동선 안내도',
+    },
+  };
 
   const style = document.createElement('style');
   style.textContent = `
@@ -49,19 +61,28 @@
   `;
   document.head.appendChild(style);
 
-  function isTransportRouteScreen(app) {
+  function getRouteConfig(app) {
     const heading = app.querySelector(':scope > .appbar h1')?.textContent?.trim() || '';
-    if (heading !== '차량 동선 안내') return false;
+    if (heading !== '차량 동선 안내') return null;
 
-    const transportIcon = app.querySelector(
-      ':scope > .appbar .flow-header-vehicle-image[src*="type-transport-flatbed"]'
+    const appbar = app.querySelector(':scope > .appbar');
+    const iconText = appbar?.querySelector('.vehicle-appbar-icon')?.textContent?.trim() || '';
+    if (iconText === '🏗️') return ROUTES.construction;
+
+    const transportIcon = appbar?.querySelector(
+      '.flow-header-vehicle-image[src*="type-transport-flatbed"]'
     );
-    return !!transportIcon;
+    if (transportIcon) return ROUTES.transport;
+
+    return null;
   }
 
   function refineTransportRoute() {
     const app = document.getElementById('app');
-    if (!app || !isTransportRouteScreen(app)) return;
+    if (!app) return;
+
+    const route = getRouteConfig(app);
+    if (!route) return;
 
     const screen = app.querySelector(':scope > .steps + .screen, :scope > .screen');
     if (!screen || screen.dataset.transportRouteRefined === 'true') return;
@@ -74,12 +95,12 @@
 
     const guide = document.createElement('div');
     guide.className = 'transport-route-guide';
-    guide.innerHTML = '정문 통과 후 직진, <strong>“전선 야적장”</strong> 정차';
+    guide.innerHTML = route.guide;
 
     const image = document.createElement('img');
     image.className = 'transport-route-map';
-    image.src = ROUTE_IMAGE;
-    image.alt = '물자수송용역 차량 동선 안내도';
+    image.src = route.image;
+    image.alt = route.alt;
 
     card.append(guide, image);
 
