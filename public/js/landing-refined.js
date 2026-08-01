@@ -26,7 +26,7 @@
     #app.landing-refined .role-btn .arrow{display:none!important}
     .landing-privacy-footer{
       margin-top:auto;padding:4px 16px calc(12px + env(safe-area-inset-bottom));text-align:center;
-      color:var(--text-muted,#64748b);font-size:12px;line-height:1.45
+      color:var(--text-muted,#64748b);font-size:14px;line-height:1.45
     }
     .landing-privacy-links{margin-top:3px;display:flex;justify-content:center;gap:12px}
     .landing-privacy-link{
@@ -53,7 +53,7 @@
       #app.landing-refined .role-btn .emoji{width:84px!important;height:84px!important;font-size:47px!important}
       #app.landing-refined .role-btn .rt{font-size:21px!important}
       #app.landing-refined .role-btn .rd{font-size:14px!important}
-      .landing-privacy-footer{padding-top:2px;padding-bottom:calc(8px + env(safe-area-inset-bottom));font-size:11px}
+      .landing-privacy-footer{padding-top:2px;padding-bottom:calc(8px + env(safe-area-inset-bottom));font-size:13px}
     }
   `;
   document.head.appendChild(style);
