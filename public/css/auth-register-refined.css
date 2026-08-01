@@ -1,19 +1,19 @@
 /* 회원가입 화면 전용 보정 */
 #app:has(#a_password2) > .screen {
-  padding-top: 10px !important;
-  padding-bottom: calc(10px + env(safe-area-inset-bottom)) !important;
+  padding-top: 8px !important;
+  padding-bottom: calc(4px + env(safe-area-inset-bottom)) !important;
 }
 
 #app:has(#a_password2) .card {
-  padding-top: 12px !important;
-  padding-bottom: 12px !important;
-  margin-bottom: 8px !important;
+  padding-top: 13px !important;
+  padding-bottom: 13px !important;
+  margin-bottom: 4px !important;
 }
 
 #app:has(#a_password2) .card > .field-h {
   gap: 12px !important;
-  min-height: 52px !important;
-  margin-bottom: 8px !important;
+  min-height: 56px !important;
+  margin-bottom: 9px !important;
 }
 
 #app:has(#a_password2) .card > .field-h .lb {
@@ -30,9 +30,9 @@
   flex: 0 1 82% !important;
   width: 82% !important;
   max-width: 82% !important;
-  min-height: 50px !important;
-  padding-top: 10px !important;
-  padding-bottom: 10px !important;
+  min-height: 54px !important;
+  padding-top: 12px !important;
+  padding-bottom: 12px !important;
   margin-left: auto !important;
 }
 
@@ -100,19 +100,20 @@
 
 @media (max-width: 390px) {
   #app:has(#a_password2) > .screen {
-    padding-top: 7px !important;
-    padding-bottom: calc(7px + env(safe-area-inset-bottom)) !important;
+    padding-top: 5px !important;
+    padding-bottom: calc(3px + env(safe-area-inset-bottom)) !important;
   }
 
   #app:has(#a_password2) .card {
-    padding-top: 9px !important;
-    padding-bottom: 9px !important;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+    margin-bottom: 3px !important;
   }
 
   #app:has(#a_password2) .card > .field-h {
     gap: 8px !important;
-    min-height: 48px !important;
-    margin-bottom: 6px !important;
+    min-height: 52px !important;
+    margin-bottom: 7px !important;
   }
 
   #app:has(#a_password2) .card > .field-h .lb {
@@ -127,9 +128,9 @@
     flex-basis: 80% !important;
     width: 80% !important;
     max-width: 80% !important;
-    min-height: 46px !important;
-    padding-top: 10px !important;
-    padding-bottom: 10px !important;
+    min-height: 50px !important;
+    padding-top: 12px !important;
+    padding-bottom: 12px !important;
     font-size: 16px !important;
   }
 
