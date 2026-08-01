@@ -15,7 +15,7 @@
     body.admin-portal-home #app{display:none!important}
     body.admin-applications-view .driver-manage-open,
     body.admin-applications-view .staff-manage-open{display:none!important}
-    .admin-portal-shell{position:fixed;inset:0;z-index:9000;background:#f8fafc;overflow:auto;overscroll-behavior:contain}
+    .admin-portal-shell{position:fixed;inset:0;z-index:12000;background:#f8fafc;overflow:auto;overscroll-behavior:contain}
     .admin-portal-shell[hidden]{display:none!important}
     .admin-portal-head{min-height:112px;box-sizing:border-box;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;align-items:center;gap:2px 14px;padding:18px 22px;background:#0f172a;color:#fff}
     .admin-portal-title{grid-column:1;grid-row:1;margin:0;font-size:30px;line-height:1.12;letter-spacing:-1.2px;white-space:nowrap}
@@ -35,6 +35,9 @@
   `;
   document.head.appendChild(style);
 
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const normalized = (text) => String(text || '').replace(/\s+/g, '');
+
   function authHeaders() {
     const token = localStorage.getItem(TOKEN_KEY) || '';
     return token ? { Authorization: `Bearer ${token}` } : {};
@@ -47,21 +50,41 @@
     return data.user || null;
   }
 
-  function originalControl(selector) {
-    return app.querySelector(`:scope > .appbar ${selector}`);
+  async function logout() {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST', headers: authHeaders(), credentials: 'same-origin' });
+    } catch { /* 네트워크 오류여도 로컬 세션은 종료 */ }
+    localStorage.removeItem(TOKEN_KEY);
+    location.reload();
   }
 
-  function logout() {
-    const button = originalControl('[data-logout]');
-    if (button) button.click();
+  function isStaffConsole() {
+    const title = app.querySelector(':scope > .appbar h1');
+    return normalized(title?.textContent).includes('출입신청관리');
   }
 
-  async function waitForControl(selector, timeout = 4000) {
+  async function ensureStaffConsole(timeout = 5000) {
+    if (isStaffConsole()) return true;
+
     const started = Date.now();
     while (Date.now() - started < timeout) {
-      const button = originalControl(selector);
+      const staffEntry = app.querySelector('[data-role="staff"]');
+      if (staffEntry) {
+        staffEntry.click();
+        await sleep(60);
+      }
+      if (isStaffConsole()) return true;
+      await sleep(50);
+    }
+    return false;
+  }
+
+  async function waitForControl(selector, timeout = 5000) {
+    const started = Date.now();
+    while (Date.now() - started < timeout) {
+      const button = app.querySelector(`:scope > .appbar ${selector}`);
       if (button) return button;
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await sleep(50);
     }
     return null;
   }
@@ -74,7 +97,9 @@
     window.scrollTo(0, 0);
   }
 
-  function showApplications() {
+  async function showApplications() {
+    const ready = await ensureStaffConsole();
+    if (!ready) return;
     document.body.classList.remove('admin-portal-home', 'admin-management-open');
     document.body.classList.add('admin-applications-view');
     if (portal) portal.hidden = true;
@@ -83,8 +108,11 @@
   }
 
   async function openManagement(selector) {
+    const ready = await ensureStaffConsole();
+    if (!ready) return;
     const button = await waitForControl(selector);
     if (!button) return;
+
     document.body.classList.remove('admin-portal-home', 'admin-applications-view');
     document.body.classList.add('admin-management-open');
     if (portal) portal.hidden = true;
@@ -117,13 +145,18 @@
     portal.querySelector('.admin-portal-user').textContent = `${currentUser.name || '관리자'}님`;
     portal.querySelector('.admin-portal-logout').addEventListener('click', logout);
     backButton.addEventListener('click', showHome);
-    portal.addEventListener('click', (event) => {
+    portal.addEventListener('click', async (event) => {
       const card = event.target.closest('[data-admin-action]');
-      if (!card) return;
-      const action = card.dataset.adminAction;
-      if (action === 'applications') showApplications();
-      if (action === 'members') openManagement('.driver-manage-open');
-      if (action === 'staff') openManagement('.staff-manage-open');
+      if (!card || card.disabled) return;
+      card.disabled = true;
+      try {
+        const action = card.dataset.adminAction;
+        if (action === 'applications') await showApplications();
+        if (action === 'members') await openManagement('.driver-manage-open');
+        if (action === 'staff') await openManagement('.staff-manage-open');
+      } finally {
+        card.disabled = false;
+      }
     });
   }
 
@@ -132,9 +165,11 @@
       const memberLayer = document.querySelector('.driver-manage-layer');
       const staffLayer = document.querySelector('.staff-manage-layer');
       if (memberLayer) {
+        memberLayer.style.zIndex = '13000';
         const title = memberLayer.querySelector('.driver-manage-head h2');
         if (title) title.textContent = '회원관리';
       }
+      if (staffLayer) staffLayer.style.zIndex = '13000';
       if (document.body.classList.contains('admin-management-open') && !memberLayer && !staffLayer) showHome();
     });
     observer.observe(document.body, { childList: true, subtree: true });
