@@ -241,10 +241,17 @@
     }
   }
 
-  function enhanceHeader() {
+  async function enhanceHeader() {
     const appbar = app.querySelector(':scope > .appbar');
     const logout = appbar?.querySelector('[data-logout]');
     if (!appbar || !logout || !isStaffConsole(appbar)) return;
+
+    const user = await getCurrentUser();
+    if (!isAdminUser(user)) {
+      appbar.classList.remove('admin-console-bar');
+      appbar.querySelector('.admin-tools-open')?.remove();
+      return;
+    }
 
     appbar.classList.add('admin-console-bar');
     if (appbar.querySelector('.admin-tools-open')) return;
