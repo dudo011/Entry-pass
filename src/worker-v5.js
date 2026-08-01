@@ -74,16 +74,19 @@ function tokenFromRequest(c) {
   return String(c.req.query('t') || '').trim();
 }
 
-async function enforceSessionExpiry(c) {
-  const token = tokenFromRequest(c);
+async function sessionFromToken(env, token) {
   if (!token) return null;
-
-  const row = await c.env.DB.prepare(`
-    SELECT s.created_at, u.role
+  return env.DB.prepare(`
+    SELECT s.user_id, s.created_at, u.role
       FROM sessions s
       JOIN users u ON u.id = s.user_id
      WHERE s.token = ?
   `).bind(token).first();
+}
+
+async function enforceSessionExpiry(c) {
+  const token = tokenFromRequest(c);
+  const row = await sessionFromToken(c.env, token);
   if (!row) return null;
 
   const createdAt = new Date(row.created_at).getTime();
@@ -135,6 +138,18 @@ app.use('*', async (c, next) => {
   if (expiredResponse) return expiredResponse;
 
   const path = new URL(c.req.url).pathname;
+
+  if (c.req.method === 'PUT' && path === '/api/auth/profile') {
+    const token = tokenFromRequest(c);
+    const session = await sessionFromToken(c.env, token);
+    const body = await c.req.raw.clone().json().catch(() => ({}));
+    await next();
+    if (session?.user_id && body.password && c.res.status >= 200 && c.res.status < 300) {
+      await c.env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(session.user_id).run();
+    }
+    return;
+  }
+
   if (c.req.method !== 'POST' || path !== '/api/auth/login') {
     await next();
     return;
@@ -175,10 +190,8 @@ app.use('*', async (c, next) => {
       ? await c.env.DB.prepare('SELECT role FROM users WHERE login_id = ?').bind(loginId).first()
       : null;
     const accountBlockMs = user?.role === 'staff' ? STAFF_BLOCK_MS : DRIVER_BLOCK_MS;
-    await Promise.all([
-      recordFailure(c.env, accountKey, ACCOUNT_FAILURE_LIMIT, ACCOUNT_WINDOW_MS, accountBlockMs, now),
-      recordFailure(c.env, ipKey, IP_FAILURE_LIMIT, IP_WINDOW_MS, IP_BLOCK_MS, now),
-    ]);
+    await recordFailure(c.env, accountKey, ACCOUNT_FAILURE_LIMIT, ACCOUNT_WINDOW_MS, accountBlockMs, now);
+    await recordFailure(c.env, ipKey, IP_FAILURE_LIMIT, IP_WINDOW_MS, IP_BLOCK_MS, now);
   }
 });
 
