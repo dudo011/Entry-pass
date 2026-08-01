@@ -1,6 +1,16 @@
 (() => {
   const COMPANY_KEY = 'ep_register_company';
 
+  function showToast(message) {
+    const old = document.querySelector('.register-privacy-toast');
+    if (old) old.remove();
+    const toast = document.createElement('div');
+    toast.className = 'toast register-privacy-toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2400);
+  }
+
   function fieldOf(id) {
     return document.getElementById(id)?.closest('label.field-h') || null;
   }
@@ -34,7 +44,14 @@
     companyField.className = 'field-h register-company-field';
     companyField.innerHTML = '<span class="lb">소속업체</span><input type="text" id="a_company" placeholder="없을 경우 공란">';
 
-    [loginField, passwordField, password2Field, nameField, phoneField, typeField, companyField, submit]
+    const privacyConsent = document.createElement('label');
+    privacyConsent.className = 'register-privacy-consent';
+    privacyConsent.innerHTML = `
+      <input type="checkbox" id="a_privacy_consent">
+      <span><b>개인정보 수집·이용에 동의합니다.</b> <em>(필수)</em></span>
+    `;
+
+    [loginField, passwordField, password2Field, nameField, phoneField, typeField, companyField, privacyConsent, submit]
       .forEach((element) => card.append(element));
 
     card.querySelectorAll(':scope > .hint').forEach((hint) => hint.remove());
@@ -44,11 +61,16 @@
         event.preventDefault();
         event.stopImmediatePropagation();
         password.focus();
-        const toast = document.createElement('div');
-        toast.className = 'toast';
-        toast.textContent = '비밀번호는 최소 4자리로 입력해 주세요.';
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 2400);
+        showToast('비밀번호는 최소 4자리로 입력해 주세요.');
+        return;
+      }
+
+      const consent = document.getElementById('a_privacy_consent');
+      if (!consent?.checked) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        consent?.focus();
+        showToast('개인정보 수집·이용 동의가 필요합니다.');
       }
     }, true);
 
@@ -63,6 +85,8 @@
         const body = JSON.parse(init.body);
         const company = document.getElementById('a_company')?.value?.trim() || '';
         body.company = company;
+        body.privacyConsent = true;
+        body.privacyConsentAt = new Date().toISOString();
         init = { ...init, body: JSON.stringify(body) };
         localStorage.setItem(COMPANY_KEY, company);
       } catch { /* 기존 요청을 그대로 전송 */ }
