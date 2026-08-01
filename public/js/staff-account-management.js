@@ -8,7 +8,8 @@
   style.textContent = `
     .staff-signup-switch{text-align:center;margin:16px 0;color:#64748b;font-size:15px}
     .staff-signup-switch button{border:0;background:none;color:#2563eb;font-weight:800;cursor:pointer;font-size:15px}
-    .staff-manage-open{width:100%;margin:0 0 12px;min-height:48px;border:1px solid #bfdbfe;border-radius:12px;background:#eff6ff;color:#1d4ed8;font-size:16px;font-weight:800;cursor:pointer}
+    .staff-manage-open{flex:none;order:2;margin-left:auto;margin-right:8px;width:auto;min-height:40px;padding:0 10px;border:0;border-radius:10px;background:rgba(255,255,255,.14);color:#fff;font-size:14px;font-weight:800;white-space:nowrap;cursor:pointer}
+    .appbar .staff-manage-open + [data-logout]{order:3;margin-left:0}
     .staff-manage-layer{position:fixed;inset:0;z-index:10000;background:#f1f5f9;overflow:auto}
     .staff-manage-head{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:12px;padding:16px;background:#0f172a;color:#fff}
     .staff-manage-head button{width:40px;height:40px;border:0;border-radius:10px;background:rgba(255,255,255,.14);color:#fff;font-size:25px;cursor:pointer}
@@ -27,6 +28,7 @@
     .staff-status{display:inline-block;border-radius:999px;padding:4px 8px;font-size:12px;font-weight:800}
     .staff-status.pending{background:#fef3c7;color:#92400e}.staff-status.active{background:#dcfce7;color:#166534}
     .staff-status.disabled{background:#fee2e2;color:#991b1b}.staff-empty{padding:18px 4px;text-align:center;color:#64748b}
+    @media (max-width:390px){.staff-manage-open{padding:0 8px;font-size:13px;margin-right:6px}}
   `;
   document.head.appendChild(style);
 
@@ -150,15 +152,15 @@
   async function enhanceAdminConsole() {
     const token = localStorage.getItem(TOKEN_KEY);
     if (!token) { currentUser = null; return; }
-    const screen = document.querySelector('#app > .screen');
-    const logout = document.querySelector('[data-logout]');
-    if (!screen || !logout || document.querySelector('.staff-manage-open')) return;
+    const appbar = document.querySelector('#app > .appbar');
+    const logout = appbar?.querySelector('[data-logout]');
+    if (!appbar || !logout || appbar.querySelector('.staff-manage-open')) return;
     try {
       if (!currentUser) currentUser = (await request('/api/auth/me')).user;
       if (currentUser?.role !== 'staff' || currentUser?.staffRole !== 'admin') return;
       const button = document.createElement('button');
       button.type = 'button'; button.className = 'staff-manage-open'; button.textContent = '👥 직원관리';
-      screen.insertAdjacentElement('afterbegin', button); button.onclick = openManagement;
+      appbar.insertBefore(button, logout); button.onclick = openManagement;
     } catch { /* 로그인 화면 또는 만료 세션 */ }
   }
 
