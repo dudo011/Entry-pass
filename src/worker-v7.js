@@ -60,6 +60,21 @@ function withCookies(response, values) {
   });
 }
 
+function withSecurityHeaders(response) {
+  const headers = new Headers(response.headers);
+  headers.set('X-Content-Type-Options', 'nosniff');
+  headers.set('X-Frame-Options', 'DENY');
+  headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 function jsonError(message, status) {
   return new Response(JSON.stringify({ error: message }), {
     status,
@@ -129,8 +144,9 @@ async function handleFetch(request, env, ctx) {
 }
 
 export default {
-  fetch(request, env, ctx) {
-    return handleFetch(request, env, ctx);
+  async fetch(request, env, ctx) {
+    const response = await handleFetch(request, env, ctx);
+    return withSecurityHeaders(response);
   },
   scheduled(event, env, ctx) {
     return legacyWorker.scheduled(event, env, ctx);
