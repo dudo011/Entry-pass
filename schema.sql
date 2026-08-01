@@ -47,27 +47,45 @@ CREATE TABLE IF NOT EXISTS requests (
 );
 
 -- 출입 신청에 첨부된 서류. 파일(이미지/PDF)을 base64 로 D1에 직접 저장 (R2 미사용).
--- 신청 기록과 동일하게 최소 보존기간까지 유지.
 CREATE TABLE IF NOT EXISTS documents (
   id TEXT PRIMARY KEY,
   request_id TEXT NOT NULL,
   label TEXT NOT NULL,
   content_type TEXT DEFAULT 'application/octet-stream',
-  data TEXT NOT NULL,               -- base64 인코딩된 파일 내용
-  size INTEGER DEFAULT 0,           -- 원본(디코딩) 바이트 크기
+  data TEXT NOT NULL,
+  size INTEGER DEFAULT 0,
   created_at TEXT NOT NULL,
   retain_until TEXT NOT NULL
+);
+
+-- 직원이 사번으로 직접 가입 신청하고 관리자가 승인하기 전까지 보관하는 테이블.
+CREATE TABLE IF NOT EXISTS staff_applications (
+  id TEXT PRIMARY KEY,
+  employee_no TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL,
+  salt TEXT NOT NULL,
+  hash TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',  -- pending | approved | rejected
+  reviewed_by TEXT DEFAULT '',
+  reviewed_at TEXT DEFAULT '',
+  created_at TEXT NOT NULL
+);
+
+-- 퇴직·전보 등으로 사용 중지된 직원 계정. 계정과 이력은 보존하고 로그인만 차단한다.
+CREATE TABLE IF NOT EXISTS staff_disabled (
+  user_id TEXT PRIMARY KEY,
+  disabled_at TEXT NOT NULL,
+  disabled_by TEXT NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_requests_status ON requests(status);
 CREATE INDEX IF NOT EXISTS idx_requests_driver ON requests(driver_user_id);
 CREATE INDEX IF NOT EXISTS idx_documents_request ON documents(request_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_staff_app_status ON staff_applications(status);
 
--- 기본 직원 계정 시드 (비밀번호는 PBKDF2-SHA256 해시)
---   admin / admin1234  (관리자)
---   staff / staff1234  (승인담당자)
--- ※ 운영 배포 전 반드시 비밀번호를 변경하세요.
+-- 기존 운영 접근을 유지하기 위한 초기 직원 계정입니다.
+-- 직원별 계정 전환을 완료한 뒤 공개 기본 계정은 다음 보안 단계에서 제거합니다.
 INSERT OR IGNORE INTO users (id, role, staff_role, login_id, name, salt, hash, created_at) VALUES
   ('seed-admin', 'staff', 'admin', 'admin', '관리자',
    'b06ceafd1991e424115f83c6e75f010a',
