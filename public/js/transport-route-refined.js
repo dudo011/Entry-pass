@@ -1,5 +1,5 @@
 (() => {
-  const CACHE_VERSION = '20260801-72';
+  const CACHE_VERSION = '20260801-73';
   const ROUTES = {
     transport: {
       image: `https://raw.githubusercontent.com/dudo011/Entry-pass/main/%EC%B0%A8%EB%9F%89%EB%8F%99%EC%84%A0(%EB%AC%BC%EC%9E%90%EC%88%98%EC%86%A1%EC%9A%A9%EC%97%AD).jpg?v=${CACHE_VERSION}`,
@@ -13,8 +13,13 @@
     },
     scrap: {
       image: `https://raw.githubusercontent.com/dudo011/Entry-pass/main/%EC%B0%A8%EB%9F%89%EB%8F%99%EC%84%A0(%EB%B6%88%EC%9A%A9%ED%92%88%EB%A7%A4%EA%B0%81).jpg?v=${CACHE_VERSION}`,
-      guide: '정문 통과 후 안내 동선에 따라 <strong>“불용품 매각장”</strong> 정차',
+      guide: '정문 통과 후 <strong>“고철장”</strong> 정차',
       alt: '불용품 매각 차량 동선 안내도',
+    },
+    pcbs: {
+      image: `https://raw.githubusercontent.com/dudo011/Entry-pass/main/%EC%B0%A8%EB%9F%89%EB%8F%99%EC%84%A0(PCBs%EC%B2%98%EB%A6%AC%EC%9A%A9%EC%97%AD).jpg?v=${CACHE_VERSION}`,
+      guide: '정문 통과 후 <strong>“PCBs 처리장”</strong> 정차',
+      alt: 'PCBs 처리용역 차량 동선 안내도',
     },
   };
 
@@ -71,11 +76,20 @@
     const icon = appbar?.querySelector('.vehicle-appbar-icon');
     const iconText = icon?.textContent?.trim() || '';
     const iconImageSrc = icon?.querySelector('img')?.getAttribute('src') || '';
+    const vehicleType = appbar?.dataset.vehicleType || '';
+
+    if (
+      vehicleType === 'pcbs' ||
+      iconText.includes('☣') ||
+      /pcb|hazard|drum|oil/i.test(iconImageSrc)
+    ) {
+      return ROUTES.pcbs;
+    }
 
     if (
       iconText.includes('♻') ||
       /recycle|scrap|disuse|waste/i.test(iconImageSrc) ||
-      appbar?.dataset.vehicleType === 'scrap'
+      vehicleType === 'scrap'
     ) {
       return ROUTES.scrap;
     }
