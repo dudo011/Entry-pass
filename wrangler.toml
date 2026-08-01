@@ -1,7 +1,7 @@
 # Cloudflare Workers 설정
 # 배포 절차는 DEPLOY.md 참고.
 name = "entry-pass"
-main = "src/worker-v6.js"
+main = "src/worker-v7.js"
 compatibility_date = "2024-11-01"
 
 # 정적 프런트엔드(public/)를 Workers 에서 함께 서빙
