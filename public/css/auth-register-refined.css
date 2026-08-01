@@ -1,20 +1,20 @@
 /* 회원가입 화면 전용 보정 */
 #app:has(#a_password2) > .screen {
-  padding-top: 6px !important;
-  padding-bottom: calc(1px + env(safe-area-inset-bottom)) !important;
+  padding-top: 4px !important;
+  padding-bottom: env(safe-area-inset-bottom) !important;
   overflow-y: hidden !important;
 }
 
 #app:has(#a_password2) .card {
-  padding-top: 9px !important;
-  padding-bottom: 8px !important;
+  padding-top: 8px !important;
+  padding-bottom: 7px !important;
   margin-bottom: 0 !important;
 }
 
 #app:has(#a_password2) .card > .field-h {
   gap: 12px !important;
-  min-height: 50px !important;
-  margin-bottom: 14px !important;
+  min-height: 54px !important;
+  margin-bottom: 18px !important;
 }
 
 #app:has(#a_password2) .card > .field-h .lb {
@@ -31,9 +31,9 @@
   flex: 0 1 82% !important;
   width: 82% !important;
   max-width: 82% !important;
-  min-height: 48px !important;
-  padding-top: 10px !important;
-  padding-bottom: 10px !important;
+  min-height: 54px !important;
+  padding-top: 11px !important;
+  padding-bottom: 11px !important;
   margin-left: auto !important;
 }
 
@@ -41,8 +41,8 @@
   display: flex !important;
   align-items: center !important;
   gap: 9px !important;
-  margin: 0 0 7px !important;
-  padding: 7px 10px !important;
+  margin: 16px 0 0 !important;
+  padding: 8px 10px !important;
   border: 1px solid var(--border, #e2e8f0) !important;
   border-radius: 12px !important;
   background: #f8fafc !important;
@@ -69,8 +69,8 @@
 }
 
 #app:has(#a_password2) #a_submit {
-  min-height: 48px !important;
-  margin-top: 0 !important;
+  min-height: 52px !important;
+  margin-top: 14px !important;
 }
 
 /* 차량 기사·관리자 로그인 화면 공통 보정 */
@@ -101,20 +101,20 @@
 
 @media (max-width: 390px) {
   #app:has(#a_password2) > .screen {
-    padding-top: 3px !important;
+    padding-top: 2px !important;
     padding-bottom: env(safe-area-inset-bottom) !important;
   }
 
   #app:has(#a_password2) .card {
-    padding-top: 7px !important;
-    padding-bottom: 6px !important;
+    padding-top: 6px !important;
+    padding-bottom: 5px !important;
     margin-bottom: 0 !important;
   }
 
   #app:has(#a_password2) .card > .field-h {
     gap: 8px !important;
-    min-height: 46px !important;
-    margin-bottom: 14px !important;
+    min-height: 50px !important;
+    margin-bottom: 18px !important;
   }
 
   #app:has(#a_password2) .card > .field-h .lb {
@@ -129,15 +129,15 @@
     flex-basis: 80% !important;
     width: 80% !important;
     max-width: 80% !important;
-    min-height: 46px !important;
-    padding-top: 9px !important;
-    padding-bottom: 9px !important;
+    min-height: 50px !important;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
     font-size: 16px !important;
   }
 
   #app:has(#a_password2) .register-privacy-consent {
-    margin-bottom: 5px !important;
-    padding: 6px 8px !important;
+    margin-top: 14px !important;
+    padding: 7px 8px !important;
   }
 
   #app:has(#a_password2) .register-privacy-consent span {
@@ -145,7 +145,8 @@
   }
 
   #app:has(#a_password2) #a_submit {
-    min-height: 46px !important;
+    min-height: 48px !important;
+    margin-top: 12px !important;
   }
 
   #app.auth-login-common .card > .field-h {
