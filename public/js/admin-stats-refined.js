@@ -22,11 +22,11 @@
       min-height:50px!important;padding:9px 12px!important;font-size:17px!important
     }
     #app .admin-stats-screen .date-range{
-      display:flex;align-items:center;justify-content:flex-start;gap:6px;min-width:0
+      display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;width:100%
     }
     #app .admin-stats-screen .date-range > span{flex:0 0 auto;font-size:17px;font-weight:700}
     #app .admin-stats-screen .compact-date{
-      position:relative;flex:0 1 104px;min-width:88px;height:50px;border:1px solid var(--border,#e2e8f0);
+      position:relative;flex:1 1 0;min-width:0;height:50px;border:1px solid var(--border,#e2e8f0);
       border-radius:11px;background:var(--surface-2,#f8fafc);display:flex;align-items:center;justify-content:center;
       overflow:hidden
     }
@@ -61,8 +61,8 @@
       #app .admin-stats-screen .card{padding:14px!important}
       #app .admin-stats-screen .card > .field{gap:6px;margin-bottom:9px}
       #app .admin-stats-screen .card > .field > .lb{flex-basis:84px;font-size:16px}
-      #app .admin-stats-screen .date-range{gap:4px}
-      #app .admin-stats-screen .compact-date{flex-basis:92px;min-width:78px;height:48px}
+      #app .admin-stats-screen .date-range{gap:6px}
+      #app .admin-stats-screen .compact-date{height:48px}
       #app .admin-stats-screen .compact-date .date-text{font-size:17px}
       #app .admin-stats-screen .period-quick-row{gap:5px;margin-left:90px;margin-bottom:10px}
       #app .admin-stats-screen .period-quick-btn{height:36px;font-size:13px}
@@ -128,7 +128,8 @@
     if (key === 'week') {
       const mondayOffset = (today.getDay() + 6) % 7;
       from.setDate(today.getDate() - mondayOffset);
-      to.setDate(from.getDate() + 6);
+      to = new Date(from);
+      to.setDate(to.getDate() + 6);
     } else if (key === 'month') {
       from = new Date(today.getFullYear(), today.getMonth(), 1);
       to = new Date(today.getFullYear(), today.getMonth() + 1, 0);
