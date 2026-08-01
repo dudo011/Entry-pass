@@ -1,10 +1,10 @@
 (() => {
-  const CACHE_VERSION = '20260801-76';
+  const CACHE_VERSION = '20260801-77';
   const ROUTES = {
     transport: {
       image: `https://raw.githubusercontent.com/dudo011/Entry-pass/main/%EC%B0%A8%EB%9F%89%EB%8F%99%EC%84%A0(%EB%AC%BC%EC%9E%90%EC%88%98%EC%86%A1%EC%9A%A9%EC%97%AD).jpg?v=${CACHE_VERSION}`,
-      guide: '정문 통과 후 직진, <strong>“전선 야적장”</strong> 정차',
-      alt: '물자수송용역 차량 동선 안내도',
+      guide: '정문 통과 후 <strong>“전선 야적장”</strong> 정차',
+      alt: '물자수송용역 및 기자재 납품 차량 동선 안내도',
     },
     construction: {
       image: `https://raw.githubusercontent.com/dudo011/Entry-pass/main/%EC%B0%A8%EB%9F%89%EB%8F%99%EC%84%A0(%EA%B3%B5%EC%82%AC%EC%97%85%EC%B2%B4).jpg?v=${CACHE_VERSION}`,
@@ -23,7 +23,6 @@
     },
   };
 
-  // 앱 실행 직후 동선 이미지를 브라우저 캐시에 미리 적재한다.
   Object.values(ROUTES).forEach((route) => {
     const preloadImage = new Image();
     preloadImage.decoding = 'async';
@@ -83,19 +82,31 @@
     const icon = appbar?.querySelector('.vehicle-appbar-icon');
     const iconText = icon?.textContent?.trim() || '';
     const iconImageSrc = icon?.querySelector('img')?.getAttribute('src') || '';
+    const allImageHints = [...(appbar?.querySelectorAll('img') || [])]
+      .map((img) => [img.getAttribute('src'), img.getAttribute('alt'), img.getAttribute('title')]
+        .filter(Boolean).join(' '))
+      .join(' ');
+    const appbarHints = [
+      appbar?.textContent || '',
+      appbar?.className || '',
+      JSON.stringify(appbar?.dataset || {}),
+      iconText,
+      iconImageSrc,
+      allImageHints,
+    ].join(' ');
     const vehicleType = appbar?.dataset.vehicleType || '';
 
     if (
       vehicleType === 'pcbs' ||
       iconText.includes('☣') ||
-      /pcb|hazard|drum|oil/i.test(iconImageSrc)
+      /pcb|hazard|drum|oil/i.test(appbarHints)
     ) {
       return ROUTES.pcbs;
     }
 
     if (
       iconText.includes('♻') ||
-      /recycle|scrap|disuse|waste/i.test(iconImageSrc) ||
+      /recycle|scrap|disuse|waste/i.test(appbarHints) ||
       vehicleType === 'scrap'
     ) {
       return ROUTES.scrap;
@@ -104,7 +115,8 @@
     // 기자재 납품은 물자수송용역과 동일한 동선·안내 이미지를 사용한다.
     if (
       vehicleType === 'delivery' ||
-      /delivery|equipment|supply/i.test(iconImageSrc)
+      /delivery|equipment|supply|납품/i.test(appbarHints) ||
+      /🚚|🚛|📦/.test(appbarHints)
     ) {
       return ROUTES.transport;
     }
@@ -168,7 +180,7 @@
     subtree: true,
     characterData: true,
     attributes: true,
-    attributeFilter: ['class', 'data-construction-flow-header', 'data-vehicle-type', 'src'],
+    attributeFilter: ['class', 'data-construction-flow-header', 'data-vehicle-type', 'src', 'alt', 'title'],
   });
   schedule();
 })();
