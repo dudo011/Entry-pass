@@ -18,7 +18,7 @@
   function normalizeContractTypeLabels(select) {
     [...select.options].forEach((option) => {
       const original = option.textContent || '';
-      const refined = original.replace(/^\s*차량\s*/, '').trim();
+      const refined = original.replace(/\s*차량\s*/g, ' ').replace(/\s{2,}/g, ' ').trim();
       if (refined && refined !== original) option.textContent = refined;
     });
   }
