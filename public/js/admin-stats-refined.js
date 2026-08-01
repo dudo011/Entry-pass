@@ -91,9 +91,19 @@
     update();
   }
 
+  function normalizePurposeOptions() {
+    const select = document.getElementById('st-type');
+    if (!select) return;
+    [...select.options].forEach((option) => {
+      const original = option.textContent || '';
+      const refined = original.replace(/\s*차량\s*/g, ' ').replace(/\s{2,}/g, ' ').trim();
+      if (refined && refined !== original) option.textContent = refined;
+    });
+  }
+
   function normalizeLabels() {
     const labels = [
-      ['st-type', '출입 목적'],
+      ['st-type', '방문 목적'],
       ['st-vehicle', '차량 번호'],
       ['st-company', '계약 업체'],
     ];
@@ -101,6 +111,7 @@
       const label = document.getElementById(id)?.closest('label.field')?.querySelector('.lb');
       if (label) label.textContent = text;
     });
+    normalizePurposeOptions();
   }
 
   function apply() {
