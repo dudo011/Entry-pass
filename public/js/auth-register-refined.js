@@ -15,6 +15,14 @@
     return document.getElementById(id)?.closest('label.field-h') || null;
   }
 
+  function normalizeContractTypeLabels(select) {
+    [...select.options].forEach((option) => {
+      const original = option.textContent || '';
+      const refined = original.replace(/^\s*차량\s*/, '').trim();
+      if (refined && refined !== original) option.textContent = refined;
+    });
+  }
+
   function normalizeRegisterForm() {
     const password = document.getElementById('a_password');
     const password2 = document.getElementById('a_password2');
@@ -22,7 +30,7 @@
     if (!password || !password2 || !submit || submit.textContent?.trim() !== '가입하고 시작') return;
 
     const card = submit.closest('.card');
-    if (!card || card.dataset.registerRefined === 'true') return;
+    if (!card) return;
 
     const loginField = fieldOf('a_loginId');
     const passwordField = fieldOf('a_password');
@@ -32,8 +40,20 @@
     const typeField = fieldOf('a_vtype');
     if (![loginField, passwordField, password2Field, nameField, phoneField, typeField].every(Boolean)) return;
 
+    const appbar = document.querySelector('#app > .appbar');
+    const appbarTitle = appbar?.querySelector('h1');
+    const appbarSub = appbar?.querySelector('.sub');
+    if (appbarTitle) appbarTitle.textContent = '회원가입';
+    appbarSub?.remove();
+
+    card.closest('.screen')?.querySelectorAll(':scope > .switch').forEach((switchText) => switchText.remove());
+
     loginField.querySelector('.lb').textContent = '차량번호';
     typeField.querySelector('.lb').textContent = '계약유형';
+    const typeSelect = document.getElementById('a_vtype');
+    if (typeSelect) normalizeContractTypeLabels(typeSelect);
+
+    if (card.dataset.registerRefined === 'true') return;
 
     password.minLength = 4;
     password2.minLength = 4;
