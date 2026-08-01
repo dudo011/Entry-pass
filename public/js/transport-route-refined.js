@@ -1,5 +1,5 @@
 (() => {
-  const CACHE_VERSION = '20260801-73';
+  const CACHE_VERSION = '20260801-74';
   const ROUTES = {
     transport: {
       image: `https://raw.githubusercontent.com/dudo011/Entry-pass/main/%EC%B0%A8%EB%9F%89%EB%8F%99%EC%84%A0(%EB%AC%BC%EC%9E%90%EC%88%98%EC%86%A1%EC%9A%A9%EC%97%AD).jpg?v=${CACHE_VERSION}`,
@@ -18,7 +18,7 @@
     },
     pcbs: {
       image: `https://raw.githubusercontent.com/dudo011/Entry-pass/main/%EC%B0%A8%EB%9F%89%EB%8F%99%EC%84%A0(PCBs%EC%B2%98%EB%A6%AC%EC%9A%A9%EC%97%AD).jpg?v=${CACHE_VERSION}`,
-      guide: '정문 통과 후 <strong>“PCBs 처리장”</strong> 정차',
+      guide: '정문 통과 후 <strong>“폐변압기 야적장”</strong> 정차',
       alt: 'PCBs 처리용역 차량 동선 안내도',
     },
   };
