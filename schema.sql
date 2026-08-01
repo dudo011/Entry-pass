@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
   company TEXT DEFAULT '',
   default_vehicle_number TEXT DEFAULT '',
   default_vehicle_type_id TEXT DEFAULT '',
+  must_change_password INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL
 );
 
@@ -78,11 +79,23 @@ CREATE TABLE IF NOT EXISTS staff_disabled (
   disabled_by TEXT NOT NULL
 );
 
+-- 차량기사 비밀번호 초기화·차주 변경 이력. 비밀번호 자체는 기록하지 않는다.
+CREATE TABLE IF NOT EXISTS driver_account_events (
+  id TEXT PRIMARY KEY,
+  driver_user_id TEXT NOT NULL,
+  action TEXT NOT NULL,
+  actor_user_id TEXT NOT NULL,
+  actor_name TEXT NOT NULL,
+  details TEXT DEFAULT '{}',
+  created_at TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_requests_status ON requests(status);
 CREATE INDEX IF NOT EXISTS idx_requests_driver ON requests(driver_user_id);
 CREATE INDEX IF NOT EXISTS idx_documents_request ON documents(request_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_staff_app_status ON staff_applications(status);
+CREATE INDEX IF NOT EXISTS idx_driver_account_events_user ON driver_account_events(driver_user_id);
 
 -- 직원 계정은 앱에서 본인이 가입 신청하고, 기존 관리자가 승인하여 생성합니다.
 -- 공개 저장소에는 기본 관리자·직원 계정이나 비밀번호 해시를 두지 않습니다.
