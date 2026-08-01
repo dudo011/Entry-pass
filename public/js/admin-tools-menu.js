@@ -14,15 +14,26 @@
     #app > .appbar .driver-manage-open,
     #app > .appbar .staff-manage-open,
     #app > .appbar .staff-role-manage-open{display:none!important}
+    .admin-console-bar,
+    .admin-tools-head,
+    .driver-manage-head,
+    .staff-manage-head{
+      min-height:76px!important;height:76px!important;box-sizing:border-box!important;
+      padding:14px 16px!important;display:flex!important;align-items:center!important
+    }
+    .admin-console-bar{gap:10px!important}
     .admin-console-bar h1{font-size:23px!important;line-height:1.15!important;white-space:nowrap!important;letter-spacing:-.7px!important}
+    .admin-console-bar .sub{margin-top:2px!important;line-height:1.2!important}
     .admin-console-bar .admin-tools-open{flex:none;order:2;margin-left:auto;margin-right:7px;min-height:42px;padding:0 12px;border:0;border-radius:11px;background:rgba(255,255,255,.14);color:#fff;font-size:14px;font-weight:900;white-space:nowrap;cursor:pointer;touch-action:manipulation}
     .admin-console-bar .admin-tools-open[aria-busy="true"]{opacity:.72;cursor:wait}
     .admin-console-bar [data-logout]{order:3;margin-left:0!important;flex:none}
     .admin-tools-layer{position:fixed;inset:0;z-index:12000;background:#f8fafc;overflow:auto;overscroll-behavior:contain}
     .admin-tools-layer[hidden]{display:none!important}
-    .admin-tools-head{position:sticky;top:0;z-index:2;min-height:76px;box-sizing:border-box;display:flex;align-items:center;gap:12px;padding:14px 16px;background:#0f172a;color:#fff}
+    .admin-tools-head{position:sticky;top:0;z-index:2;gap:12px;background:#0f172a;color:#fff}
     .admin-tools-back{width:44px;height:44px;flex:none;border:0;border-radius:12px;background:rgba(255,255,255,.14);color:#fff;font-size:29px;line-height:1;cursor:pointer;touch-action:manipulation}
-    .admin-tools-head h2{margin:0;font-size:24px;letter-spacing:-.7px}
+    .admin-tools-head h2,.driver-manage-head h2,.staff-manage-head h2{margin:0;font-size:24px;letter-spacing:-.7px}
+    .driver-manage-head,.staff-manage-head{position:sticky!important;top:0!important;z-index:2!important;gap:0!important;background:#0f172a!important;color:#fff!important}
+    .driver-manage-head > button,.staff-manage-head > button{display:none!important}
     .admin-tools-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;padding:20px 16px 28px}
     .admin-tools-card{min-height:190px;border:1px solid #e2e8f0;border-radius:20px;background:#fff;box-shadow:0 5px 16px rgba(15,23,42,.08);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px 12px;color:#0f172a;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
     .admin-tools-card:active{transform:scale(.985)}
@@ -46,6 +57,10 @@
   document.head.appendChild(style);
 
   const normalize = (value) => String(value || '').replace(/\s+/g, '');
+  const normalizeSearch = (value) => String(value || '')
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(/[\s\-_.]/g, '');
 
   function notify(message) {
     document.querySelectorAll('.admin-tools-notice').forEach((node) => node.remove());
@@ -118,6 +133,41 @@
     if (menuLayer) menuLayer.hidden = false;
   }
 
+  function installVehiclePartialSearch(layer) {
+    const search = layer?.querySelector('.driver-search');
+    if (!search || search.dataset.normalizedVehicleSearch === '1') return;
+    search.dataset.normalizedVehicleSearch = '1';
+
+    search.addEventListener('input', () => {
+      const nativeIncludes = String.prototype.includes;
+      const patchedIncludes = function patchedIncludes(needle, position) {
+        if (nativeIncludes.call(this, needle, position)) return true;
+        const normalizedNeedle = normalizeSearch(needle);
+        if (!normalizedNeedle) return true;
+        return nativeIncludes.call(normalizeSearch(this), normalizedNeedle, 0);
+      };
+
+      String.prototype.includes = patchedIncludes;
+      queueMicrotask(() => {
+        if (String.prototype.includes === patchedIncludes) {
+          String.prototype.includes = nativeIncludes;
+        }
+      });
+    }, true);
+  }
+
+  function normalizeManagementLayer(layer) {
+    if (!layer) return;
+    const head = layer.querySelector('.driver-manage-head,.staff-manage-head');
+    head?.querySelector(':scope > button')?.remove();
+
+    if (layer.classList.contains('driver-manage-layer')) {
+      const title = layer.querySelector('.driver-manage-head h2');
+      if (title) title.textContent = '회원관리';
+      installVehiclePartialSearch(layer);
+    }
+  }
+
   function openManagement(kind) {
     if (!menuLayer) return;
     const selector = kind === 'members' ? '.driver-manage-open' : '.staff-manage-open';
@@ -137,10 +187,7 @@
         history.back();
         return;
       }
-      if (kind === 'members') {
-        const title = layer.querySelector('.driver-manage-head h2');
-        if (title) title.textContent = '회원관리';
-      }
+      normalizeManagementLayer(layer);
     }, 0);
   }
 
@@ -224,7 +271,9 @@
   function watchManagementClose() {
     let hadLayer = false;
     new MutationObserver(() => {
-      const hasLayer = !!managementLayer();
+      const layer = managementLayer();
+      normalizeManagementLayer(layer);
+      const hasLayer = !!layer;
       if (hadLayer && !hasLayer && history.state?.adminTools === 'management') {
         clearTimeout(closeCheckTimer);
         closeCheckTimer = setTimeout(() => {
