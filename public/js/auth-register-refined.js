@@ -43,13 +43,16 @@
     const appbar = document.querySelector('#app > .appbar');
     const appbarTitle = appbar?.querySelector('h1');
     const appbarSub = appbar?.querySelector('.sub');
-    if (appbarTitle) appbarTitle.textContent = '회원가입';
-    appbarSub?.remove();
+    if (appbarTitle && appbarTitle.textContent?.trim() !== '회원가입') appbarTitle.textContent = '회원가입';
+    if (appbarSub) appbarSub.remove();
 
     card.closest('.screen')?.querySelectorAll(':scope > .switch').forEach((switchText) => switchText.remove());
 
-    loginField.querySelector('.lb').textContent = '차량번호';
-    typeField.querySelector('.lb').textContent = '계약유형';
+    const loginLabel = loginField.querySelector('.lb');
+    const typeLabel = typeField.querySelector('.lb');
+    if (loginLabel && loginLabel.textContent?.trim() !== '차량번호') loginLabel.textContent = '차량번호';
+    if (typeLabel && typeLabel.textContent?.trim() !== '계약유형') typeLabel.textContent = '계약유형';
+
     const typeSelect = document.getElementById('a_vtype');
     if (typeSelect) normalizeContractTypeLabels(typeSelect);
 
@@ -116,7 +119,18 @@
 
   const app = document.getElementById('app');
   if (!app) return;
-  const observer = new MutationObserver(normalizeRegisterForm);
+
+  let scheduled = false;
+  const scheduleNormalize = () => {
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(() => {
+      scheduled = false;
+      normalizeRegisterForm();
+    });
+  };
+
+  const observer = new MutationObserver(scheduleNormalize);
   observer.observe(app, { childList: true, subtree: true });
-  normalizeRegisterForm();
+  scheduleNormalize();
 })();
