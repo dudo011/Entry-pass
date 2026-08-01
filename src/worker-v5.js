@@ -10,7 +10,7 @@ const STAFF_BLOCK_MS = 30 * 60 * 1000;
 const IP_FAILURE_LIMIT = 20;
 const IP_WINDOW_MS = 15 * 60 * 1000;
 const IP_BLOCK_MS = 15 * 60 * 1000;
-const STAFF_SESSION_MS = 12 * 60 * 60 * 1000;
+const STAFF_SESSION_MS = 48 * 60 * 60 * 1000;
 const DRIVER_SESSION_MS = 30 * 24 * 60 * 60 * 1000;
 
 const nowISO = () => new Date().toISOString();
