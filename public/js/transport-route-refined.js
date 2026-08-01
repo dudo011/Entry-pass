@@ -1,5 +1,5 @@
 (() => {
-  const CACHE_VERSION = '20260801-75';
+  const CACHE_VERSION = '20260801-76';
   const ROUTES = {
     transport: {
       image: `https://raw.githubusercontent.com/dudo011/Entry-pass/main/%EC%B0%A8%EB%9F%89%EB%8F%99%EC%84%A0(%EB%AC%BC%EC%9E%90%EC%88%98%EC%86%A1%EC%9A%A9%EC%97%AD).jpg?v=${CACHE_VERSION}`,
@@ -101,10 +101,18 @@
       return ROUTES.scrap;
     }
 
+    // 기자재 납품은 물자수송용역과 동일한 동선·안내 이미지를 사용한다.
+    if (
+      vehicleType === 'delivery' ||
+      /delivery|equipment|supply/i.test(iconImageSrc)
+    ) {
+      return ROUTES.transport;
+    }
+
     const transportIcon = appbar?.querySelector(
       '.flow-header-vehicle-image[src*="type-transport-flatbed"]'
     );
-    if (transportIcon) return ROUTES.transport;
+    if (transportIcon || vehicleType === 'transport') return ROUTES.transport;
 
     return null;
   }
