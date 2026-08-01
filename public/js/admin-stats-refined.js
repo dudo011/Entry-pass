@@ -22,13 +22,16 @@
       min-height:50px!important;padding:9px 12px!important;font-size:17px!important
     }
     #app .admin-stats-screen .date-range{
-      display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;width:100%
+      display:grid!important;grid-template-columns:minmax(0,1fr) 24px minmax(0,1fr);
+      align-items:center;gap:6px;min-width:0;width:100%!important
     }
-    #app .admin-stats-screen .date-range > span{flex:0 0 auto;font-size:17px;font-weight:700}
+    #app .admin-stats-screen .date-range > span{
+      flex:none!important;font-size:17px;font-weight:700;text-align:center
+    }
     #app .admin-stats-screen .compact-date{
-      position:relative;flex:1 1 0;min-width:0;height:50px;border:1px solid var(--border,#e2e8f0);
-      border-radius:11px;background:var(--surface-2,#f8fafc);display:flex;align-items:center;justify-content:center;
-      overflow:hidden
+      position:relative;width:100%!important;max-width:none!important;min-width:0!important;height:50px;
+      border:1px solid var(--border,#e2e8f0);border-radius:11px;background:var(--surface-2,#f8fafc);
+      display:flex;align-items:center;justify-content:center;overflow:hidden
     }
     #app .admin-stats-screen .compact-date:focus-within{
       border-color:var(--primary,#1d4ed8);background:#fff;box-shadow:0 0 0 3px rgba(29,78,216,.12)
@@ -61,7 +64,7 @@
       #app .admin-stats-screen .card{padding:14px!important}
       #app .admin-stats-screen .card > .field{gap:6px;margin-bottom:9px}
       #app .admin-stats-screen .card > .field > .lb{flex-basis:84px;font-size:16px}
-      #app .admin-stats-screen .date-range{gap:6px}
+      #app .admin-stats-screen .date-range{grid-template-columns:minmax(0,1fr) 20px minmax(0,1fr);gap:5px}
       #app .admin-stats-screen .compact-date{height:48px}
       #app .admin-stats-screen .compact-date .date-text{font-size:17px}
       #app .admin-stats-screen .period-quick-row{gap:5px;margin-left:90px;margin-bottom:10px}
