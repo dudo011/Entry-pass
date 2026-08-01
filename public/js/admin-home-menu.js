@@ -4,9 +4,9 @@
 
   const TOKEN_KEY = 'ep_token';
   let portal = null;
-  let backButton = null;
   let currentUser = null;
   let initialized = false;
+  let removingLayerForHistory = false;
 
   const style = document.createElement('style');
   style.textContent = `
@@ -28,9 +28,6 @@
     .admin-portal-icon{font-size:52px;line-height:1;margin-bottom:17px}
     .admin-portal-card strong{font-size:23px;line-height:1.25;letter-spacing:-.7px}
     .admin-portal-card span{margin-top:11px;color:#64748b;font-size:14px;line-height:1.55;word-break:keep-all}
-    .admin-return-home{position:fixed;right:16px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:8500;min-height:46px;padding:0 15px;border:0;border-radius:999px;background:#0f172a;color:#fff;font-size:14px;font-weight:800;box-shadow:0 5px 18px rgba(15,23,42,.24);cursor:pointer;touch-action:manipulation}
-    .admin-return-home[hidden]{display:none!important}
-    body.admin-management-open .admin-portal-shell{display:none!important}
     @media(max-width:390px){.admin-portal-head{min-height:104px;padding:16px 18px}.admin-portal-title{font-size:27px}.admin-portal-user{font-size:16px}.admin-portal-logout{min-width:92px;min-height:46px;padding:0 13px;font-size:16px}.admin-portal-grid{gap:11px;padding:16px 14px 26px}.admin-portal-card{min-height:188px;padding:18px 9px;border-radius:17px}.admin-portal-icon{font-size:45px;margin-bottom:14px}.admin-portal-card strong{font-size:21px}.admin-portal-card span{font-size:13px}}
   `;
   document.head.appendChild(style);
@@ -65,13 +62,12 @@
 
   async function ensureStaffConsole(timeout = 5000) {
     if (isStaffConsole()) return true;
-
     const started = Date.now();
     while (Date.now() - started < timeout) {
       const staffEntry = app.querySelector('[data-role="staff"]');
       if (staffEntry) {
         staffEntry.click();
-        await sleep(60);
+        await sleep(80);
       }
       if (isStaffConsole()) return true;
       await sleep(50);
@@ -89,40 +85,60 @@
     return null;
   }
 
-  function showHome() {
+  function removeManagementLayers() {
+    removingLayerForHistory = true;
+    document.querySelectorAll('.driver-manage-layer,.staff-manage-layer').forEach((layer) => layer.remove());
+    queueMicrotask(() => { removingLayerForHistory = false; });
+  }
+
+  function applyHome() {
+    removeManagementLayers();
     document.body.classList.remove('admin-applications-view', 'admin-management-open');
     document.body.classList.add('admin-portal-home');
     if (portal) portal.hidden = false;
-    if (backButton) backButton.hidden = true;
     window.scrollTo(0, 0);
   }
 
-  async function showApplications() {
-    const ready = await ensureStaffConsole();
-    if (!ready) return;
+  function applyApplications() {
+    removeManagementLayers();
     document.body.classList.remove('admin-portal-home', 'admin-management-open');
     document.body.classList.add('admin-applications-view');
     if (portal) portal.hidden = true;
-    if (backButton) backButton.hidden = false;
     window.scrollTo(0, 0);
   }
 
-  async function openManagement(selector) {
-    const ready = await ensureStaffConsole();
-    if (!ready) return;
+  function deactivatePortal() {
+    removeManagementLayers();
+    document.body.classList.remove('admin-portal-home', 'admin-applications-view', 'admin-management-open');
+    if (portal) portal.hidden = true;
+  }
+
+  function historyState(mode, extra = {}) {
+    return { view: 'staffConsole', adminPortal: mode, ...extra };
+  }
+
+  async function navigateApplications() {
+    if (!(await ensureStaffConsole())) return;
+    history.pushState(historyState('applications'), '');
+    applyApplications();
+  }
+
+  async function navigateManagement(kind, selector) {
+    if (!(await ensureStaffConsole())) return;
     const button = await waitForControl(selector);
     if (!button) return;
 
+    history.pushState(historyState('management', { adminManagement: kind }), '');
     document.body.classList.remove('admin-portal-home', 'admin-applications-view');
     document.body.classList.add('admin-management-open');
     if (portal) portal.hidden = true;
-    if (backButton) backButton.hidden = true;
     button.click();
   }
 
   function createPortal() {
     portal = document.createElement('section');
     portal.className = 'admin-portal-shell';
+    portal.hidden = true;
     portal.innerHTML = `
       <header class="admin-portal-head">
         <h1 class="admin-portal-title">관리자모드</h1>
@@ -135,25 +151,18 @@
         <button type="button" class="admin-portal-card" data-admin-action="staff"><div class="admin-portal-icon">🪪</div><strong>직원관리</strong><span>직원 계정과 권한을<br>조회하고 관리합니다.</span></button>
       </main>`;
 
-    backButton = document.createElement('button');
-    backButton.type = 'button';
-    backButton.className = 'admin-return-home';
-    backButton.textContent = '관리자모드';
-    backButton.hidden = true;
-
-    document.body.append(portal, backButton);
+    document.body.appendChild(portal);
     portal.querySelector('.admin-portal-user').textContent = `${currentUser.name || '관리자'}님`;
     portal.querySelector('.admin-portal-logout').addEventListener('click', logout);
-    backButton.addEventListener('click', showHome);
     portal.addEventListener('click', async (event) => {
       const card = event.target.closest('[data-admin-action]');
       if (!card || card.disabled) return;
       card.disabled = true;
       try {
         const action = card.dataset.adminAction;
-        if (action === 'applications') await showApplications();
-        if (action === 'members') await openManagement('.driver-manage-open');
-        if (action === 'staff') await openManagement('.staff-manage-open');
+        if (action === 'applications') await navigateApplications();
+        if (action === 'members') await navigateManagement('members', '.driver-manage-open');
+        if (action === 'staff') await navigateManagement('staff', '.staff-manage-open');
       } finally {
         card.disabled = false;
       }
@@ -161,34 +170,61 @@
   }
 
   function watchManagementLayers() {
+    let hadLayer = false;
     const observer = new MutationObserver(() => {
       const memberLayer = document.querySelector('.driver-manage-layer');
       const staffLayer = document.querySelector('.staff-manage-layer');
+      const hasLayer = !!(memberLayer || staffLayer);
+
       if (memberLayer) {
         memberLayer.style.zIndex = '13000';
         const title = memberLayer.querySelector('.driver-manage-head h2');
         if (title) title.textContent = '회원관리';
       }
       if (staffLayer) staffLayer.style.zIndex = '13000';
-      if (document.body.classList.contains('admin-management-open') && !memberLayer && !staffLayer) showHome();
+
+      if (hadLayer && !hasLayer && !removingLayerForHistory && history.state?.adminPortal === 'management') {
+        history.back();
+      }
+      hadLayer = hasLayer;
     });
     observer.observe(document.body, { childList: true, subtree: true });
   }
 
-  async function initialize() {
+  function handlePopState(event) {
+    if (!initialized) return;
+    const mode = event.state?.adminPortal;
+    if (mode === 'home') {
+      applyHome();
+      return;
+    }
+    if (mode === 'applications') {
+      setTimeout(applyApplications, 0);
+      return;
+    }
+    if (mode === 'management') {
+      return;
+    }
+    deactivatePortal();
+  }
+
+  async function initialize(event) {
     if (initialized) return;
-    currentUser = await getMe().catch(() => null);
+    currentUser = event?.detail?.user || await getMe().catch(() => null);
     if (!currentUser || currentUser.role !== 'staff' || currentUser.staffRole !== 'admin') {
       document.documentElement.classList.remove('admin-auth-pending');
       return;
     }
+
     initialized = true;
     createPortal();
     watchManagementLayers();
-    showHome();
+    window.addEventListener('popstate', handlePopState);
+
+    history.replaceState(historyState('home'), '');
+    applyHome();
     document.documentElement.classList.remove('admin-auth-pending');
   }
 
   window.addEventListener('entrypass:admin-login', initialize);
-  initialize();
 })();
