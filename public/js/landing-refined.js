@@ -26,9 +26,11 @@
     #app.landing-refined .role-btn .arrow{display:none!important}
     .landing-notice-wrap{padding:0 16px 6px;text-align:center}
     .landing-notice-btn{
-      width:100%;min-height:44px;padding:0 14px;border:1px solid var(--border,#e2e8f0);border-radius:12px;
-      background:#fff;color:var(--text,#0f172a);font-size:16px;font-weight:800;cursor:pointer
+      width:100%;min-height:48px;padding:0 16px;border:1px solid #bfdbfe;border-radius:14px;
+      background:#eff6ff;color:#1d4ed8;font-size:17px;font-weight:800;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;gap:8px
     }
+    .landing-notice-btn::before{content:'🛡️';font-size:20px;line-height:1}
     .landing-privacy-footer{
       margin-top:auto;padding:4px 16px calc(12px + env(safe-area-inset-bottom));text-align:center;
       color:var(--text-muted,#64748b);font-size:14px;line-height:1.45
@@ -59,7 +61,7 @@
       #app.landing-refined .role-btn .rt{font-size:21px!important}
       #app.landing-refined .role-btn .rd{font-size:14px!important}
       .landing-notice-wrap{padding:0 12px 4px}
-      .landing-notice-btn{min-height:42px;font-size:15px}
+      .landing-notice-btn{min-height:44px;font-size:16px}
       .landing-privacy-footer{padding-top:2px;padding-bottom:calc(8px + env(safe-area-inset-bottom));font-size:13px}
     }
   `;
@@ -67,7 +69,7 @@
 
   const policyContent = {
     notice: {
-      title: '유의사항',
+      title: '안전수칙',
       body: `
         <p>출입 신청 전 안전수칙과 차량 동선을 반드시 확인해 주세요.</p>
         <h3>사전 승인</h3>
@@ -146,7 +148,7 @@
       if (!app.querySelector('.landing-notice-wrap')) {
         const noticeWrap = document.createElement('div');
         noticeWrap.className = 'landing-notice-wrap';
-        noticeWrap.innerHTML = '<button type="button" class="landing-notice-btn">유의사항</button>';
+        noticeWrap.innerHTML = '<button type="button" class="landing-notice-btn">안전수칙</button>';
         noticeWrap.querySelector('.landing-notice-btn').onclick = () => openPolicy('notice');
         grid.insertAdjacentElement('afterend', noticeWrap);
       }
