@@ -23,6 +23,7 @@
   <link rel="stylesheet" href="/css/application-flow-refined.css?v=20260801-100" />
   <link rel="stylesheet" href="/css/auth-register-refined.css?v=20260801-100" />
   <style>
+    html.admin-auth-pending #app{visibility:hidden!important}
     #app .section-title:has(+ #myList){display:none}
     #app:has(#myList) > .appbar,
     #app:has(> .screen > .result) > .appbar,
@@ -35,6 +36,28 @@
       background:rgba(255,255,255,.14);color:#fff;font-size:20px;line-height:1;
       display:grid;place-items:center}
   </style>
+  <script>
+    (() => {
+      const token = localStorage.getItem('ep_token');
+      if (token) document.documentElement.classList.add('admin-auth-pending');
+      const nativeFetch = window.fetch.bind(window);
+      window.fetch = async (...args) => {
+        const response = await nativeFetch(...args);
+        try {
+          const url = typeof args[0] === 'string' ? args[0] : args[0]?.url || '';
+          if (url.includes('/api/auth/login') && response.ok) {
+            const data = await response.clone().json();
+            if (data?.user?.role === 'staff' && data?.user?.staffRole === 'admin') {
+              document.documentElement.classList.add('admin-auth-pending');
+              queueMicrotask(() => window.dispatchEvent(new Event('entrypass:admin-login')));
+            }
+          }
+        } catch { /* 원래 로그인 흐름 유지 */ }
+        return response;
+      };
+      setTimeout(() => document.documentElement.classList.remove('admin-auth-pending'), 5000);
+    })();
+  </script>
 </head>
 <body>
   <div id="app"><div class="loading">불러오는 중…</div></div>
@@ -65,8 +88,7 @@
   <script src="/js/driver-account-management.js?v=20260801-101"></script>
   <script src="/js/staff-header-button-refined.js?v=20260801-100"></script>
   <script src="/js/staff-role-management.js?v=20260801-100"></script>
-  <script src="/js/admin-home-menu.js?v=20260801-105"></script>
-  <script src="/js/admin-home-init-fix.js?v=20260801-105"></script>
+  <script src="/js/admin-home-menu.js?v=20260802-001"></script>
   <script src="/js/secure-document-loader.js?v=20260801-100"></script>
   <script src="/js/pwa-install.js?v=20260801-100"></script>
 </body>
