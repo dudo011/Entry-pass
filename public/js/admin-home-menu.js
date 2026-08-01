@@ -12,6 +12,8 @@
       gap:4px 14px!important;
       padding:24px 28px!important;
       min-height:150px!important;
+      position:relative!important;
+      z-index:2!important;
     }
     #app.admin-menu-active > .appbar h1{
       grid-column:1!important;
@@ -35,6 +37,10 @@
       grid-row:1 / span 2!important;
       align-self:center!important;
       margin:0!important;
+      position:relative!important;
+      z-index:3!important;
+      pointer-events:auto!important;
+      touch-action:manipulation!important;
     }
     #app.admin-menu-active > .appbar .driver-manage-open,
     #app.admin-menu-active > .appbar .staff-manage-open{
@@ -47,12 +53,21 @@
       clip:rect(0,0,0,0)!important;
       white-space:nowrap!important;
       border:0!important;
+      pointer-events:none!important;
+    }
+    #app.admin-menu-active > .screen{
+      position:relative!important;
+      z-index:1!important;
+      pointer-events:auto!important;
     }
     .admin-home-grid{
       display:grid;
       grid-template-columns:repeat(2,minmax(0,1fr));
       gap:14px;
       padding:20px 18px 28px;
+      position:relative;
+      z-index:2;
+      pointer-events:auto;
     }
     .admin-home-card{
       min-height:210px;
@@ -68,12 +83,18 @@
       padding:22px 14px;
       cursor:pointer;
       color:#0f172a;
+      position:relative;
+      z-index:3;
+      pointer-events:auto;
+      touch-action:manipulation;
+      -webkit-tap-highlight-color:transparent;
     }
     .admin-home-card:active{transform:scale(.985)}
-    .admin-home-icon{font-size:54px;line-height:1;margin-bottom:18px}
+    .admin-home-icon{font-size:54px;line-height:1;margin-bottom:18px;pointer-events:none}
+    .admin-home-card strong,.admin-home-card span{pointer-events:none}
     .admin-home-card strong{font-size:23px;line-height:1.25;letter-spacing:-.7px}
     .admin-home-card span{margin-top:12px;color:#64748b;font-size:14px;line-height:1.55;word-break:keep-all}
-    .admin-applications-view[hidden],.admin-home-grid[hidden]{display:none!important}
+    .admin-applications-view[hidden],.admin-home-grid[hidden],.admin-section-back[hidden]{display:none!important}
     .admin-section-back{
       margin:16px 18px 0;
       min-height:44px;
@@ -85,6 +106,10 @@
       font-size:15px;
       font-weight:800;
       cursor:pointer;
+      position:relative;
+      z-index:3;
+      pointer-events:auto;
+      touch-action:manipulation;
     }
     @media(max-width:390px){
       #app.admin-menu-active > .appbar{padding:22px 20px!important;min-height:142px!important}
@@ -118,11 +143,13 @@
 
   function renameMemberManagement() {
     document.querySelectorAll('.driver-manage-open').forEach((button) => {
-      button.textContent = '회원관리';
-      button.setAttribute('aria-label', '회원관리');
+      if (button.textContent !== '회원관리') button.textContent = '회원관리';
+      if (button.getAttribute('aria-label') !== '회원관리') {
+        button.setAttribute('aria-label', '회원관리');
+      }
     });
     document.querySelectorAll('.driver-manage-head h2').forEach((title) => {
-      title.textContent = '회원관리';
+      if (title.textContent !== '회원관리') title.textContent = '회원관리';
     });
   }
 
@@ -139,8 +166,8 @@
     if (!appbar || !screen || !title || !logout || !driverButton || !staffButton) return;
     if (!normalized(title.textContent).includes('출입신청관리')) return;
 
-    title.textContent = '출입신청관리';
-    app.classList.add('admin-menu-active');
+    if (title.textContent !== '출입신청관리') title.textContent = '출입신청관리';
+    if (!app.classList.contains('admin-menu-active')) app.classList.add('admin-menu-active');
 
     if (screen.dataset.adminMenuReady === '1') return;
     screen.dataset.adminMenuReady = '1';
@@ -178,24 +205,34 @@
     screen.append(menu, back, applicationsView);
     back.hidden = true;
 
+    const scrollTop = () => {
+      try { window.scrollTo({ top: 0, behavior: 'auto' }); }
+      catch { window.scrollTo(0, 0); }
+    };
+
     const showMenu = () => {
       menu.hidden = false;
       back.hidden = true;
       applicationsView.hidden = true;
-      window.scrollTo({ top: 0, behavior: 'instant' });
+      scrollTop();
     };
 
     const showApplications = () => {
       menu.hidden = true;
       back.hidden = false;
       applicationsView.hidden = false;
-      window.scrollTo({ top: 0, behavior: 'instant' });
+      scrollTop();
     };
 
-    menu.querySelector('[data-admin-menu="applications"]').onclick = showApplications;
-    menu.querySelector('[data-admin-menu="members"]').onclick = () => openManagement('members');
-    menu.querySelector('[data-admin-menu="staff"]').onclick = () => openManagement('staff');
-    back.onclick = showMenu;
+    menu.addEventListener('click', (event) => {
+      const card = event.target.closest('[data-admin-menu]');
+      if (!card) return;
+      const action = card.dataset.adminMenu;
+      if (action === 'applications') showApplications();
+      if (action === 'members') openManagement('members');
+      if (action === 'staff') openManagement('staff');
+    });
+    back.addEventListener('click', showMenu);
   }
 
   let queued = false;
