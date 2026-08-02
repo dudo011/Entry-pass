@@ -39,12 +39,35 @@ async function driverChangingPassword(request, env) {
   `).bind(token).first();
 }
 
+function withFreshAssetHeaders(response, request) {
+  if (request.method !== 'GET') return response;
+  const path = new URL(request.url).pathname;
+  const isFreshAsset = path === '/'
+    || path === '/index.html'
+    || path === '/sw.js'
+    || path === '/manifest.webmanifest'
+    || path.endsWith('.js')
+    || path.endsWith('.css')
+    || path.endsWith('.html');
+  if (!isFreshAsset) return response;
+
+  const headers = new Headers(response.headers);
+  headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+  headers.set('Pragma', 'no-cache');
+  headers.set('Expires', '0');
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 export default {
   async fetch(request, env, ctx) {
     // 하위 워커는 비밀번호 변경 성공 직후 모든 세션을 삭제한다.
     // 따라서 요청 처리 전에 사용자 ID를 확보해야 변경 필요 상태를 확실히 해제할 수 있다.
     const profileUser = await driverChangingPassword(request, env);
-    const response = await worker.fetch(request, env, ctx);
+    let response = await worker.fetch(request, env, ctx);
 
     if (response.ok && profileUser?.role === 'driver') {
       await env.DB.prepare(
@@ -52,6 +75,7 @@ export default {
       ).bind(profileUser.id).run();
     }
 
+    response = withFreshAssetHeaders(response, request);
     return response;
   },
   scheduled(event, env, ctx) {
