@@ -1,38 +1,48 @@
-/* 자재센터 출입 신청 — 최소 서비스워커
- * 목적: PWA 설치 요건(fetch 핸들러) 충족 + 오프라인 시 기본 화면 표시.
- * 안전장치: GET 요청만, API·업로드·타 도메인은 건드리지 않음(항상 네트워크 우선).
+/* 자재센터 출입 신청 PWA 서비스워커
+ * 온라인에서는 HTML/JS/CSS를 항상 네트워크에서 확인하고,
+ * 오프라인일 때만 마지막 정상 응답을 사용한다.
  */
-const CACHE = 'entrypass-shell-v2';
+const CACHE = 'entrypass-shell-v4';
 
-self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('install', (event) => {
+  event.waitUntil(self.skipWaiting());
+});
 
-self.addEventListener('activate', (e) => {
-  e.waitUntil((async () => {
+self.addEventListener('activate', (event) => {
+  event.waitUntil((async () => {
     const keys = await caches.keys();
-    await Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)));
+    await Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key)));
     await self.clients.claim();
   })());
 });
 
-self.addEventListener('fetch', (e) => {
-  const req = e.request;
-  if (req.method !== 'GET') return;
-  const url = new URL(req.url);
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') self.skipWaiting();
+});
+
+self.addEventListener('fetch', (event) => {
+  const request = event.request;
+  if (request.method !== 'GET') return;
+
+  const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/uploads/')) return;
 
-  e.respondWith((async () => {
+  event.respondWith((async () => {
     try {
-      const networkRequest = new Request(req, { cache: 'no-store' });
-      const res = await fetch(networkRequest);
-      if (res && res.ok) {
-        const copy = res.clone();
-        caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
+      const networkRequest = new Request(request, { cache: 'no-store' });
+      const response = await fetch(networkRequest);
+      if (response?.ok) {
+        const cache = await caches.open(CACHE);
+        await cache.put(request, response.clone());
+        if (request.mode === 'navigate') await cache.put('/', response.clone());
       }
-      return res;
+      return response;
     } catch {
-      const cached = await caches.match(req);
-      return cached || (await caches.match('/')) || Response.error();
+      const cached = await caches.match(request, { ignoreSearch: false });
+      if (cached) return cached;
+      if (request.mode === 'navigate') return (await caches.match('/')) || Response.error();
+      return Response.error();
     }
   })());
 });
