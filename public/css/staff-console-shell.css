@@ -1,0 +1,81 @@
+/* 출입신청관리 공통 헤더: 관리자와 일반 직원이 같은 높이·간격을 사용한다. */
+#app > .appbar.staff-console-bar {
+  height: 76px !important;
+  min-height: 76px !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  padding: 14px 16px !important;
+  background: #0f172a !important;
+}
+
+#app > .appbar.staff-console-bar > div {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+
+#app > .appbar.staff-console-bar h1 {
+  margin: 0 !important;
+  font-size: 23px !important;
+  line-height: 1.15 !important;
+  font-weight: 800 !important;
+  letter-spacing: -.7px !important;
+  white-space: nowrap !important;
+}
+
+#app > .appbar.staff-console-bar .sub {
+  margin-top: 2px !important;
+  font-size: 14px !important;
+  line-height: 1.2 !important;
+  white-space: nowrap !important;
+}
+
+#app > .appbar.staff-console-bar .admin-tools-open,
+#app > .appbar.staff-console-bar [data-logout] {
+  flex: 0 0 auto !important;
+  min-height: 42px !important;
+  margin-left: 0 !important;
+  padding: 0 11px !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+  border-radius: 11px !important;
+  background: rgba(255,255,255,.12) !important;
+  color: #fff !important;
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  cursor: pointer !important;
+  touch-action: manipulation !important;
+}
+
+/* 기존 관리 모듈이 만드는 개별 헤더 버튼과 역할 배지는 최초 페인트부터 숨긴다. */
+#app > .appbar .driver-manage-open,
+#app > .appbar .staff-manage-open,
+#app > .appbar .staff-role-manage-open,
+#app > .admin-bar {
+  display: none !important;
+}
+
+@media (max-width: 390px) {
+  #app > .appbar.staff-console-bar {
+    gap: 5px !important;
+    padding-left: 13px !important;
+    padding-right: 13px !important;
+  }
+
+  #app > .appbar.staff-console-bar h1 {
+    font-size: 20px !important;
+  }
+
+  #app > .appbar.staff-console-bar .sub {
+    font-size: 13px !important;
+  }
+
+  #app > .appbar.staff-console-bar .admin-tools-open,
+  #app > .appbar.staff-console-bar [data-logout] {
+    min-height: 40px !important;
+    padding: 0 8px !important;
+    font-size: 13px !important;
+  }
+}
