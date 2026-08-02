@@ -1,4 +1,5 @@
 import worker from './worker-v7.js';
+import { handlePasswordResetApi } from './password-reset-api.js';
 
 const SESSION_COOKIE = '__Host-ep_session';
 
@@ -64,6 +65,9 @@ function withFreshAssetHeaders(response, request) {
 
 export default {
   async fetch(request, env, ctx) {
+    const passwordResetResponse = await handlePasswordResetApi(request, env);
+    if (passwordResetResponse) return passwordResetResponse;
+
     // 하위 워커는 비밀번호 변경 성공 직후 모든 세션을 삭제한다.
     // 따라서 요청 처리 전에 사용자 ID를 확보해야 변경 필요 상태를 확실히 해제할 수 있다.
     const profileUser = await driverChangingPassword(request, env);
