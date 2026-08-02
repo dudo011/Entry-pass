@@ -1,8 +1,14 @@
 # Cloudflare Workers 설정
 # 배포 절차는 DEPLOY.md 참고.
 name = "entry-pass"
-main = "src/worker-v9.js"
+main = "src/worker-v10.js"
 compatibility_date = "2024-11-01"
+
+# 저장소 루트의 차량 동선 JPG를 Worker 데이터 모듈로 포함합니다.
+[[rules]]
+type = "Data"
+globs = [ "**/*.jpg" ]
+fallthrough = true
 
 # 정적 프런트엔드(public/)를 Workers 에서 함께 서빙
 [assets]
