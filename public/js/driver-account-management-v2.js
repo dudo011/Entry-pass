@@ -20,13 +20,16 @@
     .driver-manage-body{max-width:760px;margin:0 auto;padding:16px}
     .driver-search{width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:12px;padding:13px 14px;font-size:16px;margin-bottom:12px;background:#fff}
     .driver-account-item{background:#fff;border:1px solid #e2e8f0;border-radius:15px;padding:14px;margin-bottom:10px}
-    .driver-account-name{font-size:17px;font-weight:900;color:#0f172a;line-height:1.4;word-break:break-word}
+    .driver-account-top{display:flex;align-items:flex-start;gap:8px}
+    .driver-account-name{min-width:0;flex:1;font-size:17px;font-weight:900;color:#0f172a;line-height:1.4;word-break:break-word}
     .driver-account-meta{margin-top:5px;color:#64748b;font-size:14px;line-height:1.5;word-break:break-word}
     .driver-account-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
     .driver-account-actions button{width:100%;min-width:0;min-height:42px;padding:8px 6px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;font-weight:800;font-size:14px;cursor:pointer;touch-action:manipulation}
     .driver-account-actions .reset{color:#1d4ed8;border-color:#bfdbfe;background:#eff6ff}
     .driver-account-actions .transfer{color:#9a3412;border-color:#fed7aa;background:#fff7ed}
+    .driver-account-actions .delete{grid-column:1/-1;color:#b91c1c;border-color:#fecaca;background:#fff7f7}
     .driver-badge{display:inline-block;margin-left:7px;padding:3px 7px;border-radius:999px;background:#fef3c7;color:#92400e;font-size:11px;font-weight:900;vertical-align:middle}
+    .driver-dormant-badge{flex:none;margin-top:1px;padding:4px 8px;border-radius:999px;background:#e2e8f0;color:#475569;font-size:11px;font-weight:900;white-space:nowrap}
     .driver-empty{text-align:center;color:#64748b;padding:28px 6px}
     .driver-modal-backdrop{position:fixed;inset:0;z-index:14500;background:rgba(15,23,42,.6);display:grid;place-items:center;padding:18px;box-sizing:border-box}
     .driver-modal{width:min(100%,460px);max-height:calc(100vh - 36px);overflow:auto;box-sizing:border-box;background:#fff;border-radius:18px;padding:20px;box-shadow:0 24px 70px rgba(15,23,42,.3)}
@@ -46,6 +49,7 @@
     @media(max-width:390px){
       .driver-manage-body{padding:13px}.driver-account-item{padding:13px}
       .driver-account-actions button{font-size:13px;padding:7px 4px}
+      .driver-dormant-badge{padding:4px 7px;font-size:10px}
     }
   `;
   document.head.appendChild(style);
@@ -161,14 +165,18 @@
 
     list.innerHTML = filtered.length ? filtered.map((item) => `
       <article class="driver-account-item">
-        <div class="driver-account-name">
-          ${esc(item.vehicleNumber || item.loginId || '-')} (${esc(item.name || '-')})
-          ${item.mustChangePassword ? '<span class="driver-badge">비밀번호 변경 대기</span>' : ''}
+        <div class="driver-account-top">
+          <div class="driver-account-name">
+            ${esc(item.vehicleNumber || item.loginId || '-')} (${esc(item.name || '-')})
+            ${item.mustChangePassword ? '<span class="driver-badge">비밀번호 변경 대기</span>' : ''}
+          </div>
+          ${item.dormant ? '<span class="driver-dormant-badge">휴면 고객</span>' : ''}
         </div>
         <div class="driver-account-meta">${esc(item.phone || '-')}, ${esc(item.company || '-')}</div>
         <div class="driver-account-actions">
           <button type="button" class="reset" data-reset="${esc(item.id)}">임시 비밀번호 발급</button>
           <button type="button" class="transfer" data-transfer="${esc(item.id)}">차주 변경</button>
+          <button type="button" class="delete" data-delete="${esc(item.id)}">회원 삭제</button>
         </div>
       </article>`).join('') : '<div class="driver-empty">검색 결과가 없습니다.</div>';
 
@@ -194,6 +202,29 @@
     list.querySelectorAll('[data-transfer]').forEach((button) => {
       const account = accounts.find((item) => item.id === button.dataset.transfer);
       if (account) button.onclick = () => transferDialog(account, () => loadDriverAccounts(layer));
+    });
+
+    list.querySelectorAll('[data-delete]').forEach((button) => {
+      button.onclick = async () => {
+        const account = accounts.find((item) => item.id === button.dataset.delete);
+        if (!account) return;
+        const message = `${account.vehicleNumber} (${account.name}) 회원을 삭제하시겠습니까?\n\n회원은 즉시 로그인할 수 없게 되며 목록에서 제거됩니다. 기존 출입신청 기록은 보존됩니다.`;
+        if (!confirm(message)) return;
+
+        button.disabled = true;
+        button.textContent = '삭제 중…';
+        try {
+          const result = await request(`/api/admin/driver-accounts/${encodeURIComponent(account.id)}`, {
+            method: 'DELETE',
+          });
+          notify(result.message || '회원을 삭제했습니다.');
+          await loadDriverAccounts(layer);
+        } catch (error) {
+          button.disabled = false;
+          button.textContent = '회원 삭제';
+          notify(error.message);
+        }
+      };
     });
   }
 
