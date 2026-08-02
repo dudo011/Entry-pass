@@ -139,7 +139,7 @@
     card.disabled = true;
     try {
       removeManagementLayers();
-      const layer = action();
+      const layer = await action();
       if (!layer || !layer.isConnected) throw new Error('관리 화면 생성 실패');
       history.pushState({ ...(history.state || {}), adminTools: 'management', adminToolKind: kind }, '');
       menuLayer.hidden = true;
