@@ -1,5 +1,5 @@
 import worker from './worker-v7.js';
-import { handlePasswordResetApi } from './password-reset-api.js';
+import { handlePasswordResetApi } from './password-reset-api-v2.js';
 
 const SESSION_COOKIE = '__Host-ep_session';
 
