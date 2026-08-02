@@ -1,5 +1,6 @@
 import worker from './worker-v7.js';
 import { handlePasswordResetApi } from './password-reset-api-v2.js';
+import { handleDriverAccountAdminV2 } from './driver-account-admin-v2.js';
 
 const SESSION_COOKIE = '__Host-ep_session';
 
@@ -65,6 +66,9 @@ function withFreshAssetHeaders(response, request) {
 
 export default {
   async fetch(request, env, ctx) {
+    const driverAdminResponse = await handleDriverAccountAdminV2(request, env);
+    if (driverAdminResponse) return driverAdminResponse;
+
     const passwordResetResponse = await handlePasswordResetApi(request, env);
     if (passwordResetResponse) return passwordResetResponse;
 
