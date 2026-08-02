@@ -2,11 +2,19 @@
   const app = document.getElementById('app');
   if (!app) return;
 
-  function invoke(selector, layerSelector) {
-    const button = app.querySelector(`:scope > .appbar ${selector}`);
-    if (!button || typeof button.onclick !== 'function') return null;
-    button.onclick.call(button, new MouseEvent('click', { bubbles: true, cancelable: true }));
-    return document.querySelector(layerSelector);
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  async function invoke(selector, layerSelector) {
+    const startedAt = Date.now();
+    while (Date.now() - startedAt < 1500) {
+      const button = app.querySelector(`:scope > .appbar ${selector}`);
+      if (button && typeof button.onclick === 'function') {
+        button.onclick.call(button, new MouseEvent('click', { bubbles: true, cancelable: true }));
+        return document.querySelector(layerSelector);
+      }
+      await sleep(50);
+    }
+    return null;
   }
 
   window.EntryPassAdminActions = Object.freeze({
