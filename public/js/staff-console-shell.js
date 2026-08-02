@@ -20,14 +20,7 @@
     appbar.classList.add('staff-console-bar');
     app.querySelector(':scope > .admin-bar')?.remove();
 
-    const isAdmin = appbar.dataset.staffConsoleRole === 'admin';
     let adminButton = appbar.querySelector('.admin-tools-open');
-
-    if (!isAdmin) {
-      adminButton?.remove();
-      return;
-    }
-
     if (!adminButton) {
       adminButton = document.createElement('button');
       adminButton.type = 'button';
