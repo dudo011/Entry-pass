@@ -1,6 +1,7 @@
 import { handlePasswordResetApi as handleLegacyPasswordResetApi } from './password-reset-api.js';
 
 const PUBLIC_PATH = '/api/auth/password-reset-requests';
+const GENERIC_MESSAGE = '임시 비밀번호 발급 요청이 접수되었습니다. 입력한 정보와 일치하는 회원이 확인되면 자재센터 관리자가 등록된 연락처로 안내합니다.';
 
 let schemaReady;
 
@@ -70,7 +71,9 @@ async function findDriver(env, body) {
   const rows = await env.DB.prepare(`
     SELECT id, login_id, name, phone, default_vehicle_number, must_change_password
       FROM users
-     WHERE role = 'driver' AND login_id NOT LIKE '%#sold#%'
+     WHERE role = 'driver'
+       AND login_id NOT LIKE '%#sold#%'
+       AND login_id NOT LIKE '%#deleted#%'
   `).all();
 
   const vehicle = normalizeVehicle(body.vehicleNumber);
@@ -100,16 +103,8 @@ async function createRequest(request, env) {
   }
 
   const driver = await findDriver(env, { vehicleNumber, name, phone });
-  if (!driver) {
-    return jsonError('입력한 회원정보와 일치하는 계정을 찾지 못했습니다.', 404);
-  }
-
-  if (driver.must_change_password) {
-    return jsonResponse({
-      ok: true,
-      status: 'issued',
-      message: '이미 임시 비밀번호가 발급된 상태입니다. 등록된 연락처로 안내받은 임시 비밀번호로 로그인해 주세요.',
-    });
+  if (!driver || driver.must_change_password) {
+    return jsonResponse({ ok: true, status: 'pending', message: GENERIC_MESSAGE }, 202);
   }
 
   const existing = await env.DB.prepare(`
@@ -135,11 +130,7 @@ async function createRequest(request, env) {
     `).bind(randomHex(12), driver.id, vehicleNumber, name, phone, now).run();
   }
 
-  return jsonResponse({
-    ok: true,
-    status: 'pending',
-    message: '임시 비밀번호 발급 요청이 접수되었습니다. 자재센터 관리자가 등록된 연락처로 확인 후 안내합니다.',
-  }, 202);
+  return jsonResponse({ ok: true, status: 'pending', message: GENERIC_MESSAGE }, 202);
 }
 
 export async function handlePasswordResetApi(request, env) {
