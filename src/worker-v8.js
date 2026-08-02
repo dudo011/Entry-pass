@@ -1,6 +1,7 @@
 import worker from './worker-v7.js';
 import { handlePasswordResetApi } from './password-reset-api-v2.js';
 import { handleDriverAccountAdminV2 } from './driver-account-admin-v2.js';
+import { preflightSecurity, withSecurityHeaders } from './security-hardening.js';
 
 const SESSION_COOKIE = '__Host-ep_session';
 
@@ -66,25 +67,27 @@ function withFreshAssetHeaders(response, request) {
 
 export default {
   async fetch(request, env, ctx) {
-    const driverAdminResponse = await handleDriverAccountAdminV2(request, env);
-    if (driverAdminResponse) return driverAdminResponse;
+    const blocked = await preflightSecurity(request, env);
+    if (blocked) return withSecurityHeaders(blocked, request);
 
-    const passwordResetResponse = await handlePasswordResetApi(request, env);
-    if (passwordResetResponse) return passwordResetResponse;
+    let response = await handleDriverAccountAdminV2(request, env);
+    if (!response) response = await handlePasswordResetApi(request, env);
 
-    // 하위 워커는 비밀번호 변경 성공 직후 모든 세션을 삭제한다.
-    // 따라서 요청 처리 전에 사용자 ID를 확보해야 변경 필요 상태를 확실히 해제할 수 있다.
-    const profileUser = await driverChangingPassword(request, env);
-    let response = await worker.fetch(request, env, ctx);
+    if (!response) {
+      // 하위 워커는 비밀번호 변경 성공 직후 모든 세션을 삭제한다.
+      // 따라서 요청 처리 전에 사용자 ID를 확보해야 변경 필요 상태를 확실히 해제할 수 있다.
+      const profileUser = await driverChangingPassword(request, env);
+      response = await worker.fetch(request, env, ctx);
 
-    if (response.ok && profileUser?.role === 'driver') {
-      await env.DB.prepare(
-        'UPDATE users SET must_change_password = 0 WHERE id = ?'
-      ).bind(profileUser.id).run();
+      if (response.ok && profileUser?.role === 'driver') {
+        await env.DB.prepare(
+          'UPDATE users SET must_change_password = 0 WHERE id = ?'
+        ).bind(profileUser.id).run();
+      }
     }
 
     response = withFreshAssetHeaders(response, request);
-    return response;
+    return withSecurityHeaders(response, request);
   },
   scheduled(event, env, ctx) {
     return worker.scheduled(event, env, ctx);
