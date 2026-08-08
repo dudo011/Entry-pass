@@ -236,45 +236,21 @@
     return new Blob(parts, { type: 'application/pdf' });
   }
 
-  function dispatchGeneratedCompanyFile(input, file) {
-    let shadowed = false;
-    try {
-      const fileListLike = {
-        0: file,
-        length: 1,
-        item(index) { return index === 0 ? file : null; },
-      };
-      Object.defineProperty(input, 'files', {
-        configurable: true,
-        enumerable: true,
-        get: () => fileListLike,
-      });
-      shadowed = true;
-      input.dispatchEvent(new Event('change', { bubbles: true }));
-    } finally {
-      if (shadowed) {
-        try { delete input.files; } catch { /* noop */ }
-      }
-    }
-    const label = input.closest('.file-btn');
-    if (!label?.classList.contains('has')) {
-      throw new Error('작성한 작업계획서를 신청 화면에 연결하지 못했습니다. 다시 시도해 주세요.');
-    }
-  }
-
   function attachWorkPlanFile(pdf) {
-    const input = document.querySelector('input[data-doc="workPlan"]');
-    if (!input) throw new Error('작업계획서 첨부 항목을 찾을 수 없습니다.');
     const file = new File([pdf], '작업계획서.pdf', { type: 'application/pdf' });
 
-    // 업체 신규 신청 흐름에서는 Android 브라우저에서 input.files = DataTransfer.files가
-    // 멈추는 사례가 있어, 기존 change 처리기에 생성 파일을 직접 전달한다.
+    // 신규 업체 신청은 생성 파일을 input.files에 대입하지 않고 내부 신청 상태에 직접 전달한다.
     if (document.getElementById('companyReqSubmit')) {
-      dispatchGeneratedCompanyFile(input, file);
+      const bridge = window.__companyRequestAttachGeneratedFile;
+      if (typeof bridge !== 'function' || bridge('workPlan', file) !== true) {
+        throw new Error('작성한 작업계획서를 신청 화면에 연결하지 못했습니다. 다시 시도해 주세요.');
+      }
       return;
     }
 
     // 기존 기사 신청 화면은 기존 방식 유지.
+    const input = document.querySelector('input[data-doc="workPlan"]');
+    if (!input) throw new Error('작업계획서 첨부 항목을 찾을 수 없습니다.');
     if (typeof DataTransfer !== 'function') {
       throw new Error('이 기기에서 작성 파일 연결을 지원하지 않습니다. 브라우저를 다시 연 뒤 시도해 주세요.');
     }
