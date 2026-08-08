@@ -4,7 +4,7 @@
   const driverToken = hash.get('driverAccess') || query.get('driverAccess');
 
   if (driverToken) {
-    document.write('<scr' + 'ipt src="/js/driver-access-paged-v2.js?v=20260808-001"></scr' + 'ipt>');
+    document.write('<scr' + 'ipt src="/js/driver-access-paged-v2.js?v=20260808-002"></scr' + 'ipt>');
     return;
   }
 
