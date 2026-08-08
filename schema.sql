@@ -34,8 +34,9 @@ CREATE TABLE IF NOT EXISTS company_accounts (
   company_name TEXT NOT NULL,
   business_no TEXT NOT NULL,
   business_no_norm TEXT NOT NULL UNIQUE,
-  contact_name TEXT NOT NULL,
-  phone TEXT NOT NULL,
+  contact_name TEXT NOT NULL DEFAULT '', -- 레거시 호환용. 현재 회원가입에서는 수집하지 않음
+  phone TEXT NOT NULL,                   -- 업체 연락처
+  contract_type_id TEXT NOT NULL DEFAULT '', -- construction | transport | delivery | scrap | pcbs
   salt TEXT NOT NULL,
   hash TEXT NOT NULL,
   account_status TEXT NOT NULL DEFAULT 'active', -- 향후 pending/active/rejected 승인제로 확장 가능
