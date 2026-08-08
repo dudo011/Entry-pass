@@ -5,7 +5,7 @@
   function setFieldLabel(inputId, text) {
     const input = document.getElementById(inputId);
     const label = input?.closest('.cf-field')?.querySelector(':scope > span');
-    if (label) label.textContent = text;
+    if (label && label.textContent !== text) label.textContent = text;
   }
 
   function refineHome() {
@@ -17,14 +17,14 @@
     const appbar = app.querySelector(':scope > .cf-appbar');
     const title = appbar?.querySelector('h1');
     const subtitle = appbar?.querySelector('small');
-    if (title) title.textContent = '출입 신청 관리';
+    if (title && title.textContent !== '출입 신청 관리') title.textContent = '출입 신청 관리';
     subtitle?.remove();
 
     /* 별도 소개문구 없이 헤드 다음에 주요 기능 버튼을 바로 배치한다. */
     app.querySelector(':scope > .cf-screen > .cf-hero')?.remove();
 
-    requestButton.textContent = '새 출입 신청';
-    vehiclesButton.textContent = '소속 차량관리';
+    if (requestButton.textContent !== '새 출입 신청') requestButton.textContent = '새 출입 신청';
+    if (vehiclesButton.textContent !== '소속 차량관리') vehiclesButton.textContent = '소속 차량관리';
   }
 
   function refineVehicleList() {
@@ -48,10 +48,12 @@
         }
         br.remove();
       }
-      if (meta.firstChild?.nodeType === Node.TEXT_NODE) {
-        meta.firstChild.textContent = meta.firstChild.textContent.replace(/^기본 운전자\s*/u, '운전자 ');
-      } else {
-        meta.innerHTML = meta.innerHTML.replace(/^기본 운전자\s*/u, '운전자 ');
+
+      const first = meta.firstChild;
+      if (first?.nodeType === Node.TEXT_NODE && /^기본 운전자\s*/u.test(first.textContent || '')) {
+        first.textContent = first.textContent.replace(/^기본 운전자\s*/u, '운전자 ');
+      } else if (!first && /^기본 운전자\s*/u.test(meta.textContent || '')) {
+        meta.textContent = meta.textContent.replace(/^기본 운전자\s*/u, '운전자 ');
       }
     });
   }
