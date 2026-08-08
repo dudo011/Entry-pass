@@ -4,9 +4,12 @@
 
   const style = document.createElement('style');
   style.textContent = `
-    /* 업체 로그인·회원가입: 기존 앱처럼 라벨과 입력칸을 한 줄에 배치 */
+    /* 업체 로그인·회원가입·출입신청: 기존 앱처럼 라벨과 입력칸을 한 줄에 배치 */
     #app.cf-auth-login-layout .cf-card > .cf-field,
-    #app.cf-auth-register-layout .cf-card > .cf-field {
+    #app.cf-auth-register-layout .cf-card > .cf-field,
+    #app.cf-request-layout .cf-card > .cf-field,
+    #app.cf-request-layout #cf_registered_box > .cf-field,
+    #app.cf-request-layout #cf_temp_box > .cf-field {
       display:grid!important;
       grid-template-columns:96px minmax(0,1fr)!important;
       align-items:center!important;
@@ -14,7 +17,10 @@
       margin:0 0 12px!important;
     }
     #app.cf-auth-login-layout .cf-card > .cf-field > span,
-    #app.cf-auth-register-layout .cf-card > .cf-field > span {
+    #app.cf-auth-register-layout .cf-card > .cf-field > span,
+    #app.cf-request-layout .cf-card > .cf-field > span,
+    #app.cf-request-layout #cf_registered_box > .cf-field > span,
+    #app.cf-request-layout #cf_temp_box > .cf-field > span {
       display:block!important;
       margin:0!important;
       font-size:14px!important;
@@ -58,9 +64,21 @@
       min-height:18px!important;
     }
 
+    /* 출입신청의 차량 선택 영역도 좌우 폭이 흐트러지지 않도록 정리 */
+    #app.cf-request-layout #cf_registered_box,
+    #app.cf-request-layout #cf_temp_box {
+      min-width:0!important;
+    }
+    #app.cf-request-layout .cf-card > .cf-title {
+      margin-top:8px!important;
+    }
+
     @media(max-width:390px) {
       #app.cf-auth-login-layout .cf-card > .cf-field,
-      #app.cf-auth-register-layout .cf-card > .cf-field {
+      #app.cf-auth-register-layout .cf-card > .cf-field,
+      #app.cf-request-layout .cf-card > .cf-field,
+      #app.cf-request-layout #cf_registered_box > .cf-field,
+      #app.cf-request-layout #cf_temp_box > .cf-field {
         grid-template-columns:86px minmax(0,1fr)!important;
         gap:8px!important;
       }
@@ -88,8 +106,10 @@
 
     const login = !!document.getElementById('cf_login_id');
     const register = !!document.getElementById('cf_reg_company');
+    const request = !!document.getElementById('cf_r_date');
     app.classList.toggle('cf-auth-login-layout', login);
     app.classList.toggle('cf-auth-register-layout', register);
+    app.classList.toggle('cf-request-layout', request);
   }
 
   let scheduled = false;
