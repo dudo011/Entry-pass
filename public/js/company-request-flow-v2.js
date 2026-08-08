@@ -217,16 +217,22 @@
   function updateFileLabel(input, file) {
     const label = input?.closest('.file-btn');
     if (!label) return;
-    label.classList.toggle('has', !!file);
+    const count = Array.isArray(file) ? file.length : (file ? 1 : 0);
+    label.classList.toggle('has', count > 0);
     const textNode = [...label.childNodes].find((node) => node.nodeType === Node.TEXT_NODE);
-    if (textNode) textNode.textContent = file ? '첨부 완료' : '파일 선택';
+    if (textNode) textNode.textContent = count > 1 ? `첨부 완료 (${count}쪽)` : (count === 1 ? '첨부 완료' : '파일 선택');
   }
 
-  function storeGeneratedFile(key, file) {
-    if (!key || !(file instanceof File)) return false;
-    flow.files[key] = file;
+  // File 하나 또는 File 배열(작업계획서 3쪽 등)을 신청 상태에 직접 저장한다.
+  function storeGeneratedFile(key, value) {
+    if (!key) return false;
+    const files = Array.isArray(value)
+      ? value.filter((item) => item instanceof File)
+      : (value instanceof File ? [value] : []);
+    if (!files.length) return false;
+    flow.files[key] = files.length === 1 ? files[0] : files;
     const input = document.querySelector(`input[data-doc="${CSS.escape(key)}"]`);
-    updateFileLabel(input, file);
+    updateFileLabel(input, flow.files[key]);
     return true;
   }
 
@@ -307,7 +313,8 @@
     if (!driverName || !driverPhone) return toast('운전자명과 연락처를 입력해 주세요.');
 
     for (const doc of requiredDocs().filter((item) => item.required)) {
-      if (!flow.files[doc.key]) return toast(`${doc.label} 서류를 첨부해 주세요.`);
+      const value = flow.files[doc.key];
+      if (!value || (Array.isArray(value) && !value.length)) return toast(`${doc.label} 서류를 첨부해 주세요.`);
     }
 
     const form = new FormData();
@@ -320,10 +327,13 @@
     form.append('driverPhone', driverPhone);
 
     for (const doc of requiredDocs()) {
-      const file = flow.files[doc.key];
-      if (!file) continue;
-      form.append('documentKeys', doc.key);
-      form.append('documents', file, file.name);
+      const value = flow.files[doc.key];
+      if (!value) continue;
+      const files = Array.isArray(value) ? value : [value];
+      for (const file of files) {
+        form.append('documentKeys', doc.key);
+        form.append('documents', file, file.name);
+      }
     }
 
     const original = button?.textContent || '출입 신청 제출';

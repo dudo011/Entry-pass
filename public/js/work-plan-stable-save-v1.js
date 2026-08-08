@@ -1,4 +1,8 @@
 (() => {
+  // 작업계획서 3쪽 저장 모듈
+  // - 전역 fetch 몽키패치 없음
+  // - 생성한 3쪽 JPEG를 신청 모듈에 배열(File[])로 직접 전달 (TBM/위험성 체크리스트와 동일한 저장 경로)
+  // - 저장 버튼 문구로 단계별 진행 상황을 실기기에서 확인할 수 있게 표시
   const MAP_URL = '/route-images/construction.jpg?v=20260808-001';
   const PAGE_WIDTH = 1000;
   const PAGE_HEIGHT = 1414;
@@ -11,7 +15,6 @@
 
   let saving = false;
   let saved = false;
-  let extraWorkPlanPages = [];
 
   const style = document.createElement('style');
   style.textContent = `
@@ -153,7 +156,7 @@
     context.save();
     context.scale(OUTPUT_SCALE, OUTPUT_SCALE);
     context.drawImage(background, 0, 0, PAGE_WIDTH, PAGE_HEIGHT);
-    if (pageNumber === 2) drawContained(context, mapImage, MAP_RECT);
+    if (pageNumber === 2 && mapImage) drawContained(context, mapImage, MAP_RECT);
     context.drawImage(drawing, 0, 0, PAGE_WIDTH, PAGE_HEIGHT);
     context.restore();
 
@@ -167,53 +170,31 @@
     return new File([bytes], `작업계획서 ${pageNumber}쪽.jpg`, { type: 'image/jpeg' });
   }
 
-  function attachFirstPage(file, pageCount) {
-    const bridge = window.__companyRequestAttachGeneratedFile;
-    if (typeof bridge !== 'function' || bridge('workPlan', file) !== true) {
-      throw new Error('작성한 작업계획서를 신청 데이터에 저장하지 못했습니다.');
-    }
-    const input = document.querySelector('input[data-doc="workPlan"]');
-    const label = input?.closest('.file-btn');
-    if (label) {
-      label.classList.add('has');
-      const textNode = [...label.childNodes].find((node) => node.nodeType === Node.TEXT_NODE);
-      if (textNode) textNode.textContent = `첨부 완료 (${pageCount}쪽)`;
-    }
-  }
-
-  const nativeFetch = window.fetch.bind(window);
-  window.fetch = function workPlanPagesFetch(input, init) {
-    try {
-      const url = typeof input === 'string' ? input : input?.url || '';
-      const method = String(init?.method || (typeof input !== 'string' ? input?.method : '') || 'GET').toUpperCase();
-      const body = init?.body;
-      if (url.includes('/api/company/requests') && method === 'POST' && body instanceof FormData && extraWorkPlanPages.length) {
-        for (const file of extraWorkPlanPages) {
-          body.append('documentKeys', 'workPlan');
-          body.append('documents', file, file.name);
-        }
-      }
-    } catch { /* 원래 요청은 그대로 보낸다. */ }
-    return nativeFetch(input, init);
-  };
-
   async function save(root, button) {
     if (saving) return;
     saving = true;
     button.disabled = true;
+    const setLabel = (text) => { if (button.isConnected) button.textContent = text; };
 
     try {
+      setLabel('지도 불러오는 중…');
       const mapImage = await loadImage(MAP_URL);
+
       const files = [];
       for (let page = 1; page <= 3; page += 1) {
-        button.textContent = `${page}/3 저장 중…`;
+        setLabel(`${page}/3쪽 저장 중…`);
         files.push(await capturePageFile(root, page, mapImage));
       }
 
-      // PDF 조립 없이 3쪽 이미지를 그대로 저장한다.
-      attachFirstPage(files[0], files.length);
-      extraWorkPlanPages = files.slice(1);
+      // 3쪽 JPEG를 신청 모듈에 배열로 직접 전달한다. (fetch 조작·DataTransfer 없음)
+      setLabel('신청서에 첨부 중…');
+      const bridge = window.__companyRequestAttachGeneratedFile;
+      if (typeof bridge !== 'function' || bridge('workPlan', files) !== true) {
+        throw new Error('작성한 작업계획서를 신청 데이터에 저장하지 못했습니다. 신청 정보 화면에서 다시 시도해 주세요.');
+      }
+
       saved = true;
+      setLabel('완료');
       root.remove();
       requestAnimationFrame(refreshEditor);
     } catch (error) {
@@ -238,20 +219,10 @@
     save(root, button);
   }, true);
 
-  document.addEventListener('change', (event) => {
-    const input = event.target;
-    if (input?.matches?.('input[data-doc="workPlan"]') && input.files?.length) {
-      // 사용자가 작업계획서 파일을 직접 선택하면 생성된 추가 페이지는 보내지 않는다.
-      extraWorkPlanPages = [];
-      saved = false;
-    }
-  }, true);
-
   const observer = new MutationObserver(() => {
     refreshEditor();
     if (document.querySelector('.driver-result-refined-screen,.result .passno')) {
       saved = false;
-      extraWorkPlanPages = [];
     }
   });
   observer.observe(document.body, { childList: true, subtree: true, characterData: true });
