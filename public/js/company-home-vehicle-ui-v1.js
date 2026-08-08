@@ -39,6 +39,18 @@
       padding:8px 12px!important;
     }
 
+    /* 헤드: 차량관리 + 로그아웃을 나란히 둔다. */
+    #app.company-flow-active .cf-appbar .cf-head-btn{
+      margin-left:0!important;
+    }
+    #app.company-flow-active .cf-head-vehicle-btn{
+      min-width:auto!important;
+      padding-left:11px!important;
+      padding-right:11px!important;
+      font-size:14px!important;
+      white-space:nowrap!important;
+    }
+
     /* 신청내역: 출입날짜 | 차량번호 | 승인상태 한 줄 */
     #app .cf-item.cf-request-compact{
       padding:13px 14px!important;
@@ -46,7 +58,7 @@
     }
     #app .cf-item.cf-request-compact .cf-request-line{
       display:grid;
-      grid-template-columns:minmax(0,1.25fr) minmax(0,.9fr) auto;
+      grid-template-columns:minmax(0,.9fr) minmax(0,1fr) auto;
       gap:8px;
       align-items:center;
       width:100%;
@@ -74,7 +86,76 @@
     }
     #app .cf-item.cf-request-compact .cf-stage{
       margin:0!important;
+      min-height:30px!important;
+      padding:5px 9px!important;
+      font-size:13px!important;
       white-space:nowrap;
+    }
+    #app #cf_request_list .cf-request-completed-hidden{
+      display:none!important;
+    }
+    #app .cf-active-empty{
+      padding:24px 12px;
+      color:var(--text-muted,#64748B);
+      text-align:center;
+      font-size:15px;
+    }
+
+    /* 완료된 신청내역 전용 화면 */
+    .cf-completed-overlay{
+      position:fixed;
+      inset:0;
+      z-index:120000;
+      overflow:auto;
+      background:var(--bg,#F8FAFC);
+      color:var(--text,#0F172A);
+    }
+    .cf-completed-overlay .cf-completed-appbar{
+      position:sticky;
+      top:0;
+      z-index:2;
+      min-height:72px;
+      box-sizing:border-box;
+      display:flex;
+      align-items:center;
+      padding:max(15px,env(safe-area-inset-top)) 16px 15px;
+      background:var(--header,#0F172A);
+      color:#fff;
+    }
+    .cf-completed-overlay .cf-completed-appbar h1{
+      margin:0;
+      font-size:23px;
+      font-weight:800;
+    }
+    .cf-completed-overlay .cf-completed-close{
+      margin-left:auto;
+      min-width:42px;
+      height:40px;
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:12px;
+      background:rgba(255,255,255,.09);
+      color:#fff;
+      font-size:24px;
+      line-height:1;
+    }
+    .cf-completed-overlay .cf-completed-screen{
+      max-width:520px;
+      margin:0 auto;
+      padding:18px 16px calc(28px + env(safe-area-inset-bottom));
+    }
+    .cf-completed-overlay .cf-item{
+      width:100%;
+      box-sizing:border-box;
+      text-align:left;
+      border:0;
+      border-radius:16px;
+      background:#fff;
+      box-shadow:0 10px 25px rgba(0,0,0,.06);
+    }
+    .cf-completed-empty{
+      padding:28px 12px;
+      color:var(--text-muted,#64748B);
+      text-align:center;
     }
 
     #app .cf-item.cf-vehicle-compact{
@@ -115,6 +196,15 @@
     if (label && label.textContent !== text) label.textContent = text;
   }
 
+  function shortStage(stage) {
+    if (!stage) return;
+    if (stage.classList.contains('pending')) stage.textContent = '승인대기';
+    else if (stage.classList.contains('safety_pending')) stage.textContent = '안전확인';
+    else if (stage.classList.contains('photo_pending')) stage.textContent = '사진대기';
+    else if (stage.classList.contains('completed')) stage.textContent = '완료';
+    else if (stage.classList.contains('rejected')) stage.textContent = '반려';
+  }
+
   function refineRequestList() {
     const list = document.getElementById('cf_request_list');
     if (!list) return;
@@ -124,9 +214,12 @@
 
       const vehicle = item.querySelector('.cf-item-top strong')?.textContent?.trim() || '-';
       const stage = item.querySelector('.cf-stage');
+      const isCompleted = !!stage?.classList.contains('completed');
+      shortStage(stage);
+
       const metaText = item.querySelector('.cf-meta')?.textContent?.replace(/\s+/g, ' ').trim() || '';
-      const dateMatch = metaText.match(/\d{4}\.\s*\d{1,2}\.\s*\d{1,2}\s*\([^)]+\)/u);
-      const visitDate = dateMatch?.[0] || '-';
+      const dateMatch = metaText.match(/(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})\s*\(([^)]+)\)/u);
+      const visitDate = dateMatch ? `${Number(dateMatch[2])}. ${Number(dateMatch[3])} (${dateMatch[4]})` : '-';
 
       const line = document.createElement('div');
       line.className = 'cf-request-line';
@@ -144,7 +237,57 @@
 
       item.replaceChildren(line);
       item.classList.add('cf-request-compact');
+      if (isCompleted) item.classList.add('cf-request-completed-hidden');
     });
+
+    const activeCards = [...list.querySelectorAll('.cf-item[data-cf-request]')]
+      .filter((item) => !item.classList.contains('cf-request-completed-hidden'));
+    let empty = list.querySelector('.cf-active-empty');
+    if (!activeCards.length) {
+      if (!empty) {
+        empty = document.createElement('div');
+        empty.className = 'cf-active-empty';
+        empty.textContent = '현재 진행 중인 신청 내역이 없습니다.';
+        list.appendChild(empty);
+      }
+    } else {
+      empty?.remove();
+    }
+  }
+
+  function openCompletedRequests() {
+    if (document.querySelector('.cf-completed-overlay')) return;
+    const list = document.getElementById('cf_request_list');
+    if (!list) return;
+
+    const completed = [...list.querySelectorAll('.cf-item.cf-request-completed-hidden[data-cf-request]')];
+    const overlay = document.createElement('div');
+    overlay.className = 'cf-completed-overlay';
+    overlay.innerHTML = `
+      <header class="cf-completed-appbar">
+        <h1>완료 신청내역</h1>
+        <button type="button" class="cf-completed-close" aria-label="닫기">×</button>
+      </header>
+      <main class="cf-completed-screen"></main>`;
+
+    const screen = overlay.querySelector('.cf-completed-screen');
+    if (!completed.length) {
+      screen.innerHTML = '<div class="cf-completed-empty">완료된 신청 내역이 없습니다.</div>';
+    } else {
+      completed.forEach((original) => {
+        const clone = original.cloneNode(true);
+        clone.classList.remove('cf-request-completed-hidden');
+        clone.style.display = '';
+        clone.onclick = () => {
+          overlay.remove();
+          original.click();
+        };
+        screen.appendChild(clone);
+      });
+    }
+
+    overlay.querySelector('.cf-completed-close').onclick = () => overlay.remove();
+    document.body.appendChild(overlay);
   }
 
   function refineHome() {
@@ -163,7 +306,29 @@
     app.querySelector(':scope > .cf-screen > .cf-hero')?.remove();
 
     if (requestButton.textContent !== '새 출입 신청') requestButton.textContent = '새 출입 신청';
-    if (vehiclesButton.textContent !== '소속 차량관리') vehiclesButton.textContent = '소속 차량관리';
+
+    /* 차량관리는 본문에서 제거하고 로그아웃 왼쪽으로 이동한다. */
+    if (appbar) {
+      vehiclesButton.textContent = '차량관리';
+      vehiclesButton.className = 'cf-head-btn cf-head-vehicle-btn';
+      const logout = appbar.querySelector('[data-cf-logout]');
+      if (vehiclesButton.parentElement !== appbar || vehiclesButton.nextElementSibling !== logout) {
+        appbar.insertBefore(vehiclesButton, logout || null);
+      }
+    }
+
+    const menu = requestButton.closest('.cf-menu');
+    if (menu) {
+      let completedButton = menu.querySelector('.cf-completed-btn');
+      if (!completedButton) {
+        completedButton = document.createElement('button');
+        completedButton.type = 'button';
+        completedButton.className = 'cf-btn cf-secondary cf-completed-btn';
+        completedButton.textContent = '완료 신청내역';
+        completedButton.onclick = openCompletedRequests;
+        menu.appendChild(completedButton);
+      }
+    }
 
     refineRequestList();
   }
