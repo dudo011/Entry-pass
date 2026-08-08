@@ -42,7 +42,7 @@
   const schedule = () => {
     if (scheduled) return;
     scheduled = true;
-    queueMicrotask(() => {
+    requestAnimationFrame(() => {
       scheduled = false;
       normalize();
     });

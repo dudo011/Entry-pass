@@ -166,13 +166,22 @@
   if (!app) return;
 
   let scheduled = false;
+  let lastApplyAt = 0;
+  const MIN_APPLY_GAP = 400;
   const schedule = () => {
     if (scheduled) return;
     scheduled = true;
-    queueMicrotask(() => {
+    // queueMicrotask는 브라우저에 양보하지 않아, 다른 보정 스크립트와 상호 재발화 루프에
+    // 걸리면 마이크로태스크가 끝없이 쌓여 화면이 하드 프리즈된다. rAF + 최소 간격으로
+    // 반드시 프레임마다 양보하고 재적용 빈도도 제한한다.
+    const run = () => {
       scheduled = false;
+      lastApplyAt = Date.now();
       refineTransportRoute();
-    });
+    };
+    const wait = Math.max(0, MIN_APPLY_GAP - (Date.now() - lastApplyAt));
+    if (wait === 0) requestAnimationFrame(run);
+    else setTimeout(run, wait);
   };
 
   new MutationObserver(schedule).observe(app, {

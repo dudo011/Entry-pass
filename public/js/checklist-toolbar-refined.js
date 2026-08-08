@@ -38,7 +38,9 @@
   document.head.appendChild(style);
 
   function refineChecklistToolbar() {
-    document.querySelectorAll('.annot').forEach((overlay) => {
+    const overlays = document.querySelectorAll('.annot');
+    if (!overlays.length) return; // 애노테이터가 없으면 아무 것도 하지 않는다(불필요한 변경 방지).
+    overlays.forEach((overlay) => {
       overlay.querySelector('.swatches')?.remove();
       overlay.querySelector('[data-tool="pen"]')?.remove();
 
@@ -49,9 +51,22 @@
     });
   }
 
-  new MutationObserver(refineChecklistToolbar).observe(document.body, {
+  // 관찰자 콜백에서 직접 DOM을 변경하면(마이크로태스크) 다른 직접-변경 관찰자와
+  // 상호 재발화 루프에 걸려 마이크로태스크 큐가 안 비워지고 화면이 하드 프리즈된다.
+  // rAF로 스케줄해 반드시 프레임마다 양보한다.
+  let scheduled = false;
+  const schedule = () => {
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(() => {
+      scheduled = false;
+      refineChecklistToolbar();
+    });
+  };
+
+  new MutationObserver(schedule).observe(document.body, {
     childList: true,
     subtree: true,
   });
-  refineChecklistToolbar();
+  schedule();
 })();
