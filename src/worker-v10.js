@@ -3,6 +3,7 @@ import { handleCompanyFlowApi, isCompanyFlowPath } from './company-flow-api.js';
 import { handleCompanyRegistrationV2 } from './company-registration-v2.js';
 import { handleCompanyContractRequestV2 } from './company-contract-request-v2.js';
 import { handleCompanyDriverShareV2 } from './company-driver-share-v2.js';
+import { handleCompanyDriverAccessV3 } from './company-driver-access-v3.js';
 import { preflightSecurity, withSecurityHeaders } from './security-hardening.js';
 
 function mayHandle(path, method) {
@@ -41,6 +42,9 @@ export default {
 
     const driverShareResponse = await handleCompanyDriverShareV2(request, env);
     if (driverShareResponse) return withSameOriginCamera(withSecurityHeaders(driverShareResponse, request));
+
+    const driverAccessResponse = await handleCompanyDriverAccessV3(request, env);
+    if (driverAccessResponse) return withSameOriginCamera(withSecurityHeaders(driverAccessResponse, request));
 
     const response = await handleCompanyFlowApi(request, env);
     if (!response) return withSameOriginCamera(await worker.fetch(request, env, ctx));
