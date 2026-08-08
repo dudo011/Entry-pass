@@ -1,5 +1,6 @@
 import worker from './worker-v9.js';
 import { handleCompanyFlowApi, isCompanyFlowPath } from './company-flow-api.js';
+import { handleCompanyRegistrationV2 } from './company-registration-v2.js';
 import { preflightSecurity, withSecurityHeaders } from './security-hardening.js';
 
 function mayHandle(path, method) {
@@ -17,6 +18,9 @@ export default {
 
     const blocked = await preflightSecurity(request, env);
     if (blocked) return withSecurityHeaders(blocked, request);
+
+    const registrationResponse = await handleCompanyRegistrationV2(request, env);
+    if (registrationResponse) return withSecurityHeaders(registrationResponse, request);
 
     const response = await handleCompanyFlowApi(request, env);
     if (!response) return worker.fetch(request, env, ctx);
