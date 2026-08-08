@@ -5,10 +5,10 @@
   const COMPANY_TOKEN_KEY = 'ep_company_token';
   const CONTRACT_TYPES = [
     { id: 'construction', name: '공사업체' },
-    { id: 'transport', name: '물자수송용역 차량' },
-    { id: 'delivery', name: '기자재 납품차량' },
-    { id: 'scrap', name: '불용품 매각차량' },
-    { id: 'pcbs', name: 'PCBs처리용역 차량' },
+    { id: 'transport', name: '물자수송용역' },
+    { id: 'delivery', name: '기자재 납품' },
+    { id: 'scrap', name: '불용품 매각' },
+    { id: 'pcbs', name: 'PCBs처리용역' },
   ];
 
   function contractOptions() {
@@ -49,7 +49,11 @@
     const companyInput = document.getElementById('cf_reg_company');
     if (!companyInput) return;
     const card = companyInput.closest('.cf-card');
-    if (!card) return;
+    if (!card || card.dataset.cfRegistrationV2Ready === '1') return;
+
+    /* 이 화면에서 DOM 재배치는 최초 1회만 수행한다.
+       반복 재배치 시 모바일 브라우저의 입력 포커스/키보드가 끊길 수 있다. */
+    card.dataset.cfRegistrationV2Ready = '1';
 
     /* 공동계정에서는 개인 담당자 이름을 받지 않는다. */
     document.getElementById('cf_reg_name')?.closest('.cf-field')?.remove();
@@ -58,7 +62,7 @@
     document.getElementById('cf_check_login')?.remove();
     document.getElementById('cf_check_business')?.remove();
 
-    /* 기존 입력 이벤트가 참조하므로 메시지 노드는 남기되 화면에서는 숨긴다. */
+    /* 기존 company-flow-v1 입력 이벤트가 참조하므로 메시지 노드는 남겨 둔다. */
     const loginMsg = document.getElementById('cf_login_msg');
     const businessMsg = document.getElementById('cf_business_msg');
     if (loginMsg) loginMsg.style.display = 'none';
