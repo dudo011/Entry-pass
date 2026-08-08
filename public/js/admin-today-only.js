@@ -228,13 +228,20 @@
   const app = document.getElementById('app');
   if (!app) return;
   let scheduled = false;
+  let lastApplyAt = 0;
+  const MIN_APPLY_GAP = 500; // 재적용 최소 간격(ms). 잔여 변경이 있어도 60fps 폭주로 화면이 멈추지 않게 하는 안전장치.
   const schedule = (forceRefresh = false) => {
     if (scheduled) return;
     scheduled = true;
-    requestAnimationFrame(() => {
+    const run = () => {
       scheduled = false;
+      lastApplyAt = Date.now();
       void apply(forceRefresh);
-    });
+    };
+    const wait = Math.max(0, MIN_APPLY_GAP - (Date.now() - lastApplyAt));
+    // 마지막 적용 후 충분히 지났으면 다음 프레임에, 아니면 남은 간격만큼 지연.
+    if (wait === 0) requestAnimationFrame(run);
+    else setTimeout(run, wait);
   };
 
   /* 완료 탭 외의 어떤 탭을 눌러도 완료 모드는 즉시 해제한다. */

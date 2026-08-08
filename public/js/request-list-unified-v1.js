@@ -150,13 +150,14 @@
   }
 
   let scheduled = false;
+  let lastApplyAt = 0;
+  const MIN_APPLY_GAP = 500; // 재적용 최소 간격(ms). MutationObserver 폭주로 화면이 멈추는 것을 막는 안전장치.
   const schedule = () => {
     if (scheduled) return;
     scheduled = true;
-    requestAnimationFrame(() => {
-      scheduled = false;
-      apply();
-    });
+    const run = () => { scheduled = false; lastApplyAt = Date.now(); apply(); };
+    const wait = Math.max(0, MIN_APPLY_GAP - (Date.now() - lastApplyAt));
+    if (wait === 0) requestAnimationFrame(run); else setTimeout(run, wait);
   };
 
   new MutationObserver(schedule).observe(app, { childList: true, subtree: true, characterData: true });
