@@ -77,7 +77,7 @@
         completedTab.dataset.tab = 'approved';
       }
     }
-    setTabLabel(completedTab, '최종완료');
+    setTabLabel(completedTab, '완료');
 
     const approvedTabs = [...tabs.querySelectorAll('.tab[data-tab="approved"]')];
     const approvedTab = approvedTabs.find((tab) => tab.dataset.workflowTab !== 'completed') || null;
