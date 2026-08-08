@@ -68,6 +68,8 @@
     const tabs = document.querySelector('#app .tabs');
     if (!tabs) return null;
 
+    const activeBeforePrepare = tabs.querySelector('.tab.active');
+
     let completedTab = tabs.querySelector('.tab[data-workflow-tab="completed"]');
     if (!completedTab) {
       completedTab = tabs.querySelector('.tab[data-tab="rejected"]');
@@ -82,10 +84,16 @@
     const approvedTabs = [...tabs.querySelectorAll('.tab[data-tab="approved"]')];
     const approvedTab = approvedTabs.find((tab) => tab.dataset.workflowTab !== 'completed') || null;
 
+    /* 코어가 통계/대기/승인을 활성화해 다시 렌더링했다면 완료 모드를 즉시 해제한다. */
+    if (activeBeforePrepare && activeBeforePrepare !== completedTab
+      && activeBeforePrepare.dataset.workflowTab !== 'completed') {
+      completedMode = false;
+    }
+
     if (completedMode && completedTab) {
       tabs.querySelectorAll('.tab').forEach((tab) => tab.classList.remove('active'));
       completedTab.classList.add('active');
-    } else if (approvedTab && completedTab) {
+    } else if (completedTab) {
       completedTab.classList.remove('active');
     }
 
@@ -213,12 +221,11 @@
     });
   };
 
-  /* 코어 탭 클릭 전에 최종완료 모드 여부를 기억한다. */
+  /* 완료 탭 외의 어떤 탭을 눌러도 완료 모드는 즉시 해제한다. */
   document.addEventListener('click', (event) => {
     const tab = event.target.closest?.('#app .tabs .tab');
     if (!tab) return;
-    if (tab.dataset.workflowTab === 'completed') completedMode = true;
-    else if (tab.dataset.tab === 'approved') completedMode = false;
+    completedMode = tab.dataset.workflowTab === 'completed';
   }, true);
 
   new MutationObserver(() => schedule(false)).observe(app, {
