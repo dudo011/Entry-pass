@@ -133,11 +133,8 @@
         onProgress?.(Math.max(1, Math.min(99, Math.round((event.loaded / event.total) * 100))));
       };
       xhr.onload = () => {
-        let data = xhr.response;
-        if (!data && xhr.responseText) {
-          try { data = JSON.parse(xhr.responseText); } catch { data = null; }
-        }
-        if (xhr.status >= 200 && xhr.status < 300) resolve(data || {});
+        const data = xhr.response || {};
+        if (xhr.status >= 200 && xhr.status < 300) resolve(data);
         else reject(new Error(data?.error || '현장사진 업로드에 실패했습니다.'));
       };
       xhr.onerror = () => reject(new Error('네트워크 연결을 확인해 주세요.'));
