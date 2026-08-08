@@ -6,12 +6,12 @@
   const OUTPUT_HEIGHT = Math.round(PAGE_HEIGHT * OUTPUT_WIDTH / PAGE_WIDTH);
   const OUTPUT_SCALE = OUTPUT_WIDTH / PAGE_WIDTH;
   const MAP_RECT = { x: 325, y: 620, width: 650, height: 760 };
-  const MAX_FILE_BYTES = 5 * 1024 * 1024;
   const IMAGE_TIMEOUT_MS = 6000;
   const PAGE_TIMEOUT_MS = 5000;
 
   let saving = false;
   let saved = false;
+  let extraWorkPlanPages = [];
 
   const style = document.createElement('style');
   style.textContent = `
@@ -136,7 +136,7 @@
     return bytes;
   }
 
-  async function capturePage(root, pageNumber, mapImage) {
+  async function capturePageFile(root, pageNumber, mapImage) {
     await goToPage(root, pageNumber);
     const background = root.querySelector('.wpe-w > img:not(.wpe-map-overlay)');
     const drawing = root.querySelector('.wpe-w > canvas');
@@ -163,94 +163,39 @@
     canvas.height = 1;
     const comma = dataUrl.indexOf(',');
     if (comma < 0) throw new Error(`${pageNumber}쪽 이미지 생성에 실패했습니다.`);
-    return { bytes: base64ToBytes(dataUrl.slice(comma + 1)), width: OUTPUT_WIDTH, height: OUTPUT_HEIGHT };
+    const bytes = base64ToBytes(dataUrl.slice(comma + 1));
+    return new File([bytes], `작업계획서 ${pageNumber}쪽.jpg`, { type: 'image/jpeg' });
   }
 
-  function textBytes(text) {
-    return new TextEncoder().encode(text);
-  }
-
-  function buildPdf(pages) {
-    const objects = [];
-    const pageRefs = [];
-    let objectNumber = 3;
-
-    for (const page of pages) {
-      const pageObject = objectNumber++;
-      const imageObject = objectNumber++;
-      const contentObject = objectNumber++;
-      const pageHeight = 595.28 * page.height / page.width;
-      pageRefs.push(`${pageObject} 0 R`);
-      objects[pageObject] = textBytes(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 ${pageHeight.toFixed(2)}] /Resources << /XObject << /I ${imageObject} 0 R >> >> /Contents ${contentObject} 0 R >>`);
-      objects[imageObject] = [
-        textBytes(`<< /Type /XObject /Subtype /Image /Width ${page.width} /Height ${page.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${page.bytes.length} >>\nstream\n`),
-        page.bytes,
-        textBytes('\nendstream'),
-      ];
-      const drawing = `q\n595.28 0 0 ${pageHeight.toFixed(2)} 0 0 cm\n/I Do\nQ`;
-      objects[contentObject] = textBytes(`<< /Length ${textBytes(drawing).length} >>\nstream\n${drawing}\nendstream`);
+  function attachFirstPage(file, pageCount) {
+    const bridge = window.__companyRequestAttachGeneratedFile;
+    if (typeof bridge !== 'function' || bridge('workPlan', file) !== true) {
+      throw new Error('작성한 작업계획서를 신청 데이터에 저장하지 못했습니다.');
     }
-
-    objects[1] = textBytes('<< /Type /Catalog /Pages 2 0 R >>');
-    objects[2] = textBytes(`<< /Type /Pages /Kids [${pageRefs.join(' ')}] /Count ${pageRefs.length} >>`);
-
-    const parts = [textBytes('%PDF-1.4\n%PDF\n')];
-    const offsets = [0];
-    let length = parts[0].length;
-    const push = (part) => {
-      if (Array.isArray(part)) part.forEach(push);
-      else { parts.push(part); length += part.length; }
-    };
-
-    for (let index = 1; index < objects.length; index += 1) {
-      offsets[index] = length;
-      push(textBytes(`${index} 0 obj\n`));
-      push(objects[index]);
-      push(textBytes('\nendobj\n'));
-    }
-
-    let xref = `xref\n0 ${objects.length}\n0000000000 65535 f \n`;
-    for (let index = 1; index < objects.length; index += 1) xref += `${String(offsets[index]).padStart(10, '0')} 00000 n \n`;
-    xref += `trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${length}\n%%EOF`;
-    parts.push(textBytes(xref));
-    return new Blob(parts, { type: 'application/pdf' });
-  }
-
-  function attachToCompany(file) {
     const input = document.querySelector('input[data-doc="workPlan"]');
     const label = input?.closest('.file-btn');
-    const bridge = window.__companyRequestAttachGeneratedFile;
-    if (typeof bridge !== 'function') throw new Error('업체 신청 파일 연결 기능을 찾을 수 없습니다.');
-
-    // 내부 저장 시 라벨 DOM을 건드리지 않도록 잠시 class를 제거한다.
-    const hadClass = !!label?.classList.contains('file-btn');
-    if (hadClass) label.classList.remove('file-btn');
-    let ok = false;
-    try {
-      ok = bridge('workPlan', file) === true;
-    } finally {
-      if (hadClass) label.classList.add('file-btn');
-    }
-    if (!ok) throw new Error('작성한 작업계획서를 신청 데이터에 저장하지 못했습니다.');
-
-    // 편집창을 닫은 다음 표시만 갱신한다.
-    setTimeout(() => {
-      if (!label?.isConnected) return;
+    if (label) {
       label.classList.add('has');
       const textNode = [...label.childNodes].find((node) => node.nodeType === Node.TEXT_NODE);
-      if (textNode) textNode.textContent = '첨부 완료';
-    }, 0);
+      if (textNode) textNode.textContent = `첨부 완료 (${pageCount}쪽)`;
+    }
   }
 
-  function attachToLegacy(file) {
-    const input = document.querySelector('input[data-doc="workPlan"]');
-    if (!input) throw new Error('작업계획서 첨부 항목을 찾을 수 없습니다.');
-    if (typeof DataTransfer !== 'function') throw new Error('이 기기에서 작성 파일 연결을 지원하지 않습니다.');
-    const transfer = new DataTransfer();
-    transfer.items.add(file);
-    input.files = transfer.files;
-    input.dispatchEvent(new Event('change', { bubbles: true }));
-  }
+  const nativeFetch = window.fetch.bind(window);
+  window.fetch = function workPlanPagesFetch(input, init) {
+    try {
+      const url = typeof input === 'string' ? input : input?.url || '';
+      const method = String(init?.method || (typeof input !== 'string' ? input?.method : '') || 'GET').toUpperCase();
+      const body = init?.body;
+      if (url.includes('/api/company/requests') && method === 'POST' && body instanceof FormData && extraWorkPlanPages.length) {
+        for (const file of extraWorkPlanPages) {
+          body.append('documentKeys', 'workPlan');
+          body.append('documents', file, file.name);
+        }
+      }
+    } catch { /* 원래 요청은 그대로 보낸다. */ }
+    return nativeFetch(input, init);
+  };
 
   async function save(root, button) {
     if (saving) return;
@@ -259,22 +204,15 @@
 
     try {
       const mapImage = await loadImage(MAP_URL);
-      const pages = [];
+      const files = [];
       for (let page = 1; page <= 3; page += 1) {
         button.textContent = `${page}/3 저장 중…`;
-        pages.push(await capturePage(root, page, mapImage));
+        files.push(await capturePageFile(root, page, mapImage));
       }
 
-      button.textContent = '파일 만드는 중…';
-      await nextPaint();
-      const pdf = buildPdf(pages);
-      if (!pdf.size) throw new Error('작업계획서 파일 생성에 실패했습니다.');
-      if (pdf.size > MAX_FILE_BYTES) throw new Error('작업계획서 파일이 5MB를 초과했습니다.');
-      const file = new File([pdf], '작업계획서.pdf', { type: 'application/pdf' });
-
-      if (document.getElementById('companyReqSubmit')) attachToCompany(file);
-      else attachToLegacy(file);
-
+      // PDF 조립 없이 3쪽 이미지를 그대로 저장한다.
+      attachFirstPage(files[0], files.length);
+      extraWorkPlanPages = files.slice(1);
       saved = true;
       root.remove();
       requestAnimationFrame(refreshEditor);
@@ -300,9 +238,21 @@
     save(root, button);
   }, true);
 
+  document.addEventListener('change', (event) => {
+    const input = event.target;
+    if (input?.matches?.('input[data-doc="workPlan"]') && input.files?.length) {
+      // 사용자가 작업계획서 파일을 직접 선택하면 생성된 추가 페이지는 보내지 않는다.
+      extraWorkPlanPages = [];
+      saved = false;
+    }
+  }, true);
+
   const observer = new MutationObserver(() => {
     refreshEditor();
-    if (document.querySelector('.driver-result-refined-screen,.result .passno')) saved = false;
+    if (document.querySelector('.driver-result-refined-screen,.result .passno')) {
+      saved = false;
+      extraWorkPlanPages = [];
+    }
   });
   observer.observe(document.body, { childList: true, subtree: true, characterData: true });
   refreshEditor();
