@@ -7,6 +7,10 @@
   const token = hash.get('driverAccess') || query.get('driverAccess');
   if (!token) return;
 
+  const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+  const PHOTO_TARGET_BYTES = 4.5 * 1024 * 1024;
+  const PHOTO_MAX_EDGE = 1920;
+
   const state = {
     data: null,
     safetyPages: [],
@@ -166,6 +170,86 @@
     window.scrollTo(0, 0);
   }
 
+  function loadPhotoImage(file) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const image = new Image();
+      image.onload = () => resolve({ image, url });
+      image.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error('사진을 읽을 수 없습니다. 다른 사진을 선택해 주세요.'));
+      };
+      image.src = url;
+    });
+  }
+
+  function canvasToJpeg(canvas, quality) {
+    return new Promise((resolve, reject) => {
+      canvas.toBlob((blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error('사진을 최적화하지 못했습니다. 다시 촬영해 주세요.'));
+      }, 'image/jpeg', quality);
+    });
+  }
+
+  async function preparePhoto(file) {
+    if (!file) throw new Error('현장사진을 선택해 주세요.');
+    if (!['image/jpeg', 'image/png'].includes(file.type)) {
+      throw new Error('현장사진은 JPG 또는 PNG 형식만 사용할 수 있습니다.');
+    }
+    if (file.size <= PHOTO_TARGET_BYTES) return file;
+
+    const { image, url } = await loadPhotoImage(file);
+    try {
+      const longest = Math.max(image.naturalWidth, image.naturalHeight) || 1;
+      const scale = Math.min(1, PHOTO_MAX_EDGE / longest);
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+      const context = canvas.getContext('2d', { alpha: false });
+      if (!context) throw new Error('사진 최적화를 지원하지 않는 브라우저입니다.');
+      context.fillStyle = '#fff';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+      let blob = null;
+      for (const quality of [0.82, 0.72, 0.62, 0.52]) {
+        blob = await canvasToJpeg(canvas, quality);
+        if (blob.size <= PHOTO_TARGET_BYTES) break;
+      }
+      canvas.width = 1;
+      canvas.height = 1;
+      if (!blob || blob.size > MAX_UPLOAD_BYTES) {
+        throw new Error('사진 용량을 5MB 이하로 줄이지 못했습니다. 카메라 해상도를 낮춰 다시 촬영해 주세요.');
+      }
+      return new File([blob], `현장사진-${Date.now()}.jpg`, { type: 'image/jpeg' });
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  async function uploadPhoto(file, button, { automatic = false } = {}) {
+    if (!button) return;
+    const original = button.textContent;
+    button.disabled = true;
+    try {
+      button.textContent = file.size > PHOTO_TARGET_BYTES ? '사진 최적화 중…' : '업로드 중…';
+      const prepared = await preparePhoto(file);
+      button.textContent = '업로드 중…';
+      const form = new FormData();
+      form.append('photo', prepared, prepared.name);
+      await api(`/api/driver-access/${encodeURIComponent(token)}/photo`, { method: 'POST', body: form });
+      state.data = await api(`/api/driver-access/${encodeURIComponent(token)}`);
+      history.replaceState(historyState('completed'), '');
+      state.stage = 'completed';
+      renderCompleted();
+    } catch (error) {
+      button.disabled = false;
+      button.textContent = original;
+      toast(error.message || (automatic ? '촬영한 사진 자동 업로드에 실패했습니다.' : '현장사진 업로드에 실패했습니다.'));
+    }
+  }
+
   function renderPhoto() {
     app.className = '';
     app.innerHTML = appbar('현장사진 업로드') + stepBar(state.safetyPages.length + 1) + `
@@ -173,31 +257,51 @@
         <div class="section-title">현장사진 업로드</div>
         <div class="card">
           <p style="margin:2px 0 14px;font-size:17px;line-height:1.55;color:var(--text-muted)">자재센터 출입 후 현장에서 촬영한 차량·운전자 사진을 등록해 주세요.</p>
-          <label class="field"><span class="lb">현장사진</span><input type="file" id="driverSitePhoto" accept="image/jpeg,image/png" capture="environment"></label>
+          <div class="btn-row" style="margin-bottom:10px">
+            <button type="button" class="btn btn-ghost" id="driverChoosePhoto">사진 선택</button>
+            <button type="button" class="btn btn-primary" id="driverCameraPhoto">카메라로 촬영</button>
+          </div>
+          <input type="file" id="driverSitePhoto" accept="image/jpeg,image/png" hidden>
+          <input type="file" id="driverCameraInput" accept="image/jpeg,image/png" capture="environment" hidden>
+          <div id="driverPhotoStatus" style="min-height:24px;font-size:15px;font-weight:700;color:var(--text-muted)">촬영한 사진은 촬영 완료 후 바로 업로드됩니다.</div>
         </div>
-        <div class="sticky-cta"><button class="btn btn-primary" id="driverPhotoUpload">현장사진 업로드 및 완료</button></div>
+        <div class="sticky-cta"><button class="btn btn-primary" id="driverPhotoUpload" disabled>선택한 사진 업로드 및 완료</button></div>
       </div>`;
 
-    const button = document.getElementById('driverPhotoUpload');
-    if (button) button.onclick = async () => {
-      const file = document.getElementById('driverSitePhoto')?.files?.[0];
+    const fileInput = document.getElementById('driverSitePhoto');
+    const cameraInput = document.getElementById('driverCameraInput');
+    const chooseButton = document.getElementById('driverChoosePhoto');
+    const cameraButton = document.getElementById('driverCameraPhoto');
+    const uploadButton = document.getElementById('driverPhotoUpload');
+    const status = document.getElementById('driverPhotoStatus');
+
+    if (chooseButton && fileInput) chooseButton.onclick = () => {
+      fileInput.value = '';
+      fileInput.click();
+    };
+    if (fileInput) fileInput.onchange = () => {
+      const file = fileInput.files?.[0] || null;
+      if (status) status.textContent = file ? `선택됨 · ${file.name}` : '사진을 선택해 주세요.';
+      if (uploadButton) uploadButton.disabled = !file;
+    };
+    if (uploadButton) uploadButton.onclick = async () => {
+      const file = fileInput?.files?.[0];
       if (!file) return toast('현장사진을 선택해 주세요.');
-      const form = new FormData();
-      form.append('photo', file, file.name);
-      button.disabled = true;
-      const original = button.textContent;
-      button.textContent = '업로드 중…';
-      try {
-        await api(`/api/driver-access/${encodeURIComponent(token)}/photo`, { method: 'POST', body: form });
-        state.data = await api(`/api/driver-access/${encodeURIComponent(token)}`);
-        history.replaceState(historyState('completed'), '');
-        state.stage = 'completed';
-        renderCompleted();
-      } catch (error) {
-        button.disabled = false;
-        button.textContent = original;
-        toast(error.message || '현장사진 업로드에 실패했습니다.');
-      }
+      await uploadPhoto(file, uploadButton);
+    };
+
+    if (cameraButton && cameraInput) cameraButton.onclick = () => {
+      cameraInput.value = '';
+      cameraInput.click();
+    };
+    if (cameraInput) cameraInput.onchange = async () => {
+      const file = cameraInput.files?.[0];
+      if (!file) return;
+      if (status) status.textContent = '촬영한 사진을 자동 업로드하고 있습니다.';
+      if (chooseButton) chooseButton.disabled = true;
+      if (uploadButton) uploadButton.disabled = true;
+      await uploadPhoto(file, cameraButton, { automatic: true });
+      if (chooseButton?.isConnected) chooseButton.disabled = false;
     };
     window.scrollTo(0, 0);
   }
