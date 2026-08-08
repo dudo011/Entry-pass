@@ -8,6 +8,7 @@ import { preflightSecurity, withSecurityHeaders } from './security-hardening.js'
 
 function mayHandle(path, method) {
   if (isCompanyFlowPath(path)) return true;
+  if (method === 'GET' && path === '/api/requests') return true;
   if (method === 'POST' && (path === '/api/auth/register' || path === '/api/staff-applications')) return true;
   return method === 'POST' && /^\/api\/requests\/[^/]+\/(approve|reject)$/.test(path);
 }
@@ -16,6 +17,43 @@ function withSameOriginCamera(response) {
   const headers = new Headers(response.headers);
   headers.set('Permissions-Policy', 'camera=(self), microphone=(), geolocation=(), payment=(), usb=()');
   return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
+async function withCompanyWorkflowStatus(response, env) {
+  if (!response?.ok) return response;
+  let records;
+  try { records = await response.clone().json(); } catch { return response; }
+  if (!Array.isArray(records)) return response;
+
+  let rows;
+  try {
+    rows = await env.DB.prepare(`
+      SELECT id, workflow_status
+        FROM requests
+       WHERE company_account_id IS NOT NULL
+         AND company_account_id <> ''
+    `).all();
+  } catch {
+    return response;
+  }
+
+  const workflowById = new Map((rows.results || []).map((row) => [String(row.id), String(row.workflow_status || '')]));
+  const output = records.map((record) => {
+    const workflowStatus = workflowById.get(String(record?.id || ''));
+    if (!workflowStatus) return record;
+    return { ...record, workflowStatus, companyFlow: true };
+  });
+
+  const body = JSON.stringify(output);
+  const headers = new Headers(response.headers);
+  headers.set('Content-Type', 'application/json; charset=utf-8');
+  headers.set('Cache-Control', 'no-store');
+  headers.delete('Content-Length');
+  return new Response(body, {
     status: response.status,
     statusText: response.statusText,
     headers,
@@ -47,7 +85,13 @@ export default {
     if (driverAccessResponse) return withSameOriginCamera(withSecurityHeaders(driverAccessResponse, request));
 
     const response = await handleCompanyFlowApi(request, env);
-    if (!response) return withSameOriginCamera(await worker.fetch(request, env, ctx));
+    if (!response) {
+      let legacyResponse = await worker.fetch(request, env, ctx);
+      if (method === 'GET' && path === '/api/requests') {
+        legacyResponse = await withCompanyWorkflowStatus(legacyResponse, env);
+      }
+      return withSameOriginCamera(legacyResponse);
+    }
     return withSameOriginCamera(withSecurityHeaders(response, request));
   },
   scheduled(event, env, ctx) {
