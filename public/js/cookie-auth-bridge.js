@@ -66,12 +66,15 @@
   window.fetch = async function cookieAuthenticatedFetch(input, init = {}) {
     if (!sameOriginUrl(input)) return nativeFetch(input, init);
 
+    const url = new URL(input instanceof Request ? input.url : input, location.href);
+    const isCompanyApi = url.pathname.startsWith('/api/company/');
     const headers = new Headers(init.headers || (input instanceof Request ? input.headers : undefined));
     const method = methodOf(input, init);
 
-    // 기존 토큰은 최초 인증 확인에만 사용하고, 이후에는 브라우저 쿠키로 전환한다.
+    // 기존 직원/레거시 토큰은 최초 인증 확인에만 사용하고 이후 브라우저 쿠키로 전환한다.
+    // 신규 업체 공동계정 API는 별도 Bearer 세션을 사용하므로 해당 Authorization은 보존한다.
     if (legacyToken) headers.set('Authorization', `Bearer ${legacyToken}`);
-    else headers.delete('Authorization');
+    else if (!isCompanyApi) headers.delete('Authorization');
 
     if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
       const csrf = cookieValue('ep_csrf');
@@ -84,7 +87,6 @@
       credentials: 'same-origin',
     });
 
-    const url = new URL(input instanceof Request ? input.url : input, location.href);
     if (response.ok && (url.pathname === '/api/auth/login' || url.pathname === '/api/auth/register')) {
       nativeSetItem.call(storage, MARKER_KEY, '1');
       legacyToken = '';
@@ -94,7 +96,7 @@
     } else if (url.pathname === '/api/auth/logout') {
       nativeRemoveItem.call(storage, MARKER_KEY);
       legacyToken = '';
-    } else if (response.status === 401) {
+    } else if (response.status === 401 && !isCompanyApi) {
       nativeRemoveItem.call(storage, MARKER_KEY);
       legacyToken = '';
     }
