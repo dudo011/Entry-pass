@@ -1,13 +1,9 @@
 (() => {
-  const MAP_URL = '/route-images/construction.jpg?v=20260806-002';
+  const MAP_URL = '/route-images/construction.jpg?v=20260808-001';
   const PAGE_WIDTH = 1000;
   const PAGE_HEIGHT = 1414;
   const MAP_RECT = { x: 325, y: 620, width: 650, height: 760 };
   const MAX_FILE_BYTES = 5 * 1024 * 1024;
-  const IMAGE_TIMEOUT_MS = 8000;
-  const PAGE_TIMEOUT_MS = 6000;
-  const BLOB_TIMEOUT_MS = 10000;
-  const PDF_TIMEOUT_MS = 12000;
 
   let saving = false;
   let savedByOverride = false;
@@ -35,27 +31,14 @@
   `;
   document.head.appendChild(style);
 
-  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-  function withTimeout(promise, ms, message) {
-    let timer;
-    return Promise.race([
-      promise,
-      new Promise((_, reject) => {
-        timer = setTimeout(() => reject(new Error(message)), ms);
-      }),
-    ]).finally(() => clearTimeout(timer));
-  }
-
   function loadImage(src) {
-    return withTimeout(new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
       const image = new Image();
       image.decoding = 'async';
       image.onload = () => resolve(image);
       image.onerror = () => reject(new Error('차량 동선 이미지를 불러오지 못했습니다.'));
       image.src = src;
-      if (image.complete && image.naturalWidth > 0) resolve(image);
-    }), IMAGE_TIMEOUT_MS, '차량 동선 이미지 로딩 시간이 초과되었습니다. 다시 시도해 주세요.');
+    });
   }
 
   function currentPage(root) {
@@ -93,38 +76,27 @@
     return new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   }
 
-  async function waitForBackground(root, targetPage) {
-    const started = Date.now();
-    while (Date.now() - started < PAGE_TIMEOUT_MS) {
-      const background = root.querySelector('.wpe-w > img:not(.wpe-map-overlay)');
-      if (currentPage(root) === targetPage && background?.complete && background.naturalWidth > 0) {
-        await nextFrame();
-        return;
-      }
-      await sleep(50);
-    }
-    throw new Error(`${targetPage}쪽 화면 준비 시간이 초과되었습니다. 다시 시도해 주세요.`);
-  }
-
   async function goToPage(root, targetPage) {
-    for (let guard = 0; guard < 4; guard += 1) {
+    for (let guard = 0; guard < 6; guard += 1) {
       const page = currentPage(root);
       if (page === targetPage) {
-        await waitForBackground(root, targetPage);
+        await nextFrame();
         ensureMapOverlay(root);
         return;
       }
 
-      const direction = targetPage < page ? -1 : 1;
-      const selector = direction < 0 ? '[data-p="-1"]' : '[data-p="1"]';
+      const selector = targetPage < page ? '[data-p="-1"]' : '[data-p="1"]';
       const button = root.querySelector(selector);
       if (!button || button.disabled) throw new Error('작업계획서 페이지를 이동할 수 없습니다.');
-
-      const expectedPage = page + direction;
+      const before = root.querySelector('.wpe-p span')?.textContent;
       button.click();
-      await waitForBackground(root, expectedPage);
+
+      for (let wait = 0; wait < 30; wait += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        if (root.querySelector('.wpe-p span')?.textContent !== before) break;
+      }
     }
-    throw new Error('작업계획서 페이지 이동 시간이 초과되었습니다. 다시 시도해 주세요.');
+    throw new Error('작업계획서 페이지 이동 시간이 초과되었습니다.');
   }
 
   function drawContained(context, image, rect, padding = 12) {
@@ -218,50 +190,58 @@
     return new Blob(output, { type: 'application/pdf' });
   }
 
-  function canvasToJpeg(canvas) {
-    return withTimeout(new Promise((resolve, reject) => {
-      canvas.toBlob((blob) => {
-        if (blob) resolve(blob);
-        else reject(new Error('작업계획서 페이지 이미지 생성에 실패했습니다.'));
-      }, 'image/jpeg', 0.82);
-    }), BLOB_TIMEOUT_MS, '작업계획서 이미지 저장 시간이 초과되었습니다. 다시 시도해 주세요.');
-  }
-
   async function capturePage(root, pageNumber, mapImage) {
     await goToPage(root, pageNumber);
     const background = root.querySelector('.wpe-w > img:not(.wpe-map-overlay)');
     const drawing = root.querySelector('.wpe-w > canvas');
-    if (!background || !drawing || !background.naturalWidth) {
-      throw new Error('작업계획서 화면을 확인할 수 없습니다.');
-    }
+    if (!background || !drawing) throw new Error('작업계획서 화면을 확인할 수 없습니다.');
+    if (!background.complete) await background.decode();
 
     const canvas = document.createElement('canvas');
     canvas.width = PAGE_WIDTH;
     canvas.height = PAGE_HEIGHT;
     const context = canvas.getContext('2d');
-    if (!context) throw new Error('작업계획서 저장용 화면을 만들 수 없습니다.');
     context.fillStyle = '#fff';
     context.fillRect(0, 0, PAGE_WIDTH, PAGE_HEIGHT);
     context.drawImage(background, 0, 0, PAGE_WIDTH, PAGE_HEIGHT);
     if (pageNumber === 2) drawContained(context, mapImage, MAP_RECT);
     context.drawImage(drawing, 0, 0, PAGE_WIDTH, PAGE_HEIGHT);
 
-    const blob = await canvasToJpeg(canvas);
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.82));
+    if (!blob) throw new Error('작업계획서 페이지 저장에 실패했습니다.');
     return { blob, width: PAGE_WIDTH, height: PAGE_HEIGHT };
   }
 
-  function attachWorkPlanFile(pdf) {
+  function attachGeneratedFile(file) {
     const input = document.querySelector('input[data-doc="workPlan"]');
     if (!input) throw new Error('작업계획서 첨부 항목을 찾을 수 없습니다.');
-    if (typeof DataTransfer !== 'function') {
-      throw new Error('이 기기에서 작성 파일 연결을 지원하지 않습니다. 브라우저를 다시 연 뒤 시도해 주세요.');
+
+    if (document.getElementById('companyReqSubmit') && typeof window.__companyRequestAttachGeneratedFile === 'function') {
+      // 새 업체 신청에서는 브라우저의 input.files 대입을 피하되,
+      // 어제 정상 동작하던 저장 엔진 자체는 그대로 사용한다.
+      const label = input.closest('.file-btn');
+      const hadClass = !!label?.classList.contains('file-btn');
+      if (hadClass) label.classList.remove('file-btn');
+      let attached = false;
+      try {
+        attached = window.__companyRequestAttachGeneratedFile('workPlan', file) === true;
+      } finally {
+        if (hadClass) label.classList.add('file-btn');
+      }
+      if (!attached) throw new Error('작성한 작업계획서를 신청 화면에 연결하지 못했습니다.');
+      requestAnimationFrame(() => {
+        if (!label?.isConnected) return;
+        label.classList.add('has');
+        const textNode = [...label.childNodes].find((node) => node.nodeType === Node.TEXT_NODE);
+        if (textNode) textNode.textContent = '첨부 완료';
+      });
+      return;
     }
 
-    const file = new File([pdf], '작업계획서.pdf', { type: 'application/pdf' });
+    if (typeof DataTransfer !== 'function') throw new Error('이 기기에서 작성 파일 연결을 지원하지 않습니다.');
     const transfer = new DataTransfer();
     transfer.items.add(file);
     input.files = transfer.files;
-    if (!input.files?.length) throw new Error('작성한 작업계획서를 첨부하지 못했습니다. 다시 시도해 주세요.');
     input.dispatchEvent(new Event('change', { bubbles: true }));
   }
 
@@ -269,26 +249,20 @@
     if (saving) return;
     saving = true;
     button.disabled = true;
+    button.textContent = '저장 중…';
 
     try {
-      button.textContent = '동선 준비 중…';
       const mapImage = await loadImage(MAP_URL);
       const pages = [];
       for (let page = 1; page <= 3; page += 1) {
-        button.textContent = `${page}/3 저장 중…`;
         pages.push(await capturePage(root, page, mapImage));
       }
 
-      button.textContent = '파일 만드는 중…';
-      const pdf = await withTimeout(
-        createPdf(pages),
-        PDF_TIMEOUT_MS,
-        '작업계획서 파일 생성 시간이 초과되었습니다. 다시 시도해 주세요.'
-      );
+      const pdf = await createPdf(pages);
       if (pdf.size > MAX_FILE_BYTES) throw new Error('파일이 5MB를 초과했습니다.');
 
-      button.textContent = '첨부 중…';
-      attachWorkPlanFile(pdf);
+      const file = new File([pdf], '작업계획서.pdf', { type: 'application/pdf' });
+      attachGeneratedFile(file);
 
       savedByOverride = true;
       root.remove();
@@ -298,7 +272,7 @@
         button.disabled = false;
         button.textContent = '저장';
       }
-      alert(error?.message || '작업계획서 저장에 실패했습니다. 다시 시도해 주세요.');
+      alert(error?.message || '작업계획서 저장에 실패했습니다.');
     } finally {
       saving = false;
     }
