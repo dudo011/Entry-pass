@@ -12,6 +12,7 @@
   let cachedRecords = [];
   let recordsById = new Map();
   let lastRefreshAt = 0;
+  let completedMode = false;
 
   const style = document.createElement('style');
   style.textContent = `
@@ -51,24 +52,63 @@
     return value === 'safety_pending' || value === 'photo_pending';
   }
 
-  function activeTabId() {
-    return document.querySelector('#app .tabs .tab.active')?.dataset.tab || '';
+  function isTodayCompleted(record) {
+    return !!record?.companyFlow
+      && workflow(record) === 'completed'
+      && visitKey(record) === todayKey();
   }
 
-  function updateTabCount(tabId, count) {
-    const tab = document.querySelector(`#app .tabs .tab[data-tab="${tabId}"]`);
+  function setTabLabel(tab, label) {
+    if (!tab) return;
+    const textNode = [...tab.childNodes].find((node) => node.nodeType === Node.TEXT_NODE);
+    if (textNode) textNode.textContent = `${label} `;
+  }
+
+  function prepareTabs() {
+    const tabs = document.querySelector('#app .tabs');
+    if (!tabs) return null;
+
+    let completedTab = tabs.querySelector('.tab[data-workflow-tab="completed"]');
+    if (!completedTab) {
+      completedTab = tabs.querySelector('.tab[data-tab="rejected"]');
+      if (completedTab) {
+        completedTab.dataset.workflowTab = 'completed';
+        /* 기존 코어의 승인 목록 렌더링을 재사용해 상세 클릭 기능을 그대로 유지한다. */
+        completedTab.dataset.tab = 'approved';
+      }
+    }
+    setTabLabel(completedTab, '최종완료');
+
+    const approvedTabs = [...tabs.querySelectorAll('.tab[data-tab="approved"]')];
+    const approvedTab = approvedTabs.find((tab) => tab.dataset.workflowTab !== 'completed') || null;
+
+    if (completedMode && completedTab) {
+      tabs.querySelectorAll('.tab').forEach((tab) => tab.classList.remove('active'));
+      completedTab.classList.add('active');
+    } else if (approvedTab && completedTab) {
+      completedTab.classList.remove('active');
+    }
+
+    return { tabs, approvedTab, completedTab };
+  }
+
+  function updateCounter(tab, count) {
     const counter = tab?.querySelector('.cnt');
     if (counter) counter.textContent = String(count);
   }
 
-  function applyCounts() {
+  function updateTabCount(tabId, count) {
+    const tab = document.querySelector(`#app .tabs .tab[data-tab="${tabId}"]:not([data-workflow-tab="completed"])`);
+    updateCounter(tab, count);
+  }
+
+  function applyCounts(tabInfo) {
     if (!cachedRecords.length && !lastRefreshAt) return;
     const today = todayKey();
     updateTabCount('pending', cachedRecords.filter((request) => request.status === 'pending').length);
-    updateTabCount('approved', cachedRecords.filter((request) =>
+    updateCounter(tabInfo?.approvedTab, cachedRecords.filter((request) =>
       visitKey(request) === today && isCompanyApprovedInProgress(request)).length);
-    updateTabCount('rejected', cachedRecords.filter((request) =>
-      request.status === 'rejected' && visitKey(request) === today).length);
+    updateCounter(tabInfo?.completedTab, cachedRecords.filter(isTodayCompleted).length);
   }
 
   function decorateWorkflowCards() {
@@ -87,8 +127,8 @@
   }
 
   function filterCurrentList() {
-    const tabId = activeTabId();
-    if (tabId !== 'approved' && tabId !== 'rejected') return;
+    const active = document.querySelector('#app .tabs .tab.active');
+    if (!active || active.dataset.tab !== 'approved') return;
 
     const screen = document.querySelector('#app > .screen');
     if (!screen) return;
@@ -99,12 +139,12 @@
 
     cards.forEach((card) => {
       const record = recordsById.get(String(card.dataset.detail || ''));
-      let show;
+      let show = false;
       if (record) {
-        show = visitKey(record) === today && (tabId === 'approved'
-          ? isCompanyApprovedInProgress(record)
-          : record.status === 'rejected');
-      } else {
+        show = completedMode
+          ? isTodayCompleted(record)
+          : visitKey(record) === today && isCompanyApprovedInProgress(record);
+      } else if (!completedMode) {
         const visit = visitKeyFromMeta(card.querySelector('.meta')?.textContent);
         show = visit === today;
       }
@@ -115,14 +155,19 @@
 
     screen.querySelector('.today-only-empty')?.remove();
     const originalEmpty = screen.querySelector('.empty:not(.today-only-empty)');
-    if (originalEmpty) originalEmpty.style.display = visible ? 'none' : '';
+    const emptyText = completedMode
+      ? '오늘 최종완료된 출입 신청이 없습니다.'
+      : '오늘 승인 진행 중인 출입 신청이 없습니다.';
+
+    if (originalEmpty) {
+      originalEmpty.textContent = emptyText;
+      originalEmpty.style.display = visible ? 'none' : '';
+    }
 
     if (!visible && !originalEmpty) {
       const empty = document.createElement('div');
       empty.className = 'empty today-only-empty';
-      empty.textContent = tabId === 'approved'
-        ? '오늘 승인 진행 중인 출입 신청이 없습니다.'
-        : '오늘 반려된 출입 신청이 없습니다.';
+      empty.textContent = emptyText;
       screen.appendChild(empty);
     }
   }
@@ -148,10 +193,10 @@
   }
 
   async function apply(forceRefresh = false) {
-    const tabs = document.querySelector('#app .tabs');
-    if (!tabs) return;
+    const tabInfo = prepareTabs();
+    if (!tabInfo) return;
     await refreshRecords(forceRefresh);
-    applyCounts();
+    applyCounts(tabInfo);
     decorateWorkflowCards();
     filterCurrentList();
   }
@@ -167,6 +212,14 @@
       void apply(forceRefresh);
     });
   };
+
+  /* 코어 탭 클릭 전에 최종완료 모드 여부를 기억한다. */
+  document.addEventListener('click', (event) => {
+    const tab = event.target.closest?.('#app .tabs .tab');
+    if (!tab) return;
+    if (tab.dataset.workflowTab === 'completed') completedMode = true;
+    else if (tab.dataset.tab === 'approved') completedMode = false;
+  }, true);
 
   new MutationObserver(() => schedule(false)).observe(app, {
     childList: true,
