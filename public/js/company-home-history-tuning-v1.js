@@ -12,11 +12,29 @@
 
   const style = document.createElement('style');
   style.textContent = `
-    /* 홈 주요 버튼: 70px -> 60px */
+    /* 홈 주요 버튼 */
     body #app.company-flow-active .cf-menu .cf-btn{
       min-height:60px!important;
       height:60px!important;
       padding:6px 10px!important;
+    }
+
+    /* 헤드의 차량관리/로그아웃 버튼을 같은 규격으로 통일 */
+    body #app.company-flow-active .cf-appbar .cf-head-vehicle-btn,
+    body #app.company-flow-active .cf-appbar [data-cf-logout]{
+      min-width:auto!important;
+      width:auto!important;
+      min-height:40px!important;
+      height:40px!important;
+      padding:0 11px!important;
+      border:1px solid rgba(255,255,255,.14)!important;
+      border-radius:12px!important;
+      background:rgba(255,255,255,.09)!important;
+      color:#fff!important;
+      font-size:14px!important;
+      font-weight:700!important;
+      line-height:1.2!important;
+      white-space:nowrap!important;
     }
 
     /* 날짜는 차량번호와 같은 글자 크기/굵기 */
@@ -74,6 +92,16 @@
     const title = overlay.querySelector('.cf-completed-appbar h1');
     if (title && title.textContent !== '출입 이력') title.textContent = '출입 이력';
 
+    /* 닫기 X는 사용하지 않고 휴대폰/브라우저 뒤로가기로만 홈에 복귀한다. */
+    overlay.querySelector('.cf-completed-close')?.remove();
+
+    if (overlay.dataset.historyReady !== '1') {
+      overlay.dataset.historyReady = '1';
+      if (!history.state?.companyHistoryOverlay) {
+        history.pushState({ ...(history.state || {}), companyFlow: 'home', companyHistoryOverlay: true }, '');
+      }
+    }
+
     const empty = overlay.querySelector('.cf-completed-empty');
     if (empty && empty.textContent !== '출입 이력이 없습니다.') {
       empty.textContent = '출입 이력이 없습니다.';
@@ -100,7 +128,6 @@
   }
 
   function apply() {
-    /* 원본 카드가 축약되기 전에 YYYY-MM-DD를 먼저 보존한다. */
     captureOriginalDates();
     tuneHome();
     tuneHistoryOverlay();
@@ -125,5 +152,11 @@
     childList: true,
     subtree: true,
   });
+
+  window.addEventListener('popstate', () => {
+    const overlay = document.querySelector('.cf-completed-overlay');
+    if (overlay) overlay.remove();
+  });
+
   schedule();
 })();
