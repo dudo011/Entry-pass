@@ -78,9 +78,9 @@
       body: `
         <p>본 서비스는 자재센터 출입 신청과 안전수칙 안내를 위한 업무용 서비스입니다.</p>
         <h3>이용자 의무</h3>
-        <p>이용자는 본인의 정확한 정보로 신청해야 하며, 타인의 정보나 차량정보를 무단으로 사용해서는 안 됩니다.</p>
+        <p>이용자는 정확한 업체·차량·운전자 정보로 신청해야 하며, 타인의 정보나 차량정보를 무단으로 사용해서는 안 됩니다.</p>
         <h3>출입 승인</h3>
-        <p>신청 완료가 출입 승인을 의미하지 않으며, 관리자의 확인과 승인 후 출입할 수 있습니다.</p>
+        <p>신청 완료가 출입 승인을 의미하지 않으며, 자재센터 직원의 확인과 승인 후 출입할 수 있습니다.</p>
         <h3>서비스 이용 제한</h3>
         <p>허위 신청, 안전수칙 위반 또는 시스템 오남용이 확인되면 이용이나 출입이 제한될 수 있습니다.</p>
       `
@@ -115,13 +115,17 @@
 
       const message = hero.querySelector('p');
       if (message && message.dataset.landingRefined !== 'true') {
-        message.innerHTML = '출입 전 안전수칙을 확인하고<br><span class="pre-approval">사전 승인</span>을 받으세요.';
+        message.innerHTML = '출입 전 <span class="pre-approval">사전 승인</span>을 받고<br>안전수칙을 확인하세요.';
         message.dataset.landingRefined = 'true';
       }
 
       const driver = grid.querySelector('[data-role="driver"]');
       const driverTitle = driver?.querySelector('.rt');
+      const driverDescription = driver?.querySelector('.rd');
       if (driverTitle && driverTitle.textContent !== '계약업체') driverTitle.textContent = '계약업체';
+      if (driverDescription && driverDescription.textContent !== '차량 등록·작업서류 작성 및 출입 신청') {
+        driverDescription.textContent = '차량 등록·작업서류 작성 및 출입 신청';
+      }
       grid.querySelectorAll('.arrow').forEach((arrow) => arrow.remove());
 
       if (!app.querySelector('.landing-privacy-footer')) {
