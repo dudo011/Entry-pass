@@ -7,9 +7,15 @@
   const token = hash.get('driverAccess') || query.get('driverAccess');
   if (!token) return;
 
+  const CAMERA_MAX_EDGE = 1280;
+  const CAMERA_TARGET_BYTES = 1.2 * 1024 * 1024;
   let stream = null;
   let cameraLayer = null;
   let uploading = false;
+
+  const esc = (value) => String(value == null ? '' : value).replace(/[&<>\"]/g, (char) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;',
+  }[char]));
 
   const style = document.createElement('style');
   style.textContent = `
@@ -45,6 +51,8 @@
       flex:1;min-height:0;display:grid;place-items:center;background:#020617;overflow:hidden
     }
     .driver-direct-camera-view video{width:100%;height:100%;object-fit:contain;background:#000}
+    .driver-direct-camera-progress{padding:24px;text-align:center;font-size:20px;font-weight:900;line-height:1.55}
+    .driver-direct-camera-progress small{display:block;margin-top:8px;color:#cbd5e1;font-size:15px;font-weight:700}
     .driver-direct-camera-actions{
       padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:#0f172a
     }
@@ -70,11 +78,14 @@
     setTimeout(() => node.remove(), 3400);
   }
 
+  function stopStream() {
+    if (!stream) return;
+    stream.getTracks().forEach((track) => track.stop());
+    stream = null;
+  }
+
   function stopCamera() {
-    if (stream) {
-      stream.getTracks().forEach((track) => track.stop());
-      stream = null;
-    }
+    stopStream();
     cameraLayer?.remove();
     cameraLayer = null;
   }
@@ -90,8 +101,7 @@
     const sourceHeight = video.videoHeight || 0;
     if (!sourceWidth || !sourceHeight) throw new Error('카메라 화면이 아직 준비되지 않았습니다.');
 
-    const maxEdge = 1920;
-    const scale = Math.min(1, maxEdge / Math.max(sourceWidth, sourceHeight));
+    const scale = Math.min(1, CAMERA_MAX_EDGE / Math.max(sourceWidth, sourceHeight));
     const canvas = document.createElement('canvas');
     canvas.width = Math.max(1, Math.round(sourceWidth * scale));
     canvas.height = Math.max(1, Math.round(sourceHeight * scale));
@@ -99,12 +109,58 @@
     if (!context) throw new Error('사진 촬영을 지원하지 않는 브라우저입니다.');
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    let blob = await canvasBlob(canvas, 0.84);
-    if (blob.size > 4.5 * 1024 * 1024) blob = await canvasBlob(canvas, 0.70);
-    if (blob.size > 4.5 * 1024 * 1024) blob = await canvasBlob(canvas, 0.58);
+    let blob = await canvasBlob(canvas, 0.68);
+    if (blob.size > CAMERA_TARGET_BYTES) blob = await canvasBlob(canvas, 0.54);
     canvas.width = 1;
     canvas.height = 1;
     return new File([blob], `현장사진-${Date.now()}.jpg`, { type: 'image/jpeg' });
+  }
+
+  function setProgress(title, detail = '') {
+    const view = cameraLayer?.querySelector('.driver-direct-camera-view');
+    if (!view) return;
+    view.innerHTML = `<div class="driver-direct-camera-progress">${esc(title)}${detail ? `<small>${esc(detail)}</small>` : ''}</div>`;
+  }
+
+  function uploadWithProgress(form, onProgress) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `/api/driver-access/${encodeURIComponent(token)}/photo`);
+      xhr.responseType = 'json';
+      xhr.timeout = 20000;
+      xhr.upload.onprogress = (event) => {
+        if (!event.lengthComputable) return;
+        onProgress?.(Math.max(1, Math.min(99, Math.round((event.loaded / event.total) * 100))));
+      };
+      xhr.onload = () => {
+        let data = xhr.response;
+        if (!data && xhr.responseText) {
+          try { data = JSON.parse(xhr.responseText); } catch { data = null; }
+        }
+        if (xhr.status >= 200 && xhr.status < 300) resolve(data || {});
+        else reject(new Error(data?.error || '현장사진 업로드에 실패했습니다.'));
+      };
+      xhr.onerror = () => reject(new Error('네트워크 연결을 확인해 주세요.'));
+      xhr.ontimeout = () => reject(new Error('사진 업로드 시간이 너무 오래 걸립니다. 다시 시도해 주세요.'));
+      xhr.send(form);
+    });
+  }
+
+  function renderCompleted(data) {
+    stopCamera();
+    history.replaceState({ driverAccessPaged: true, stage: 'completed' }, '');
+    app.className = '';
+    app.innerHTML = `
+      <div class="appbar application-flow-appbar" data-vehicle-type="${esc(data.vehicleTypeId || '')}">
+        <div><h1>${esc(data.vehicleTypeName || '')}</h1><div class="sub">출입 절차 완료</div></div>
+      </div>
+      <div class="screen"><div class="result">
+        <div class="big-ico">✅</div>
+        <h2>최종 완료되었습니다.</h2>
+        <p>안전수칙 확인과 현장사진 등록이 완료되었습니다.</p>
+        <div class="passno">${esc(data.passNo || '')}</div>
+      </div></div>`;
+    window.scrollTo(0, 0);
   }
 
   async function uploadCapturedPhoto(file, button) {
@@ -112,23 +168,24 @@
     uploading = true;
     const original = button.textContent;
     button.disabled = true;
-    button.textContent = '업로드 중…';
+    stopStream();
+    setProgress('사진 준비 완료', `${Math.max(1, Math.round(file.size / 1024))}KB · 업로드를 시작합니다.`);
+
     try {
       const form = new FormData();
       form.append('photo', file, file.name);
-      const response = await fetch(`/api/driver-access/${encodeURIComponent(token)}/photo`, {
-        method: 'POST',
-        body: form,
+      const data = await uploadWithProgress(form, (percent) => {
+        button.textContent = `업로드 중 ${percent}%`;
+        setProgress(`업로드 중 ${percent}%`, '잠시만 기다려 주세요.');
       });
-      let data = null;
-      try { data = await response.json(); } catch { /* noop */ }
-      if (!response.ok) throw new Error(data?.error || '현장사진 업로드에 실패했습니다.');
-      stopCamera();
-      location.reload();
+      button.textContent = '완료 처리 중…';
+      setProgress('업로드 완료', '완료 화면으로 이동합니다.');
+      renderCompleted(data);
     } catch (error) {
       button.disabled = false;
       button.textContent = original;
       toast(error.message || '촬영한 사진 업로드에 실패했습니다.');
+      stopCamera();
     } finally {
       uploading = false;
     }
@@ -145,8 +202,8 @@
         audio: false,
         video: {
           facingMode: { ideal: 'environment' },
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
         },
       });
 
