@@ -1,6 +1,7 @@
 import worker from './worker-v9.js';
 import { handleCompanyFlowApi, isCompanyFlowPath } from './company-flow-api.js';
 import { handleCompanyRegistrationV2 } from './company-registration-v2.js';
+import { handleCompanyContractRequestV2 } from './company-contract-request-v2.js';
 import { preflightSecurity, withSecurityHeaders } from './security-hardening.js';
 
 function mayHandle(path, method) {
@@ -21,6 +22,9 @@ export default {
 
     const registrationResponse = await handleCompanyRegistrationV2(request, env);
     if (registrationResponse) return withSecurityHeaders(registrationResponse, request);
+
+    const contractRequestResponse = await handleCompanyContractRequestV2(request, env);
+    if (contractRequestResponse) return withSecurityHeaders(contractRequestResponse, request);
 
     const response = await handleCompanyFlowApi(request, env);
     if (!response) return worker.fetch(request, env, ctx);
