@@ -5,6 +5,8 @@ const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000;
 
 const PUBLIC_LIMITS = new Map([
   ['/api/auth/register', { limit: 5, windowMs: 60 * 60 * 1000 }],
+  ['/api/company/register', { limit: 5, windowMs: 60 * 60 * 1000 }],
+  ['/api/company/login', { limit: 20, windowMs: 15 * 60 * 1000 }],
   ['/api/staff-applications', { limit: 5, windowMs: 60 * 60 * 1000 }],
   ['/api/auth/password-reset-requests', { limit: 6, windowMs: 15 * 60 * 1000 }],
 ]);
