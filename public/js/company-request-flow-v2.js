@@ -512,9 +512,12 @@
       if (strokes.length && !confirm('저장하지 않고 닫을까요? 작성한 내용이 사라집니다.')) return;
       close();
     };
-    el.querySelector('.annot-save').onclick = async () => {
-      const button = el.querySelector('.annot-save');
-      button.disabled = true; button.textContent = '저장 중…';
+    const annotSaveBtn = el.querySelector('.annot-save');
+    let annotSaving = false;
+    const doAnnotSave = async () => {
+      if (annotSaving) return;
+      annotSaving = true;
+      annotSaveBtn.disabled = true; annotSaveBtn.textContent = '저장 중…';
       try {
         const off = document.createElement('canvas');
         const maxSide = 1200;
@@ -532,10 +535,14 @@
         close();
         toast(`${doc.label} 첨부 완료`);
       } catch (error) {
-        button.disabled = false; button.textContent = '저장';
+        annotSaving = false;
+        annotSaveBtn.disabled = false; annotSaveBtn.textContent = '저장';
         alert(error.message || '저장에 실패했습니다.');
       }
     };
+    // 캔버스 드로잉 직후 첫 탭이 click 합성 억제로 무시되는 문제 방지: pointerup에도 바인딩(가드로 중복 방지)
+    annotSaveBtn.addEventListener('pointerup', (event) => { event.preventDefault(); doAnnotSave(); });
+    annotSaveBtn.addEventListener('click', doAnnotSave);
   }
 
   function renderStage(stage, extra = {}) {
