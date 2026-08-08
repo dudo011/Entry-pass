@@ -3,7 +3,7 @@
 > 최종 갱신일: 2026-08-08  
 > 저장소: `dudo011/Entry-pass`  
 > 기준 브랜치: `main`  
-> 현재 Worker 진입점: `src/worker-v10.js`  
+> 현재 Worker 진입점: `src/worker.js` (과거 worker-v2..v10 체인을 동작 보존하며 단일 파일로 병합)  
 > 문서 목적: 현재 구현 구조, 현장 업무 규칙, 2026-08-08까지의 주요 변경사항, 미해결 이슈를 다음 개발자 또는 AI 도구에 정확하게 인계하기 위한 문서
 
 ---
@@ -371,7 +371,7 @@ public/route-images/
 
 | 키 | 표시명 | 필수 여부 | 현재 비고 |
 |---|---|---:|---|
-| `workPlan` | 작업계획서 | 필수 | **앱 내 3쪽 작성 저장은 현재 미해결** |
+| `workPlan` | 작업계획서 | 필수 | 앱 내 3쪽 작성 저장 해결됨(메모리 기반 toBlob 3쪽 → 배열 첨부). 15~17절 참고 |
 | `tbm` | TBM | 필수 | 앱 내 필기/첨부 기능 유지 |
 | `safetyChecklist` | 위험성 체크리스트 | 필수 | 앱 내 필기/첨부 기능 유지 |
 | `sitePhoto` | 현장사진 | 신규 업체 신청 단계에서는 제외 | 기사 전용 링크에서 현장 도착 후 업로드 |
@@ -471,7 +471,7 @@ completed
 - `public/js/request-list-unified-v1.js`
 - `public/js/admin-stats-refined.js`
 - `public/js/admin-excel-refined.js`
-- `src/worker-v10.js`
+- `src/worker.js` (LAYER_v10)
 
 ### 상단 주요 탭
 
@@ -517,7 +517,7 @@ completed
 
 기존 직원 API는 `status=approved`만 내려주어 기사 진행이 끝나도 계속 `승인 완료`로 보이는 문제가 있었다.
 
-`src/worker-v10.js`에서 직원용 `GET /api/requests` 응답에 신규 업체 신청의 다음 값을 추가한다.
+`src/worker.js`(LAYER_v10)에서 직원용 `GET /api/requests` 응답에 신규 업체 신청의 다음 값을 추가한다.
 
 - `workflowStatus`
 - `companyFlow: true`
@@ -942,17 +942,26 @@ Excel 내보내기 기능은 `public/js/admin-excel-refined.js`에서 브라우�
 
 ## 21. 현재 Worker 구조
 
-현재 진입점:
+현재 진입점: `src/worker.js` (단일 파일).
+
+2026-08-08 정리 전에는 `worker.js + worker-v2..v10`으로 이어지는 "레이어
+오버라이드" 버전 체인(10개 파일)이었다. 새 담당자 혼동을 줄이기 위해 **동작을
+보존하며 하나의 `src/worker.js`로 합쳤다.** 각 과거 버전은 블록 스코프로 격리된
+레이어(`LAYER_base`, `LAYER_v2`…`LAYER_v10`)로 남아 있으며, 실행 순서는 동일하다.
 
 ```text
-src/worker-v10.js
-  → worker-v9.js
-    → worker-v8.js
-      → worker-v7.js
-        → 이전 Worker
+요청 → LAYER_v10 → v9 → v8 → v7 → v6 → v5 → v4 → v3 → v2 → LAYER_base
+      (각 레이어가 자체 라우트 처리 후 안쪽 레이어로 위임)
+export default LAYER_v10
 ```
 
-`worker-v10.js`는 신규 업체 흐름을 우선 처리한다.
+합치기 방식은 로직 재작성이 아니라 "각 파일 본문을 블록으로 감싸고 파일 간
+import를 파일 내 변수 참조로 바꾼" 기계적 병합이라, 라우트 우선순위·미들웨어·
+스케줄러(cron) 동작이 그대로 보존된다. 원본 체인과 병합본을 dev 서버로 나란히
+띄워 대표 라우트 11개(정적 자산·`/api/vehicle-types` 실데이터·인증/검증/404)의
+응답이 **바이트 단위로 동일**함을 확인했다.
+
+`LAYER_v10`(최외곽)은 신규 업체 흐름을 우선 처리한다.
 
 주요 모듈:
 
@@ -991,7 +1000,7 @@ src/worker-v10.js
 - Worker 버전 체인 누적
 - 정식 보안진단 미실시
 
-`worker-v10.js`는 기사 사진 업로드를 위해 `Permissions-Policy`의 camera를 same-origin에 허용하도록 보정한다.
+`src/worker.js`의 LAYER_v10은 기사 사진 업로드를 위해 `Permissions-Policy`의 camera를 same-origin에 허용하도록 보정한다.
 
 ---
 
@@ -1089,7 +1098,7 @@ src/worker-v10.js
 
 | 파일 | 역할 |
 |---|---|
-| `src/worker-v10.js` | 현재 Worker 진입점, 신규 업체 흐름 우선 라우팅, 직원 API workflow 상태 보정 |
+| `src/worker.js` | 현재 Worker 진입점(단일 파일). 과거 worker-v2..v10 레이어 체인을 동작 보존 병합. 신규 업체 흐름 우선 라우팅, 직원 API workflow 상태 보정 |
 | `src/company-flow-api.js` | 업체 인증, 차량관리, 신청/승인 관련 기본 API |
 | `src/company-registration-v2.js` | 업체 회원가입 v2 |
 | `src/company-contract-request-v2.js` | 업체 계약유형 강제 및 신청 wrapper |
