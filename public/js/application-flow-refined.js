@@ -53,21 +53,13 @@
     icon.dataset.imageNormalized = 'true';
   }
 
+  /*
+   * 차량 동선 화면은 transport-route-refined.js가 최신 지도 이미지로 완성한다.
+   * 과거 임시 구현의 '수정중' placeholder가 최신 지도를 다시 덮어쓰지 않도록
+   * 여기서는 동선 본문을 변경하지 않는다.
+   */
   function normalizeRouteScreen() {
-    const heading = document.querySelector('#app > .appbar h1')?.textContent?.trim();
-    if (heading !== '차량 동선 안내') return;
-
-    const screen = document.querySelector('#app > .steps + .screen');
-    if (!screen || screen.dataset.routePlaceholder === 'true') return;
-
-    const cta = screen.querySelector(':scope > .sticky-cta');
-    screen.querySelectorAll(':scope > :not(.sticky-cta)').forEach((element) => element.remove());
-
-    const placeholder = document.createElement('div');
-    placeholder.className = 'route-placeholder card';
-    placeholder.textContent = '수정중';
-    screen.insertBefore(placeholder, cta || null);
-    screen.dataset.routePlaceholder = 'true';
+    return;
   }
 
   function normalizeApplicationForm() {
