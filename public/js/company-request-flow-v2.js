@@ -202,7 +202,7 @@
         <div class="card">
           <label class="field-h"><span class="lb">출입일자</span><input type="date" id="companyReqDate" min="${today()}" value="${today()}"></label>
           <label class="field-h"><span class="lb">등록 차량</span><select id="companyReqVehicle">${vehicleOptions()}</select></label>
-          <label class="field-h" id="companyTempVehicleRow" hidden><span class="lb">차량번호</span><input type="text" id="companyReqTempVehicle" placeholder="용차 차량번호"></label>
+          <label class="field-h" id="companyTempVehicleRow"><span class="lb">차량번호</span><input type="text" id="companyReqTempVehicle" placeholder="차량을 선택하세요" readonly></label>
           <label class="field-h"><span class="lb">운전자명</span><input type="text" id="companyReqDriver"></label>
           <label class="field-h"><span class="lb">연락처</span><input type="tel" id="companyReqPhone" placeholder="010-0000-0000"></label>
         </div>
@@ -215,48 +215,63 @@
   }
 
   function updateFileLabel(input, file) {
-    const label = input.closest('.file-btn');
+    const label = input?.closest('.file-btn');
     if (!label) return;
     label.classList.toggle('has', !!file);
     const textNode = [...label.childNodes].find((node) => node.nodeType === Node.TEXT_NODE);
     if (textNode) textNode.textContent = file ? '첨부 완료' : '파일 선택';
   }
 
-  function setInputFile(key, file) {
+  function storeGeneratedFile(key, file) {
+    if (!key || !(file instanceof File)) return false;
     flow.files[key] = file;
     const input = document.querySelector(`input[data-doc="${CSS.escape(key)}"]`);
-    if (!input) return;
-    try {
-      const transfer = new DataTransfer();
-      transfer.items.add(file);
-      input.files = transfer.files;
-    } catch { /* flow.files에 저장된 파일로 제출 가능 */ }
     updateFileLabel(input, file);
+    return true;
+  }
+
+  // 작업계획서/TBM/위험성 체크리스트 등 앱에서 생성한 파일은
+  // 모바일 브라우저의 input.files/DataTransfer를 거치지 않고 신청 상태에 직접 저장한다.
+  window.__companyRequestAttachGeneratedFile = (key, file) => {
+    if (!flow.active || !document.getElementById('companyReqSubmit')) return false;
+    return storeGeneratedFile(key, file);
+  };
+
+  function setInputFile(key, file) {
+    storeGeneratedFile(key, file);
   }
 
   function bindRequestScreen() {
     const vehicleSelect = document.getElementById('companyReqVehicle');
-    const tempRow = document.getElementById('companyTempVehicleRow');
-    const tempInput = document.getElementById('companyReqTempVehicle');
+    const vehicleRow = document.getElementById('companyTempVehicleRow');
+    const vehicleNumberInput = document.getElementById('companyReqTempVehicle');
     const driverInput = document.getElementById('companyReqDriver');
     const phoneInput = document.getElementById('companyReqPhone');
 
     const syncVehicle = () => {
       const value = vehicleSelect?.value || '';
       const temporary = value === TEMP_VEHICLE;
-      if (tempRow) tempRow.hidden = !temporary;
-      if (tempInput && !temporary) tempInput.value = '';
+      if (vehicleRow) vehicleRow.hidden = false;
+      if (vehicleNumberInput) {
+        vehicleNumberInput.readOnly = !temporary;
+        vehicleNumberInput.placeholder = temporary ? '용차 차량번호' : '차량을 선택하세요';
+      }
+
       if (temporary) {
+        if (vehicleNumberInput) vehicleNumberInput.value = '';
         if (driverInput) driverInput.value = '';
         if (phoneInput) phoneInput.value = '';
         return;
       }
+
       const vehicle = flow.vehicles.find((item) => item.id === value);
+      if (vehicleNumberInput) vehicleNumberInput.value = vehicle?.vehicleNumber || '';
       if (driverInput) driverInput.value = vehicle?.driverName || '';
       if (phoneInput) phoneInput.value = vehicle?.driverPhone || '';
     };
     if (vehicleSelect) vehicleSelect.onchange = syncVehicle;
     if (phoneInput) phoneInput.oninput = () => { phoneInput.value = formatPhone(phoneInput.value); };
+    syncVehicle();
 
     document.querySelectorAll('input[data-doc]').forEach((input) => {
       input.addEventListener('change', () => {
@@ -282,7 +297,7 @@
     const visitAt = document.getElementById('companyReqDate')?.value || '';
     const selected = document.getElementById('companyReqVehicle')?.value || '';
     const temporary = selected === TEMP_VEHICLE;
-    const vehicleNumber = temporary ? (document.getElementById('companyReqTempVehicle')?.value || '').trim() : '';
+    const vehicleNumber = (document.getElementById('companyReqTempVehicle')?.value || '').trim();
     const driverName = (document.getElementById('companyReqDriver')?.value || '').trim();
     const driverPhone = (document.getElementById('companyReqPhone')?.value || '').trim();
 
@@ -296,7 +311,7 @@
     }
 
     const form = new FormData();
-    form.append('vehicleTypeId', flow.type.id); // 서버에서 업체 계약유형으로 다시 고정한다.
+    form.append('vehicleTypeId', flow.type.id);
     form.append('visitAt', visitAt);
     form.append('temporaryVehicle', temporary ? 'true' : 'false');
     form.append('companyVehicleId', temporary ? '' : selected);
