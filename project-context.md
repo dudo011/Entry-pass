@@ -593,10 +593,9 @@ height 53.748231966%
 - `public/js/work-plan-stable-save-v1.js`  ← **현재 index.html에서 로드되는 저장 보정 모듈**
 - `public/js/work-plan-map-position-fix.js`
 
-저장소에는 과거 시도 파일도 남아 있으나 현재 로드하지 않는다.
-
-- `public/js/work-plan-fast-save-v2.js`
-- `public/js/work-plan-map-override.js`
+과거 시도 파일(`work-plan-fast-save-v2.js`, `work-plan-map-override.js`)은
+2026-08-08 저장소 정리 시 삭제했다(로드되지 않던 죽은 코드). 필요 시 git
+이력에서 복구할 수 있다.
 
 ### 15.1 중요한 관찰
 
