@@ -50,9 +50,10 @@
   line-height: 1.3 !important;
 }
 
-/* 방문일자·계약업체 입력 영역을 화면 비율과 무관한 고정 너비로 축소 */
+/* 신청 정보의 입력칸과 선택칸 너비를 동일하게 맞춤 */
 .application-form-card > .field-h > .datebtn,
-.application-form-card > .field-h > input {
+.application-form-card > .field-h > input,
+.application-form-card > .field-h > select {
   flex: 0 0 220px !important;
   width: 220px !important;
   min-width: 0 !important;
@@ -108,7 +109,8 @@
   }
 
   .application-form-card > .field-h > .datebtn,
-  .application-form-card > .field-h > input {
+  .application-form-card > .field-h > input,
+  .application-form-card > .field-h > select {
     flex-basis: 190px !important;
     width: 190px !important;
     max-width: 190px !important;
