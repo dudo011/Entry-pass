@@ -61,7 +61,8 @@
   function setTabLabel(tab, label) {
     if (!tab) return;
     const textNode = [...tab.childNodes].find((node) => node.nodeType === Node.TEXT_NODE);
-    if (textNode) textNode.textContent = `${label} `;
+    // 값이 같으면 다시 쓰지 않는다(멱등) — 자기 변경으로 옵저버 재발화 루프 방지.
+    if (textNode && textNode.textContent !== `${label} `) textNode.textContent = `${label} `;
   }
 
   function prepareTabs() {
@@ -90,10 +91,14 @@
       completedMode = false;
     }
 
+    // active 클래스는 상태가 바뀔 때만 토글한다(멱등) — 매번 remove+add 하면
+    // 코어의 활성 탭 관리와 60fps 클래스 토글 전쟁이 되어 화면이 멈춘다.
     if (completedMode && completedTab) {
-      tabs.querySelectorAll('.tab').forEach((tab) => tab.classList.remove('active'));
-      completedTab.classList.add('active');
-    } else if (completedTab) {
+      tabs.querySelectorAll('.tab').forEach((tab) => {
+        const shouldActive = tab === completedTab;
+        if (tab.classList.contains('active') !== shouldActive) tab.classList.toggle('active', shouldActive);
+      });
+    } else if (completedTab && completedTab.classList.contains('active')) {
       completedTab.classList.remove('active');
     }
 
@@ -102,7 +107,8 @@
 
   function updateCounter(tab, count) {
     const counter = tab?.querySelector('.cnt');
-    if (counter) counter.textContent = String(count);
+    // 값이 같으면 다시 쓰지 않는다(자기 변경으로 MutationObserver를 재발화시키는 루프 방지).
+    if (counter && counter.textContent !== String(count)) counter.textContent = String(count);
   }
 
   function updateTabCount(tabId, count) {
@@ -128,9 +134,11 @@
       const pill = card.querySelector('.status-pill');
       if (!pill || !WORKFLOW_LABEL[value]) return;
 
-      pill.textContent = WORKFLOW_LABEL[value];
-      pill.classList.remove('pending', 'approved', 'rejected', 'safety_pending', 'photo_pending', 'completed');
-      pill.classList.add(value);
+      if (pill.textContent !== WORKFLOW_LABEL[value]) pill.textContent = WORKFLOW_LABEL[value];
+      if (!pill.classList.contains(value)) {
+        pill.classList.remove('pending', 'approved', 'rejected', 'safety_pending', 'photo_pending', 'completed');
+        pill.classList.add(value);
+      }
     });
   }
 
@@ -156,27 +164,35 @@
         const visit = visitKeyFromMeta(card.querySelector('.meta')?.textContent);
         show = visit === today;
       }
-      card.hidden = !show;
-      card.style.display = show ? '' : 'none';
+      // 값이 바뀔 때만 쓴다(멱등) — 자기 변경으로 옵저버를 재발화시키는 루프 방지.
+      if (card.hidden !== !show) card.hidden = !show;
+      const disp = show ? '' : 'none';
+      if (card.style.display !== disp) card.style.display = disp;
       if (show) visible += 1;
     });
 
-    screen.querySelector('.today-only-empty')?.remove();
+    const injected = screen.querySelector('.today-only-empty');
     const originalEmpty = screen.querySelector('.empty:not(.today-only-empty)');
     const emptyText = completedMode
       ? '오늘 최종완료된 출입 신청이 없습니다.'
       : '오늘 승인 진행 중인 출입 신청이 없습니다.';
 
     if (originalEmpty) {
-      originalEmpty.textContent = emptyText;
-      originalEmpty.style.display = visible ? 'none' : '';
-    }
-
-    if (!visible && !originalEmpty) {
-      const empty = document.createElement('div');
-      empty.className = 'empty today-only-empty';
-      empty.textContent = emptyText;
-      screen.appendChild(empty);
+      if (injected) injected.remove();
+      if (originalEmpty.textContent !== emptyText) originalEmpty.textContent = emptyText;
+      const disp = visible ? 'none' : '';
+      if (originalEmpty.style.display !== disp) originalEmpty.style.display = disp;
+    } else if (!visible) {
+      if (!injected) {
+        const empty = document.createElement('div');
+        empty.className = 'empty today-only-empty';
+        empty.textContent = emptyText;
+        screen.appendChild(empty);
+      } else if (injected.textContent !== emptyText) {
+        injected.textContent = emptyText;
+      }
+    } else if (injected) {
+      injected.remove();
     }
   }
 
