@@ -220,7 +220,7 @@
     const count = Array.isArray(file) ? file.length : (file ? 1 : 0);
     label.classList.toggle('has', count > 0);
     const textNode = [...label.childNodes].find((node) => node.nodeType === Node.TEXT_NODE);
-    if (textNode) textNode.textContent = count > 1 ? `첨부 완료 (${count}쪽)` : (count === 1 ? '첨부 완료' : '파일 선택');
+    if (textNode) textNode.textContent = count > 0 ? '첨부 완료' : '파일 선택';
   }
 
   // File 하나 또는 File 배열(작업계획서 3쪽 등)을 신청 상태에 직접 저장한다.
