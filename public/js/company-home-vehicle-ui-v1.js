@@ -32,6 +32,51 @@
 
   const style = document.createElement('style');
   style.textContent = `
+    /* 업체 홈의 두 주요 버튼은 기존 76px에서 약 6px 낮춘다. */
+    #app.company-flow-active .cf-menu .cf-btn{
+      min-height:70px!important;
+      height:70px!important;
+      padding:8px 12px!important;
+    }
+
+    /* 신청내역: 출입날짜 | 차량번호 | 승인상태 한 줄 */
+    #app .cf-item.cf-request-compact{
+      padding:13px 14px!important;
+      margin-bottom:10px!important;
+    }
+    #app .cf-item.cf-request-compact .cf-request-line{
+      display:grid;
+      grid-template-columns:minmax(0,1.25fr) minmax(0,.9fr) auto;
+      gap:8px;
+      align-items:center;
+      width:100%;
+      min-width:0;
+    }
+    #app .cf-item.cf-request-compact .cf-request-date{
+      min-width:0;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      color:var(--text-muted,#64748B);
+      font-size:15px;
+      font-weight:650;
+      line-height:1.3;
+    }
+    #app .cf-item.cf-request-compact .cf-request-vehicle{
+      min-width:0;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      color:var(--text,#0F172A);
+      font-size:17px;
+      font-weight:800;
+      line-height:1.3;
+    }
+    #app .cf-item.cf-request-compact .cf-stage{
+      margin:0!important;
+      white-space:nowrap;
+    }
+
     #app .cf-item.cf-vehicle-compact{
       padding:10px 12px;
       margin-bottom:8px;
@@ -70,6 +115,38 @@
     if (label && label.textContent !== text) label.textContent = text;
   }
 
+  function refineRequestList() {
+    const list = document.getElementById('cf_request_list');
+    if (!list) return;
+
+    list.querySelectorAll('.cf-item[data-cf-request]').forEach((item) => {
+      if (item.classList.contains('cf-request-compact')) return;
+
+      const vehicle = item.querySelector('.cf-item-top strong')?.textContent?.trim() || '-';
+      const stage = item.querySelector('.cf-stage');
+      const metaText = item.querySelector('.cf-meta')?.textContent?.replace(/\s+/g, ' ').trim() || '';
+      const dateMatch = metaText.match(/\d{4}\.\s*\d{1,2}\.\s*\d{1,2}\s*\([^)]+\)/u);
+      const visitDate = dateMatch?.[0] || '-';
+
+      const line = document.createElement('div');
+      line.className = 'cf-request-line';
+
+      const dateNode = document.createElement('span');
+      dateNode.className = 'cf-request-date';
+      dateNode.textContent = visitDate;
+
+      const vehicleNode = document.createElement('span');
+      vehicleNode.className = 'cf-request-vehicle';
+      vehicleNode.textContent = vehicle;
+
+      line.append(dateNode, vehicleNode);
+      if (stage) line.append(stage);
+
+      item.replaceChildren(line);
+      item.classList.add('cf-request-compact');
+    });
+  }
+
   function refineHome() {
     const requestList = document.getElementById('cf_request_list');
     const requestButton = app.querySelector('[data-cf-view="request"]');
@@ -87,6 +164,8 @@
 
     if (requestButton.textContent !== '새 출입 신청') requestButton.textContent = '새 출입 신청';
     if (vehiclesButton.textContent !== '소속 차량관리') vehiclesButton.textContent = '소속 차량관리';
+
+    refineRequestList();
   }
 
   function refineRequestDate() {
