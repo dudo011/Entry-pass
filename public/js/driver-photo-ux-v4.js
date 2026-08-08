@@ -7,15 +7,20 @@
   const token = hash.get('driverAccess') || query.get('driverAccess');
   if (!token) return;
 
+  const CAMERA_MAX_EDGE = 800;
+  const CAMERA_QUALITY = 0.55;
+
   let stream = null;
   let layer = null;
   let captureBusy = false;
-  let sessionCount = 0;
+  let baseCount = 0;
+  let sessionFiles = [];
 
   const style = document.createElement('style');
   style.textContent = `
+    #app .result .passno{margin-bottom:18px!important}
     #app .driver-complete-info{
-      margin-top:16px!important;
+      margin:0!important;
       padding:0!important;
       border:0!important;
       border-radius:0!important;
@@ -24,12 +29,12 @@
     }
     #app .driver-complete-row{
       display:block!important;
-      padding:3px 0!important;
+      padding:7px 0!important;
       border:0!important;
       color:#0f172a!important;
-      font-size:17px!important;
+      font-size:22px!important;
       font-weight:800!important;
-      line-height:1.5!important;
+      line-height:1.45!important;
       text-align:center!important;
       word-break:break-word!important;
     }
@@ -77,7 +82,7 @@
       fontWeight: '800', textAlign: 'center', lineHeight: '1.45',
     });
     document.body.append(node);
-    setTimeout(() => node.remove(), 2600);
+    setTimeout(() => node.remove(), 1800);
   }
 
   function stopStream() {
@@ -86,7 +91,7 @@
     stream = null;
   }
 
-  function closeCamera() {
+  function removeCameraLayer() {
     stopStream();
     layer?.remove();
     layer = null;
@@ -104,7 +109,7 @@
       canvas.toBlob((blob) => {
         if (blob) resolve(blob);
         else reject(new Error('촬영한 사진을 저장하지 못했습니다.'));
-      }, 'image/jpeg', 0.60);
+      }, 'image/jpeg', CAMERA_QUALITY);
     });
   }
 
@@ -113,8 +118,7 @@
     const sourceHeight = video.videoHeight || 0;
     if (!sourceWidth || !sourceHeight) throw new Error('카메라 화면이 아직 준비되지 않았습니다.');
 
-    const maxEdge = 960;
-    const scale = Math.min(1, maxEdge / Math.max(sourceWidth, sourceHeight));
+    const scale = Math.min(1, CAMERA_MAX_EDGE / Math.max(sourceWidth, sourceHeight));
     const canvas = document.createElement('canvas');
     canvas.width = Math.max(1, Math.round(sourceWidth * scale));
     canvas.height = Math.max(1, Math.round(sourceHeight * scale));
@@ -128,15 +132,33 @@
     return new File([blob], `현장사진-촬영-${Date.now()}.jpg`, { type: 'image/jpeg' });
   }
 
-  function appendToExistingPhotoFlow(file) {
+  function commitSessionPhotos() {
+    if (!sessionFiles.length) return;
     const input = document.getElementById('driverPhotoInputV3');
-    if (!input) throw new Error('현장사진 입력 화면을 찾을 수 없습니다.');
-    if (typeof DataTransfer !== 'function') throw new Error('현재 브라우저에서는 연속 촬영을 지원하지 않습니다.');
+    if (!input) {
+      sessionFiles = [];
+      toast('현장사진 입력 화면을 찾을 수 없습니다.');
+      return;
+    }
+    if (typeof DataTransfer !== 'function') {
+      sessionFiles = [];
+      toast('현재 브라우저에서는 연속 촬영을 지원하지 않습니다.');
+      return;
+    }
 
     const transfer = new DataTransfer();
-    transfer.items.add(file);
+    sessionFiles.forEach((file) => transfer.items.add(file));
     input.files = transfer.files;
+    const count = sessionFiles.length;
+    sessionFiles = [];
     input.dispatchEvent(new Event('change', { bubbles: true }));
+    toast(`${count}장의 촬영 사진을 목록에 추가했습니다.`);
+  }
+
+  function finishCameraSession() {
+    if (captureBusy) return;
+    removeCameraLayer();
+    commitSessionPhotos();
   }
 
   async function openFastCamera() {
@@ -151,12 +173,13 @@
         audio: false,
         video: {
           facingMode: { ideal: 'environment' },
-          width: { ideal: 960 },
-          height: { ideal: 720 },
+          width: { ideal: 800 },
+          height: { ideal: 600 },
         },
       });
 
-      sessionCount = preparedCount();
+      baseCount = preparedCount();
+      sessionFiles = [];
       layer = document.createElement('section');
       layer.className = 'driver-fast-camera';
       layer.innerHTML = `
@@ -166,7 +189,7 @@
         </div>
         <div class="driver-fast-camera-view">
           <video autoplay playsinline muted></video>
-          <div class="driver-fast-camera-count">현재 ${sessionCount}장</div>
+          <div class="driver-fast-camera-count">현재 ${baseCount}장</div>
         </div>
         <div class="driver-fast-camera-actions">
           <button type="button" class="driver-fast-camera-capture">사진 추가</button>
@@ -179,22 +202,20 @@
       video.srcObject = stream;
       await video.play();
 
-      layer.querySelector('.driver-fast-camera-close').onclick = closeCamera;
+      layer.querySelector('.driver-fast-camera-close').onclick = finishCameraSession;
       capture.onclick = async () => {
         if (captureBusy) return;
         captureBusy = true;
         capture.disabled = true;
         capture.textContent = '사진 처리 중…';
         try {
-          await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
           const file = await captureFast(video);
-          appendToExistingPhotoFlow(file);
-          sessionCount += 1;
-          count.textContent = `현재 ${sessionCount}장`;
+          sessionFiles.push(file);
+          const total = baseCount + sessionFiles.length;
+          count.textContent = `현재 ${total}장`;
           capture.textContent = '사진 추가';
-          await new Promise((resolve) => setTimeout(resolve, 180));
           capture.disabled = false;
-          toast(`현장사진 ${sessionCount}장이 준비되었습니다.`);
+          toast(`현장사진 ${total}장이 준비되었습니다.`);
         } catch (error) {
           capture.disabled = false;
           capture.textContent = '사진 추가';
@@ -204,22 +225,33 @@
         }
       };
     } catch (error) {
-      closeCamera();
+      removeCameraLayer();
+      sessionFiles = [];
       if (error?.name === 'NotAllowedError' || error?.name === 'SecurityError') toast('카메라 권한을 허용해 주세요.');
       else toast('현재 브라우저에서 카메라를 열 수 없습니다. 다른 브라우저로 열어 주세요.');
     }
   }
 
+  function esc(value) {
+    return String(value || '-').replace(/[&<>\"]/g, (char) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;',
+    }[char]));
+  }
+
   function normalizeCompleted() {
-    const info = document.querySelector('#app .driver-complete-info');
-    if (!info || info.dataset.simpleComplete === '1') return;
+    const result = document.querySelector('#app .result');
+    const info = result?.querySelector('.driver-complete-info');
+    if (!result || !info || info.dataset.simpleComplete === '1') return;
+
+    const description = result.querySelector(':scope > p');
+    if (description) description.remove();
+
     const values = [...info.querySelectorAll('.driver-complete-row strong')].map((node) => node.textContent.trim());
     if (values.length < 4) return;
-
     const driver = values[2] && values[2] !== '-' && !values[2].endsWith('님') ? `${values[2]}님` : values[2];
-    info.innerHTML = [values[0], values[1], driver || '-', values[3]].map((value) =>
-      `<div class="driver-complete-row">${String(value || '-').replace(/[&<>\"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]))}</div>`
-    ).join('');
+    info.innerHTML = [values[0], values[1], driver || '-', values[3]]
+      .map((value) => `<div class="driver-complete-row">${esc(value)}</div>`)
+      .join('');
     info.dataset.simpleComplete = '1';
   }
 
@@ -235,5 +267,9 @@
   const observer = new MutationObserver(normalizeCompleted);
   observer.observe(app, { childList: true, subtree: true });
   normalizeCompleted();
-  window.addEventListener('pagehide', closeCamera);
+
+  window.addEventListener('pagehide', () => {
+    sessionFiles = [];
+    removeCameraLayer();
+  });
 })();
