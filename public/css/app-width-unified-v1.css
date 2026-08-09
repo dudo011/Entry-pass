@@ -1,5 +1,6 @@
 :root{
   --entry-pass-shell-width:520px;
+  --entry-pass-large-screen-zoom:.90;
 }
 
 /*
@@ -17,7 +18,6 @@
  * 아래 화면들은 #app 밖(document.body)에 fixed 레이어로 생성되기 때문에
  * 기존에는 태블릿/PC에서 전체 화면 너비로 벌어졌다.
  * 일반 앱 화면과 동일한 520px 쉘 안에 고정한다.
- * 문서 작성/필기 전용 편집기는 의도적으로 제외한다.
  */
 body > .past-request-overlay,
 body > .cf-completed-overlay,
@@ -48,4 +48,16 @@ body > .staff-manage-layer .staff-manage-body{
   width:100%!important;
   max-width:none!important;
   box-sizing:border-box!important;
+}
+
+/*
+ * 태블릿/PC의 Chrome 브라우저에서는 주소창·탭 바가 세로 공간을 차지하므로
+ * 화면별 높이를 개별 수정하지 않고 페이지 전체를 90%로 축소한다.
+ * CSS zoom은 레이아웃 자체를 함께 축소하므로 fixed/sticky 화면과 터치 영역도
+ * 동일한 비율로 유지된다. 휴대폰 세로 화면(<600px)은 기존 100%를 유지한다.
+ */
+@media (min-width:600px){
+  body{
+    zoom:var(--entry-pass-large-screen-zoom);
+  }
 }
