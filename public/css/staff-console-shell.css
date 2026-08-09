@@ -1,7 +1,7 @@
 /* 출입신청관리 공통 헤더: 관리자와 일반 직원이 같은 높이·간격을 사용한다. */
 #app > .appbar.staff-console-bar {
-  height: 76px !important;
-  min-height: 76px !important;
+  height: 68px !important;
+  min-height: 68px !important;
   box-sizing: border-box !important;
   display: flex !important;
   align-items: center !important;

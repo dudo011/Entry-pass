@@ -30,12 +30,12 @@
       position:sticky!important;
       top:0!important;
       z-index:50!important;
-      min-height:72px!important;
+      min-height:68px!important;
       box-sizing:border-box!important;
       display:flex!important;
       align-items:center!important;
       gap:12px!important;
-      padding:max(15px,env(safe-area-inset-top)) 16px 15px!important;
+      padding:max(13px,env(safe-area-inset-top)) 16px 13px!important;
       background:var(--header,#0F172A)!important;
       color:#fff!important;
       box-shadow:none!important;
