@@ -1,5 +1,5 @@
 (() => {
-  const CACHE_VERSION = '20260802-102';
+  const CACHE_VERSION = '20260808-001';
   const ROUTES = {
     transport: {
       image: `/route-images/transport.jpg?v=${CACHE_VERSION}`,
@@ -22,6 +22,16 @@
       alt: 'PCBs 처리용역 차량 동선 안내도',
     },
   };
+
+  // 새 업체 신청 흐름은 헤더의 data-vehicle-type 값을 항상 가지고 있다.
+  // 아이콘/문구 보정 스크립트의 실행 순서와 무관하게 이 값을 최우선으로 사용한다.
+  const ROUTE_BY_VEHICLE_TYPE = Object.freeze({
+    construction: ROUTES.construction,
+    transport: ROUTES.transport,
+    delivery: ROUTES.transport,
+    scrap: ROUTES.scrap,
+    pcbs: ROUTES.pcbs,
+  });
 
   Object.values(ROUTES).forEach((route) => {
     const preloadImage = new Image();
@@ -71,6 +81,11 @@
     const heading = appbar?.querySelector('h1')?.textContent?.trim() || '';
     if (heading !== '차량 동선 안내') return null;
 
+    const vehicleType = String(appbar?.dataset.vehicleType || '').trim().toLowerCase();
+    const directRoute = ROUTE_BY_VEHICLE_TYPE[vehicleType];
+    if (directRoute) return directRoute;
+
+    // 아래부터는 data-vehicle-type이 없는 레거시 화면만을 위한 보조 판별이다.
     if (
       appbar?.dataset.constructionFlowHeader === 'true' ||
       appbar?.classList.contains('vehicle-flow-appbar') &&
@@ -94,10 +109,8 @@
       iconImageSrc,
       allImageHints,
     ].join(' ');
-    const vehicleType = appbar?.dataset.vehicleType || '';
 
     if (
-      vehicleType === 'pcbs' ||
       iconText.includes('☣') ||
       /pcb|hazard|drum|oil/i.test(appbarHints)
     ) {
@@ -106,15 +119,13 @@
 
     if (
       iconText.includes('♻') ||
-      /recycle|scrap|disuse|waste/i.test(appbarHints) ||
-      vehicleType === 'scrap'
+      /recycle|scrap|disuse|waste/i.test(appbarHints)
     ) {
       return ROUTES.scrap;
     }
 
     // 기자재 납품은 물자수송용역과 동일한 동선·안내 이미지를 사용한다.
     if (
-      vehicleType === 'delivery' ||
       /delivery|equipment|supply|납품/i.test(appbarHints) ||
       /🚚|🚛|📦/.test(appbarHints)
     ) {
@@ -124,7 +135,7 @@
     const transportIcon = appbar?.querySelector(
       '.flow-header-vehicle-image[src*="type-transport-flatbed"]'
     );
-    if (transportIcon || vehicleType === 'transport') return ROUTES.transport;
+    if (transportIcon) return ROUTES.transport;
 
     return null;
   }
