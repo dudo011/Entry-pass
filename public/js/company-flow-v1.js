@@ -78,7 +78,8 @@
     .cf-driver{min-height:100dvh;background:#f8fafc}.cf-driver .cf-screen{max-width:720px}.cf-rules{padding-left:0;list-style:none;margin:0}.cf-rules li{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #e2e8f0;line-height:1.45}.cf-rules li:last-child{border-bottom:0}
     .cf-num{flex:0 0 28px;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#dbeafe;color:#1d4ed8;font-weight:900}.cf-route-img{width:100%;height:auto;border-radius:12px;border:1px solid #e2e8f0;background:#fff}.cf-route-steps{padding-left:22px;line-height:1.65}
     .cf-agree{display:flex;gap:10px;align-items:flex-start;font-weight:800;line-height:1.45;margin:14px 0}.cf-agree input{width:22px;height:22px;margin-top:1px}.cf-photo input[type=file]{width:100%;padding:11px;border:1px dashed #94a3b8;border-radius:12px;background:#fff}
-    .cf-admin-companies{position:fixed;inset:0;z-index:95000;background:#f8fafc;overflow:auto}.cf-admin-company{display:flex;gap:10px;align-items:center;padding:14px;border-bottom:1px solid #e2e8f0;background:#fff}.cf-admin-company-info{flex:1;min-width:0}.cf-admin-company strong{display:block;font-size:16px}.cf-admin-company-info>div{margin-top:5px;color:#64748b;font-size:14px;line-height:1.45}.cf-admin-company-del{flex:0 0 auto;width:auto}
+    .cf-admin-companies{position:fixed;inset:0;z-index:95000;background:#f8fafc;overflow:auto}.cf-admin-company{display:flex;gap:10px;align-items:center;padding:14px;border-bottom:1px solid #e2e8f0;background:#fff}.cf-admin-company-info{flex:1;min-width:0;border:0;background:none;text-align:left;padding:0;margin:0;font:inherit;color:inherit;cursor:pointer}.cf-admin-company strong{display:block;font-size:16px}.cf-admin-company-info>div{margin-top:5px;color:#64748b;font-size:14px;line-height:1.45}.cf-admin-company-del{flex:0 0 auto;width:auto}
+    .cf-reset-box{margin-top:12px;padding:12px;border-radius:12px;background:#fffbeb;border:1px solid #fde68a;color:#78350f;font-size:15px;line-height:1.6;word-break:break-all}.cf-reset-box b{font-size:18px;color:#0f172a}
     .cf-staff-workflow{margin-top:14px}.cf-share-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.cf-annot{position:fixed;inset:0;z-index:100000;background:#cbd5e1;display:flex;flex-direction:column}
     .cf-annot-head{height:68px;background:#0f172a;color:#fff;display:flex;align-items:center;gap:8px;padding:10px}.cf-annot-head strong{flex:1;text-align:center}.cf-annot-head button{height:44px;border:0;border-radius:10px;padding:0 13px;font-weight:900}
     .cf-annot-stage{position:relative;flex:1;overflow:auto;background:#94a3b8;padding:8px;touch-action:none}.cf-annot-wrap{position:relative;margin:0 auto;background:#fff;width:min(100%,900px)}.cf-annot-wrap img{display:block;width:100%;height:auto}.cf-annot-wrap canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
@@ -139,7 +140,7 @@
   }
 
   function homeView() {
-    return head(state.account?.companyName || '계약업체', state.account?.contactName ? `${state.account.contactName} 담당자` : '', false) + `<main class="cf-screen"><div class="cf-hero"><strong>출입 신청 관리</strong><span>소속 차량을 등록하고 출입신청과 작업서류를 관리합니다.</span></div><div class="cf-menu"><button class="cf-btn cf-primary" data-cf-view="request">＋ 새 출입 신청</button><button class="cf-btn cf-secondary" data-cf-view="vehicles">🚚 소속 차량 관리</button></div><div class="cf-title">신청 내역</div><div id="cf_request_list">${state.requests.length ? state.requests.map(requestCard).join('') : '<div class="cf-card" style="color:#64748b;text-align:center">아직 신청 내역이 없습니다.</div>'}</div></main>`;
+    return head(state.account?.companyName || '계약업체', state.account?.contactName ? `${state.account.contactName} 담당자` : '', false) + `<main class="cf-screen"><div class="cf-hero"><strong>출입 신청 관리</strong><span>소속 차량을 등록하고 출입신청과 작업서류를 관리합니다.</span></div><div class="cf-menu"><button class="cf-btn cf-primary" data-cf-view="request">＋ 새 출입 신청</button><button class="cf-btn cf-secondary" data-cf-view="vehicles">🚚 소속 차량 관리</button></div><button class="cf-btn cf-secondary" data-cf-view="profile" style="margin-bottom:18px">✏️ 회원정보 수정</button><div class="cf-title">신청 내역</div><div id="cf_request_list">${state.requests.length ? state.requests.map(requestCard).join('') : '<div class="cf-card" style="color:#64748b;text-align:center">아직 신청 내역이 없습니다.</div>'}</div></main>`;
   }
 
   function typeOptions(selected = '') {
@@ -179,6 +180,16 @@
       <div class="cf-title">사전 제출서류</div><div class="cf-card" id="cf_docs">${docsHtml(firstType)}</div><button class="cf-btn cf-primary" id="cf_submit_request">출입 신청 제출</button></main>`;
   }
 
+  function profileView() {
+    const a = state.account || {};
+    return head('회원정보 수정', '', true) + `<main class="cf-screen"><div class="cf-card">
+      <label class="cf-field"><span>상호(업체명)</span><input id="cf_p_company" value="${esc(a.companyName || '')}"></label>
+      <label class="cf-field"><span>담당자명</span><input id="cf_p_name" value="${esc(a.contactName || '')}"></label>
+      <label class="cf-field"><span>담당자 연락처</span><input id="cf_p_phone" type="tel" value="${esc(a.phone || '')}"></label>
+      <div class="cf-meta" style="margin:2px 2px 14px">로그인 아이디(${esc(a.loginId || '')})와 사업자등록번호는 변경할 수 없습니다. 비밀번호를 잊으신 경우 자재센터 관리자에게 초기화를 요청해 주세요.</div>
+      <button class="cf-btn cf-primary" id="cf_p_save">저장</button></div></main>`;
+  }
+
   function detailView() {
     const r = state.requests.find((x) => x.id === state.currentRequestId);
     if (!r) return homeView();
@@ -194,7 +205,7 @@
   function render() {
     if (!state.active) return;
     app.classList.add('company-flow-active');
-    const views = { login: loginView, register: registerView, home: homeView, vehicles: vehiclesView, request: requestView, detail: detailView };
+    const views = { login: loginView, register: registerView, home: homeView, vehicles: vehiclesView, request: requestView, detail: detailView, profile: profileView };
     app.innerHTML = (views[state.view] || loginView)();
     bindCompany();
   }
@@ -255,6 +266,14 @@
     document.getElementById('cf_v_cancel')?.addEventListener('click', () => { state.editingVehicleId = ''; render(); });
     app.querySelectorAll('[data-cf-edit-vehicle]').forEach((b) => b.onclick = () => { state.editingVehicleId = b.dataset.cfEditVehicle; render(); window.scrollTo(0, 0); });
     app.querySelectorAll('[data-cf-delete-vehicle]').forEach((b) => b.onclick = async () => { if (!confirm('이 차량을 소속 차량 목록에서 삭제할까요? 기존 출입기록은 유지됩니다.')) return; try { await api(`/api/company/vehicles/${encodeURIComponent(b.dataset.cfDeleteVehicle)}`, { method: 'DELETE' }); await refreshHomeData(); render(); } catch (e) { toast(e.message); } });
+
+    document.getElementById('cf_p_save')?.addEventListener('click', async () => {
+      const companyName = formValue('cf_p_company').trim(), contactName = formValue('cf_p_name').trim(), phone = formValue('cf_p_phone').trim();
+      if (!companyName) return toast('상호(업체명)를 입력해 주세요.');
+      if (!phone) return toast('담당자 연락처를 입력해 주세요.');
+      try { const out = await api('/api/company/me', { method: 'PUT', body: { companyName, contactName, phone } }); state.account = out.account; toast('회원정보를 저장했습니다.'); history.back(); }
+      catch (e) { toast(e.message); }
+    });
 
     app.querySelectorAll('[data-cf-request]').forEach((b) => b.onclick = () => { state.currentRequestId = b.dataset.cfRequest; setView('detail'); });
     document.getElementById('cf_cancel_request')?.addEventListener('click', async () => { if (!confirm('승인 대기 중인 신청을 취소할까요?')) return; try { await api(`/api/company/requests/${encodeURIComponent(state.currentRequestId)}`, { method: 'DELETE' }); await refreshHomeData(); setView('home'); } catch (e) { toast(e.message); } });
@@ -377,13 +396,13 @@
   function companyAdminRow(c) {
     const contract = contractTypeName(c.contractTypeId);
     const line2 = [contract, c.phone].filter(Boolean).join(', ');
-    return `<div class="cf-admin-company"><div class="cf-admin-company-info"><strong>${esc(c.companyName)} (${esc(c.businessNo)})</strong><div>${esc(line2)}</div></div><button class="cf-btn cf-danger cf-small cf-admin-company-del" data-cf-company-del="${esc(c.id)}" data-cf-company-name="${esc(c.companyName)}">삭제</button></div>`;
+    return `<div class="cf-admin-company"><button class="cf-admin-company-info" data-cf-company-open="${esc(c.id)}"><strong>${esc(c.companyName)} (${esc(c.businessNo)})</strong><div>${esc(line2)}</div></button><button class="cf-btn cf-danger cf-small cf-admin-company-del" data-cf-company-del="${esc(c.id)}" data-cf-company-name="${esc(c.companyName)}">삭제</button></div>`;
   }
 
   async function openCompanyManager() {
     document.querySelector('.cf-admin-companies')?.remove();
     const layer = document.createElement('section'); layer.className = 'cf-admin-companies';
-    // 헤더: 뒤로가기 버튼·설명 없이 제목만 크게(다른 관리 화면과 동일한 24px).
+    // 헤더: 뒤로가기 버튼·설명 없이 제목만 크게(다른 관리 화면과 동일하게).
     layer.innerHTML = `<header class="cf-appbar"><div><h1 style="font-size:23px;font-weight:800;letter-spacing:-.6px;margin:0">업체관리</h1></div></header><main id="cf_company_admin_list"><div class="cf-screen">불러오는 중…</div></main>`;
     document.body.append(layer);
     // 하드웨어/브라우저 뒤로가기 시 앱이 종료되지 않고 이 화면만 닫혀 이전(관리자모드) 화면으로
@@ -393,29 +412,92 @@
     window.addEventListener('popstate', onPop);
 
     const listBox = layer.querySelector('#cf_company_admin_list');
+    let companies = [];
+
     async function loadList() {
       try {
         if (!state.vehicleTypes.length) { try { state.vehicleTypes = await api('/api/vehicle-types', { companyAuth: false }); } catch { /* noop */ } }
         const res = await fetch('/api/admin/companies'); const data = await res.json();
         if (!res.ok) throw new Error(data?.error || '조회 실패');
+        companies = data;
         listBox.innerHTML = `<div class="cf-screen">${data.length ? data.map(companyAdminRow).join('') : '<div class="cf-card">등록 업체가 없습니다.</div>'}</div>`;
       } catch (e) {
         listBox.innerHTML = `<div class="cf-screen"><div class="cf-card">${esc(e.message)}</div></div>`;
       }
     }
 
+    async function loadDetail(id) {
+      const c = companies.find((x) => x.id === id); if (!c) return loadList();
+      listBox.innerHTML = `<div class="cf-screen"><div class="cf-card">불러오는 중…</div></div>`;
+      let vehicles = [];
+      try { const res = await fetch(`/api/admin/companies/${encodeURIComponent(id)}/vehicles`); const d = await res.json(); if (res.ok) vehicles = d; } catch { /* noop */ }
+      const contract = contractTypeName(c.contractTypeId);
+      const vehiclesHtml = vehicles.length
+        ? vehicles.map((v) => `<div class="cf-item"><div class="cf-item-top"><strong>${esc(v.vehicleNumber)}</strong><button class="cf-btn cf-danger cf-small" style="margin-left:auto" data-cf-veh-del="${esc(v.id)}" data-cf-veh-num="${esc(v.vehicleNumber)}">삭제</button></div><div class="cf-meta">${esc(v.driverName || '')}${v.driverPhone ? ` · ${esc(v.driverPhone)}` : ''}</div></div>`).join('')
+        : '<div class="cf-card" style="color:#64748b">등록된 차량이 없습니다.</div>';
+      listBox.innerHTML = `<div class="cf-screen">
+        <button class="cf-form-btn" data-cf-company-back style="margin:0 0 10px">‹ 업체 목록</button>
+        <div class="cf-card"><div class="cf-item-top"><strong style="font-size:18px">${esc(c.companyName)}</strong></div>
+          <div class="cf-meta" style="margin-top:8px;line-height:1.8">사업자번호 ${esc(c.businessNo)}<br>로그인 아이디 ${esc(c.loginId)}${contract ? `<br>계약유형 ${esc(contract)}` : ''}${c.phone ? `<br>연락처 ${esc(c.phone)}` : ''}</div>
+          <button class="cf-btn cf-secondary" style="margin-top:12px" data-cf-company-reset="${esc(c.id)}">🔑 비밀번호 초기화</button>
+          <div id="cf_reset_result"></div>
+        </div>
+        <div class="cf-title">등록 차량 (${vehicles.length}대)</div>
+        <div id="cf_admin_vehicles">${vehiclesHtml}</div>
+      </div>`;
+    }
+
     listBox.addEventListener('click', async (event) => {
-      const btn = event.target.closest?.('[data-cf-company-del]'); if (!btn) return;
-      const id = btn.dataset.cfCompanyDel; const name = btn.dataset.cfCompanyName || '';
-      if (!confirm(`'${name}' 업체 계정을 삭제하시겠습니까?\n등록된 차량 정보도 함께 삭제됩니다.`)) return;
-      btn.disabled = true;
-      try {
-        const res = await fetch(`/api/admin/companies/${encodeURIComponent(id)}`, { method: 'DELETE' });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data?.error || '삭제하지 못했습니다.');
-        toast('업체를 삭제했습니다.');
-        await loadList();
-      } catch (e) { btn.disabled = false; toast(e.message); }
+      const open = event.target.closest?.('[data-cf-company-open]');
+      if (open) { await loadDetail(open.dataset.cfCompanyOpen); return; }
+
+      if (event.target.closest?.('[data-cf-company-back]')) { await loadList(); return; }
+
+      const del = event.target.closest?.('[data-cf-company-del]');
+      if (del) {
+        const id = del.dataset.cfCompanyDel; const name = del.dataset.cfCompanyName || '';
+        if (!confirm(`'${name}' 업체 계정을 삭제하시겠습니까?\n등록된 차량 정보도 함께 삭제됩니다.`)) return;
+        del.disabled = true;
+        try {
+          const res = await fetch(`/api/admin/companies/${encodeURIComponent(id)}`, { method: 'DELETE' });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data?.error || '삭제하지 못했습니다.');
+          toast('업체를 삭제했습니다.');
+          await loadList();
+        } catch (e) { del.disabled = false; toast(e.message); }
+        return;
+      }
+
+      const reset = event.target.closest?.('[data-cf-company-reset]');
+      if (reset) {
+        if (!confirm('임시 비밀번호를 발급하시겠습니까?\n기존 비밀번호는 즉시 사용할 수 없게 됩니다.')) return;
+        reset.disabled = true;
+        try {
+          const res = await fetch(`/api/admin/companies/${encodeURIComponent(reset.dataset.cfCompanyReset)}/reset-password`, { method: 'POST' });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data?.error || '초기화하지 못했습니다.');
+          const box = document.getElementById('cf_reset_result');
+          if (box) box.innerHTML = `<div class="cf-reset-box">임시 비밀번호가 발급되었습니다.<br>아이디 <b>${esc(data.loginId)}</b><br>임시 비밀번호 <b>${esc(data.tempPassword)}</b><div style="margin-top:6px;font-weight:700;color:#92400e">이 화면을 벗어나면 다시 확인할 수 없습니다. 업체 담당자에게 안전하게 전달해 주세요.</div></div>`;
+          reset.disabled = false;
+        } catch (e) { reset.disabled = false; toast(e.message); }
+        return;
+      }
+
+      const vehDel = event.target.closest?.('[data-cf-veh-del]');
+      if (vehDel) {
+        const open2 = layer.querySelector('[data-cf-company-reset]');
+        const companyId = open2?.dataset.cfCompanyReset || '';
+        if (!confirm(`차량 '${vehDel.dataset.cfVehNum}'을(를) 등록 내역에서 삭제하시겠습니까?`)) return;
+        vehDel.disabled = true;
+        try {
+          const res = await fetch(`/api/admin/companies/${encodeURIComponent(companyId)}/vehicles/${encodeURIComponent(vehDel.dataset.cfVehDel)}`, { method: 'DELETE' });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data?.error || '삭제하지 못했습니다.');
+          toast('차량을 삭제했습니다.');
+          await loadDetail(companyId);
+        } catch (e) { vehDel.disabled = false; toast(e.message); }
+        return;
+      }
     });
 
     await loadList();

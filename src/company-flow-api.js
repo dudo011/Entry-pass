@@ -670,6 +670,59 @@ async function deleteCompany(request, env, id) {
   return json({ ok: true });
 }
 
+// 업체 공동계정 회원정보(상호·담당자·연락처) 자체 수정
+async function updateCompanyProfile(request, env) {
+  const auth = await requireCompany(request, env); if (auth.error) return auth.error;
+  const body = await request.json().catch(() => ({}));
+  const companyName = String(body.companyName || '').trim();
+  const contactName = String(body.contactName || '').trim();
+  const phone = String(body.phone || '').trim();
+  if (!companyName) return error('상호(업체명)를 입력해 주세요.');
+  if (!phone) return error('연락처를 입력해 주세요.');
+  await env.DB.prepare('UPDATE company_accounts SET company_name = ?, contact_name = ?, phone = ? WHERE id = ?')
+    .bind(companyName, contactName, phone, auth.account.id).run();
+  const updated = await env.DB.prepare('SELECT * FROM company_accounts WHERE id = ?').bind(auth.account.id).first();
+  return json({ account: publicAccount(updated) });
+}
+
+// 관리자: 특정 업체의 등록차량 조회
+async function listCompanyVehicles(request, env, id) {
+  const auth = await requireStaff(request, env); if (auth.error) return auth.error;
+  const company = await env.DB.prepare('SELECT id FROM company_accounts WHERE id = ?').bind(id).first();
+  if (!company) return error('업체 계정을 찾을 수 없습니다.', 404);
+  const rows = await env.DB.prepare('SELECT * FROM company_vehicles WHERE company_account_id = ? ORDER BY created_at').bind(id).all();
+  return json((rows.results || []).map(publicVehicle));
+}
+
+// 관리자: 특정 업체의 등록차량 삭제(DB에서 실제 삭제)
+async function deleteCompanyVehicle(request, env, id, vehicleId) {
+  const auth = await requireStaff(request, env, true); if (auth.error) return auth.error;
+  const result = await env.DB.prepare('DELETE FROM company_vehicles WHERE id = ? AND company_account_id = ?')
+    .bind(vehicleId, id).run();
+  if (!result.meta?.changes) return error('차량을 찾을 수 없습니다.', 404);
+  return json({ ok: true });
+}
+
+// 관리자: 업체가 비밀번호 분실 시 임시 비밀번호 발급(발급값을 관리자에게 1회 표시)
+function makeTempPassword() {
+  const chars = 'abcdefghijkmnpqrstuvwxyz23456789'; // 혼동되는 0,O,1,l,I 등 제외
+  const bytes = crypto.getRandomValues(new Uint8Array(8));
+  return [...bytes].map((b) => chars[b % chars.length]).join('');
+}
+async function resetCompanyPassword(request, env, id) {
+  const auth = await requireStaff(request, env, true); if (auth.error) return auth.error;
+  const row = await env.DB.prepare('SELECT id, login_id FROM company_accounts WHERE id = ?').bind(id).first();
+  if (!row) return error('업체 계정을 찾을 수 없습니다.', 404);
+  const tempPassword = makeTempPassword();
+  const { salt, hash } = await hashPassword(tempPassword);
+  await env.DB.batch([
+    env.DB.prepare('UPDATE company_accounts SET salt = ?, hash = ? WHERE id = ?').bind(salt, hash, id),
+    // 기존 세션은 모두 무효화하여 새 임시 비밀번호로만 로그인하도록 한다.
+    env.DB.prepare('DELETE FROM company_sessions WHERE company_account_id = ?').bind(id),
+  ]);
+  return json({ loginId: row.login_id, tempPassword });
+}
+
 export function isCompanyFlowPath(path) {
   return path.startsWith('/api/company/')
     || path.startsWith('/api/driver-access/')
@@ -723,6 +776,7 @@ export async function handleCompanyFlowApi(request, env) {
     const auth = await requireCompany(request, env); if (auth.error) return auth.error;
     return json({ account: publicAccount(auth.account) });
   }
+  if (method === 'PUT' && path === '/api/company/me') return updateCompanyProfile(request, env);
   if (method === 'GET' && path === '/api/company/vehicles') return listVehicles(request, env);
   if (method === 'POST' && path === '/api/company/vehicles') return saveVehicle(request, env);
   const vehicleMatch = path.match(/^\/api\/company\/vehicles\/([^/]+)$/);
@@ -745,6 +799,12 @@ export async function handleCompanyFlowApi(request, env) {
   const metaMatch = path.match(/^\/api\/admin\/company-requests\/([^/]+)\/meta$/);
   if (metaMatch && method === 'GET') return companyRequestMeta(request, env, decodeURIComponent(metaMatch[1]));
   if (method === 'GET' && path === '/api/admin/companies') return listCompanies(request, env);
+  const companyVehiclesMatch = path.match(/^\/api\/admin\/companies\/([^/]+)\/vehicles$/);
+  if (companyVehiclesMatch && method === 'GET') return listCompanyVehicles(request, env, decodeURIComponent(companyVehiclesMatch[1]));
+  const companyVehicleMatch = path.match(/^\/api\/admin\/companies\/([^/]+)\/vehicles\/([^/]+)$/);
+  if (companyVehicleMatch && method === 'DELETE') return deleteCompanyVehicle(request, env, decodeURIComponent(companyVehicleMatch[1]), decodeURIComponent(companyVehicleMatch[2]));
+  const companyResetMatch = path.match(/^\/api\/admin\/companies\/([^/]+)\/reset-password$/);
+  if (companyResetMatch && method === 'POST') return resetCompanyPassword(request, env, decodeURIComponent(companyResetMatch[1]));
   const companyMatch = path.match(/^\/api\/admin\/companies\/([^/]+)$/);
   if (companyMatch && method === 'DELETE') return deleteCompany(request, env, decodeURIComponent(companyMatch[1]));
 
