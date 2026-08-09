@@ -1,0 +1,51 @@
+:root{
+  --entry-pass-shell-width:520px;
+}
+
+/*
+ * 모든 일반 앱 화면은 기존 #app 기준폭(520px)을 공통으로 사용한다.
+ * 휴대폰에서는 화면폭 100%, 태블릿/PC에서는 520px로 중앙 정렬된다.
+ */
+#app{
+  width:min(100%,var(--entry-pass-shell-width))!important;
+  max-width:var(--entry-pass-shell-width)!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+
+/*
+ * 아래 화면들은 #app 밖(document.body)에 fixed 레이어로 생성되기 때문에
+ * 기존에는 태블릿/PC에서 전체 화면 너비로 벌어졌다.
+ * 일반 앱 화면과 동일한 520px 쉘 안에 고정한다.
+ * 문서 작성/필기 전용 편집기는 의도적으로 제외한다.
+ */
+body > .past-request-overlay,
+body > .cf-completed-overlay,
+body > .admin-tools-layer,
+body > .cf-admin-companies,
+body > .driver-manage-layer,
+body > .staff-manage-layer,
+body > .forced-password-layer{
+  top:0!important;
+  bottom:0!important;
+  left:50%!important;
+  right:auto!important;
+  width:min(100vw,var(--entry-pass-shell-width))!important;
+  max-width:var(--entry-pass-shell-width)!important;
+  min-width:0!important;
+  margin:0!important;
+  transform:translateX(-50%)!important;
+  box-sizing:border-box!important;
+}
+
+/* 레이어 안쪽 컨텐츠도 부모 쉘 폭을 그대로 사용한다. */
+body > .past-request-overlay .past-screen,
+body > .cf-completed-overlay .cf-completed-screen,
+body > .admin-tools-layer .admin-tools-grid,
+body > .cf-admin-companies .cf-screen,
+body > .driver-manage-layer .driver-manage-body,
+body > .staff-manage-layer .staff-manage-body{
+  width:100%!important;
+  max-width:none!important;
+  box-sizing:border-box!important;
+}
