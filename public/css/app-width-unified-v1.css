@@ -2,6 +2,17 @@
   --entry-pass-shell-width:520px;
   --entry-pass-browser-zoom:.85;
   --entry-pass-browser-vw:117.6470588vw;
+  --entry-pass-outer-bg:#f1f5f9;
+}
+
+/*
+ * 브라우저 줌으로 #app/body 바깥이 노출되어도 좌우·하단 공백은
+ * 화면 종류와 관계없이 동일한 공통 배경색을 사용한다.
+ */
+html,
+body{
+  min-height:100%;
+  background:var(--entry-pass-outer-bg)!important;
 }
 
 /*
