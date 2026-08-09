@@ -1,6 +1,7 @@
 :root{
   --entry-pass-shell-width:520px;
-  --entry-pass-large-screen-zoom:.90;
+  --entry-pass-browser-zoom:.85;
+  --entry-pass-browser-vw:117.6470588vw;
 }
 
 /*
@@ -15,8 +16,7 @@
 }
 
 /*
- * 아래 화면들은 #app 밖(document.body)에 fixed 레이어로 생성되기 때문에
- * 기존에는 태블릿/PC에서 전체 화면 너비로 벌어졌다.
+ * 아래 화면들은 #app 밖(document.body)에 fixed 레이어로 생성되므로
  * 일반 앱 화면과 동일한 520px 쉘 안에 고정한다.
  */
 body > .past-request-overlay,
@@ -51,13 +51,38 @@ body > .staff-manage-layer .staff-manage-body{
 }
 
 /*
- * 태블릿/PC의 Chrome 브라우저에서는 주소창·탭 바가 세로 공간을 차지하므로
- * 화면별 높이를 개별 수정하지 않고 페이지 전체를 90%로 축소한다.
- * CSS zoom은 레이아웃 자체를 함께 축소하므로 fixed/sticky 화면과 터치 영역도
- * 동일한 비율로 유지된다. 휴대폰 세로 화면(<600px)은 기존 100%를 유지한다.
+ * 일반 Chrome/Edge 브라우저 탭에서는 주소창·탭 바 때문에 사용 가능한 세로 공간이
+ * 설치형 PWA보다 짧다. 화면별 높이를 개별 수정하지 않고 페이지 전체를 85%로 축소한다.
+ * 기기 크기와 관계없이 휴대폰·태블릿·PC 브라우저에 동일하게 적용한다.
  */
-@media (min-width:600px){
+@media (display-mode: browser){
   body{
-    zoom:var(--entry-pass-large-screen-zoom);
+    zoom:var(--entry-pass-browser-zoom);
+  }
+
+  /*
+   * CSS zoom 상태에서 100vw를 직접 쓰는 fixed 레이어는 휴대폰에서 폭도 85%로
+   * 줄어들 수 있다. 1 / 0.85 만큼 viewport 폭을 보정해 #app과 같은 시각 폭을 유지한다.
+   */
+  body > .past-request-overlay,
+  body > .cf-completed-overlay,
+  body > .admin-tools-layer,
+  body > .cf-admin-companies,
+  body > .driver-manage-layer,
+  body > .staff-manage-layer,
+  body > .forced-password-layer{
+    width:min(var(--entry-pass-browser-vw),var(--entry-pass-shell-width))!important;
+  }
+}
+
+/*
+ * 설치된 PWA는 manifest의 display: standalone으로 실행된다.
+ * 주소창이 없는 설치형 앱과 브라우저 전체화면에서는 원래 설계 크기 100%를 유지한다.
+ */
+@media (display-mode: standalone),
+       (display-mode: fullscreen),
+       (display-mode: window-controls-overlay){
+  body{
+    zoom:1!important;
   }
 }
