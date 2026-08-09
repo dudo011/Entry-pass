@@ -670,17 +670,23 @@ async function deleteCompany(request, env, id) {
   return json({ ok: true });
 }
 
-// 업체 공동계정 회원정보(상호·담당자·연락처) 자체 수정
+// 업체 공동계정 회원정보(상호·사업자번호·담당자·연락처) 자체 수정
 async function updateCompanyProfile(request, env) {
   const auth = await requireCompany(request, env); if (auth.error) return auth.error;
   const body = await request.json().catch(() => ({}));
   const companyName = String(body.companyName || '').trim();
   const contactName = String(body.contactName || '').trim();
   const phone = String(body.phone || '').trim();
-  if (!companyName) return error('상호(업체명)를 입력해 주세요.');
+  const businessNoRaw = String(body.businessNo || '').trim();
+  const businessNorm = normBusiness(businessNoRaw);
+  if (!companyName) return error('업체명(상호)을 입력해 주세요.');
+  if (businessNorm.length !== 10) return error('사업자등록번호 10자리를 입력해 주세요.');
   if (!phone) return error('연락처를 입력해 주세요.');
-  await env.DB.prepare('UPDATE company_accounts SET company_name = ?, contact_name = ?, phone = ? WHERE id = ?')
-    .bind(companyName, contactName, phone, auth.account.id).run();
+  const dup = await env.DB.prepare('SELECT id FROM company_accounts WHERE business_no_norm = ? AND id <> ?')
+    .bind(businessNorm, auth.account.id).first();
+  if (dup) return error('이미 가입된 사업자등록번호입니다.');
+  await env.DB.prepare('UPDATE company_accounts SET company_name = ?, contact_name = ?, phone = ?, business_no = ?, business_no_norm = ? WHERE id = ?')
+    .bind(companyName, contactName, phone, businessNoRaw, businessNorm, auth.account.id).run();
   const updated = await env.DB.prepare('SELECT * FROM company_accounts WHERE id = ?').bind(auth.account.id).first();
   return json({ account: publicAccount(updated) });
 }

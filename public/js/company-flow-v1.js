@@ -106,8 +106,8 @@
     return data;
   }
 
-  function head(title, sub = '', back = false) {
-    return `<header class="cf-appbar">${back ? '<button class="cf-head-btn" data-cf-back>‹</button>' : ''}<div><h1>${esc(title)}</h1>${sub ? `<small>${esc(sub)}</small>` : ''}</div><div class="cf-spacer"></div>${state.account ? '<button class="cf-head-btn" data-cf-logout>로그아웃</button>' : ''}</header>`;
+  function head(title, sub = '', back = false, extra = '') {
+    return `<header class="cf-appbar">${back ? '<button class="cf-head-btn" data-cf-back>‹</button>' : ''}<div><h1>${esc(title)}</h1>${sub ? `<small>${esc(sub)}</small>` : ''}</div><div class="cf-spacer"></div>${extra}${state.account ? '<button class="cf-head-btn" data-cf-logout>로그아웃</button>' : ''}</header>`;
   }
 
   function workflowLabel(value) {
@@ -140,19 +140,24 @@
   }
 
   function homeView() {
-    return head(state.account?.companyName || '계약업체', state.account?.contactName ? `${state.account.contactName} 담당자` : '', false) + `<main class="cf-screen"><div class="cf-hero"><strong>출입 신청 관리</strong><span>소속 차량을 등록하고 출입신청과 작업서류를 관리합니다.</span></div><div class="cf-menu"><button class="cf-btn cf-primary" data-cf-view="request">＋ 새 출입 신청</button><button class="cf-btn cf-secondary" data-cf-view="vehicles">🚚 소속 차량 관리</button></div><button class="cf-btn cf-secondary" data-cf-view="profile" style="margin-bottom:18px">✏️ 회원정보 수정</button><div class="cf-title">신청 내역</div><div id="cf_request_list">${state.requests.length ? state.requests.map(requestCard).join('') : '<div class="cf-card" style="color:#64748b;text-align:center">아직 신청 내역이 없습니다.</div>'}</div></main>`;
+    const extra = '<button class="cf-head-btn" data-cf-view="profile">정보수정</button>';
+    return head(state.account?.companyName || '계약업체', state.account?.contactName ? `${state.account.contactName} 담당자` : '', false, extra) + `<main class="cf-screen"><div class="cf-hero"><strong>출입 신청 관리</strong><span>소속 차량을 등록하고 출입신청과 작업서류를 관리합니다.</span></div><button class="cf-btn cf-primary" data-cf-view="request" style="margin-bottom:18px">＋ 새 출입 신청</button><div class="cf-title">신청 내역</div><div id="cf_request_list">${state.requests.length ? state.requests.map(requestCard).join('') : '<div class="cf-card" style="color:#64748b;text-align:center">아직 신청 내역이 없습니다.</div>'}</div></main>`;
   }
 
   function typeOptions(selected = '') {
     return state.vehicleTypes.map((t) => `<option value="${esc(t.id)}" ${selected === t.id ? 'selected' : ''}>${esc(t.name)}</option>`).join('');
   }
 
-  function vehiclesView() {
+  function vehicleSectionHtml() {
     const edit = state.vehicles.find((v) => v.id === state.editingVehicleId);
-    return head('소속 차량 관리', `${state.vehicles.length}대 등록`, true) + `<main class="cf-screen"><div class="cf-card"><div class="cf-title">${edit ? '차량정보 수정' : '차량 등록'}</div>
+    return `<div class="cf-card"><div class="cf-title">${edit ? '차량정보 수정' : '차량 등록'}</div>
       <label class="cf-field"><span>차량번호</span><input id="cf_v_number" value="${esc(edit?.vehicleNumber || '')}"></label><label class="cf-field"><span>기본 운전자</span><input id="cf_v_driver" value="${esc(edit?.driverName || '')}"></label><label class="cf-field"><span>기본 운전자 연락처</span><input id="cf_v_phone" type="tel" value="${esc(edit?.driverPhone || '')}"></label><label class="cf-field"><span>기본 차량 유형</span><select id="cf_v_type"><option value="">선택 안 함</option>${typeOptions(edit?.defaultVehicleTypeId || '')}</select></label>
       <div class="cf-row2">${edit ? '<button class="cf-btn cf-secondary" id="cf_v_cancel">취소</button>' : '<span></span>'}<button class="cf-btn cf-primary" id="cf_v_save">${edit ? '수정 저장' : '차량 등록'}</button></div></div><div class="cf-title">등록 차량</div>
-      ${state.vehicles.length ? state.vehicles.map((v) => `<div class="cf-item"><div class="cf-item-top"><strong>${esc(v.vehicleNumber)}</strong></div><div class="cf-meta">기본 운전자 ${esc(v.driverName)} · ${esc(v.driverPhone)}${v.defaultVehicleTypeId ? `<br>${esc(state.vehicleTypes.find((t) => t.id === v.defaultVehicleTypeId)?.name || '')}` : ''}</div><div class="cf-vehicle-actions"><button class="cf-btn cf-secondary cf-small" data-cf-edit-vehicle="${esc(v.id)}">수정</button><button class="cf-btn cf-danger cf-small" data-cf-delete-vehicle="${esc(v.id)}">삭제</button></div></div>`).join('') : '<div class="cf-card" style="color:#64748b">등록된 차량이 없습니다.</div>'}</main>`;
+      ${state.vehicles.length ? state.vehicles.map((v) => `<div class="cf-item"><div class="cf-item-top"><strong>${esc(v.vehicleNumber)}</strong></div><div class="cf-meta">기본 운전자 ${esc(v.driverName)} · ${esc(v.driverPhone)}${v.defaultVehicleTypeId ? `<br>${esc(state.vehicleTypes.find((t) => t.id === v.defaultVehicleTypeId)?.name || '')}` : ''}</div><div class="cf-vehicle-actions"><button class="cf-btn cf-secondary cf-small" data-cf-edit-vehicle="${esc(v.id)}">수정</button><button class="cf-btn cf-danger cf-small" data-cf-delete-vehicle="${esc(v.id)}">삭제</button></div></div>`).join('') : '<div class="cf-card" style="color:#64748b">등록된 차량이 없습니다.</div>'}`;
+  }
+
+  function vehiclesView() {
+    return head('소속 차량 관리', `${state.vehicles.length}대 등록`, true) + `<main class="cf-screen">${vehicleSectionHtml()}</main>`;
   }
 
   function requiredDocs(typeId) {
@@ -182,12 +187,16 @@
 
   function profileView() {
     const a = state.account || {};
-    return head('회원정보 수정', '', true) + `<main class="cf-screen"><div class="cf-card">
-      <label class="cf-field"><span>상호(업체명)</span><input id="cf_p_company" value="${esc(a.companyName || '')}"></label>
-      <label class="cf-field"><span>담당자명</span><input id="cf_p_name" value="${esc(a.contactName || '')}"></label>
+    return head('정보수정', '', true) + `<main class="cf-screen">
+      <div class="cf-title">기본정보</div>
+      <div class="cf-card">
+      <label class="cf-field"><span>업체명(상호)</span><input id="cf_p_company" value="${esc(a.companyName || '')}"></label>
+      <label class="cf-field"><span>사업자등록번호</span><input id="cf_p_business" inputmode="numeric" placeholder="123-45-67890" value="${esc(fmtBusiness(a.businessNo || ''))}"></label>
       <label class="cf-field"><span>담당자 연락처</span><input id="cf_p_phone" type="tel" value="${esc(a.phone || '')}"></label>
-      <div class="cf-meta" style="margin:2px 2px 14px">로그인 아이디(${esc(a.loginId || '')})와 사업자등록번호는 변경할 수 없습니다. 비밀번호를 잊으신 경우 자재센터 관리자에게 초기화를 요청해 주세요.</div>
-      <button class="cf-btn cf-primary" id="cf_p_save">저장</button></div></main>`;
+      <div class="cf-meta" style="margin:2px 2px 14px">로그인 아이디(${esc(a.loginId || '')})는 변경할 수 없습니다. 비밀번호를 잊으신 경우 자재센터 관리자에게 초기화를 요청해 주세요.</div>
+      <button class="cf-btn cf-primary" id="cf_p_save">기본정보 저장</button></div>
+      <div class="cf-title">차량관리</div>
+      ${vehicleSectionHtml()}</main>`;
   }
 
   function detailView() {
@@ -215,8 +224,9 @@
   function bindCompany() {
     app.querySelectorAll('[data-cf-view]').forEach((b) => b.onclick = async () => {
       const view = b.dataset.cfView;
-      if (view === 'vehicles' || view === 'request' || view === 'home') { try { await refreshHomeData(); } catch (e) { toast(e.message); } }
+      if (view === 'vehicles' || view === 'request' || view === 'home' || view === 'profile') { try { await refreshHomeData(); } catch (e) { toast(e.message); } }
       if (view === 'request') state.requestFiles = {};
+      if (view === 'profile' || view === 'vehicles') state.editingVehicleId = '';
       setView(view);
     });
     app.querySelectorAll('[data-cf-back]').forEach((b) => b.onclick = () => history.back());
@@ -267,11 +277,14 @@
     app.querySelectorAll('[data-cf-edit-vehicle]').forEach((b) => b.onclick = () => { state.editingVehicleId = b.dataset.cfEditVehicle; render(); window.scrollTo(0, 0); });
     app.querySelectorAll('[data-cf-delete-vehicle]').forEach((b) => b.onclick = async () => { if (!confirm('이 차량을 소속 차량 목록에서 삭제할까요? 기존 출입기록은 유지됩니다.')) return; try { await api(`/api/company/vehicles/${encodeURIComponent(b.dataset.cfDeleteVehicle)}`, { method: 'DELETE' }); await refreshHomeData(); render(); } catch (e) { toast(e.message); } });
 
+    const pbiz = document.getElementById('cf_p_business');
+    if (pbiz) pbiz.oninput = () => { pbiz.value = fmtBusiness(pbiz.value); };
     document.getElementById('cf_p_save')?.addEventListener('click', async () => {
-      const companyName = formValue('cf_p_company').trim(), contactName = formValue('cf_p_name').trim(), phone = formValue('cf_p_phone').trim();
-      if (!companyName) return toast('상호(업체명)를 입력해 주세요.');
+      const companyName = formValue('cf_p_company').trim(), businessNo = formValue('cf_p_business').trim(), phone = formValue('cf_p_phone').trim();
+      if (!companyName) return toast('업체명(상호)을 입력해 주세요.');
+      if (businessNo.replace(/\D/g, '').length !== 10) return toast('사업자등록번호 10자리를 입력해 주세요.');
       if (!phone) return toast('담당자 연락처를 입력해 주세요.');
-      try { const out = await api('/api/company/me', { method: 'PUT', body: { companyName, contactName, phone } }); state.account = out.account; toast('회원정보를 저장했습니다.'); history.back(); }
+      try { const out = await api('/api/company/me', { method: 'PUT', body: { companyName, businessNo, phone, contactName: state.account?.contactName || '' } }); state.account = out.account; toast('기본정보를 저장했습니다.'); }
       catch (e) { toast(e.message); }
     });
 
