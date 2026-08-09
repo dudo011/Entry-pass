@@ -4,13 +4,13 @@
   --entry-pass-browser-vw:117.6470588vw;
   --entry-pass-browser-vh:117.6470588dvh;
   --entry-pass-outer-bg:#f1f5f9;
-  --entry-pass-center-bg:#f8fafc;
+  --entry-pass-center-bg:var(--bg,#f8fafc);
   --entry-pass-visible-shell-half:260px;
 }
 
 /*
  * 앱 바깥 배경을 브라우저 전체 높이에 걸쳐 3구역으로 유지한다.
- * 좌/우 = 공통 바깥 배경, 가운데 = 앱 본문 배경.
+ * 좌/우 = 공통 바깥 배경, 가운데 = 실제 앱 테마 배경(--bg).
  * 콘텐츠 높이와 무관하게 브라우저 최하단까지 같은 세로 구조가 이어진다.
  */
 html{
@@ -34,13 +34,18 @@ body{
 
 /*
  * 모든 일반 앱 화면은 기존 #app 기준폭(520px)을 공통으로 사용한다.
- * 휴대폰에서는 화면폭 100%, 태블릿/PC에서는 520px로 중앙 정렬된다.
+ * 실제 #app 배경은 투명하게 두고, 바로 뒤의 동일한 중앙 배경판을 사용한다.
+ * 이렇게 하면 85% zoom 경계에서 생기던 미세한 색 차이/수평 띠가 사라진다.
  */
-#app{
+#app,
+#app.company-flow-active,
+#app.cf-driver{
   width:min(100%,var(--entry-pass-shell-width))!important;
   max-width:var(--entry-pass-shell-width)!important;
   margin-left:auto!important;
   margin-right:auto!important;
+  background:transparent!important;
+  box-shadow:none!important;
 }
 
 /*
