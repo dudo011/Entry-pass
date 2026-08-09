@@ -218,33 +218,23 @@
     finally { loading = false; }
   }
 
-  async function apply(forceRefresh = false) {
+  // 캐시된 데이터로 탭/카운트/장식/필터를 즉시 반영한다(네트워크 대기 없음).
+  function applyVisual() {
     const tabInfo = prepareTabs();
     if (!tabInfo) return;
-    await refreshRecords(forceRefresh);
     applyCounts(tabInfo);
     decorateWorkflowCards();
     filterCurrentList();
   }
 
+  // 네트워크로 최신 신청을 받아온 뒤 다시 반영한다(변경 없으면 화면 그대로).
+  async function refresh(force = false) {
+    await refreshRecords(force);
+    applyVisual();
+  }
+
   const app = document.getElementById('app');
   if (!app) return;
-  let scheduled = false;
-  let lastApplyAt = 0;
-  const MIN_APPLY_GAP = 500; // 재적용 최소 간격(ms). 잔여 변경이 있어도 60fps 폭주로 화면이 멈추지 않게 하는 안전장치.
-  const schedule = (forceRefresh = false) => {
-    if (scheduled) return;
-    scheduled = true;
-    const run = () => {
-      scheduled = false;
-      lastApplyAt = Date.now();
-      void apply(forceRefresh);
-    };
-    const wait = Math.max(0, MIN_APPLY_GAP - (Date.now() - lastApplyAt));
-    // 마지막 적용 후 충분히 지났으면 다음 프레임에, 아니면 남은 간격만큼 지연.
-    if (wait === 0) requestAnimationFrame(run);
-    else setTimeout(run, wait);
-  };
 
   /* 완료 탭 외의 어떤 탭을 눌러도 완료 모드는 즉시 해제한다. */
   document.addEventListener('click', (event) => {
@@ -253,13 +243,17 @@
     completedMode = tab.dataset.workflowTab === 'completed';
   }, true);
 
-  new MutationObserver(() => schedule(false)).observe(app, {
+  // 관찰자 콜백은 mo-raf-guard가 rAF로 미뤄 "페인트 직전"에 실행된다. 여기서 캐시된
+  // 데이터로 즉시 필터링하므로, 코어가 그린 전체 승인/완료 목록이 잠깐 보였다 사라지는
+  // 깜빡임 없이 처음부터 오늘 것만 보인다. (네트워크 갱신은 아래 폴링/포커스에서 수행)
+  new MutationObserver(applyVisual).observe(app, {
     childList: true,
     subtree: true,
     characterData: true,
   });
 
-  window.addEventListener('focus', () => schedule(true));
-  setInterval(() => schedule(true), 5000);
-  schedule(true);
+  window.addEventListener('focus', () => refresh(true));
+  setInterval(() => refresh(true), 5000);
+  applyVisual();
+  refresh(true);
 })();

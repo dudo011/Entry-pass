@@ -8,5 +8,5 @@
     return;
   }
 
-  document.write('<scr' + 'ipt src="/js/company-flow-v1.js?v=20260808-001"></scr' + 'ipt>');
+  document.write('<scr' + 'ipt src="/js/company-flow-v1.js?v=20260808-020"></scr' + 'ipt>');
 })();

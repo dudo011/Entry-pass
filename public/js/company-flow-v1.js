@@ -371,7 +371,15 @@
 
   async function openCompanyManager() {
     document.querySelector('.cf-admin-companies')?.remove();
-    const layer = document.createElement('section'); layer.className = 'cf-admin-companies'; layer.innerHTML = `<header class="cf-appbar"><button class="cf-head-btn" data-close>‹</button><div><h1>업체관리</h1><small>업체 공동계정과 등록차량 현황</small></div></header><main id="cf_company_admin_list"><div class="cf-screen">불러오는 중…</div></main>`; document.body.append(layer); layer.querySelector('[data-close]').onclick = () => layer.remove();
+    const layer = document.createElement('section'); layer.className = 'cf-admin-companies';
+    // 헤더: 뒤로가기 버튼·설명 없이 제목만 크게(다른 관리 화면과 동일한 24px).
+    layer.innerHTML = `<header class="cf-appbar"><div><h1 style="font-size:24px;font-weight:800;letter-spacing:-.5px;margin:0">업체관리</h1></div></header><main id="cf_company_admin_list"><div class="cf-screen">불러오는 중…</div></main>`;
+    document.body.append(layer);
+    // 하드웨어/브라우저 뒤로가기 시 앱이 종료되지 않고 이 화면만 닫혀 이전(관리자모드) 화면으로
+    // 돌아가도록 히스토리 상태를 쌓고 popstate에서 닫는다.
+    history.pushState({ adminCompanyManager: true }, '');
+    const onPop = () => { window.removeEventListener('popstate', onPop); if (layer.isConnected) layer.remove(); };
+    window.addEventListener('popstate', onPop);
     try { const res = await fetch('/api/admin/companies'); const data = await res.json(); if (!res.ok) throw new Error(data?.error || '조회 실패'); layer.querySelector('#cf_company_admin_list').innerHTML = `<div class="cf-screen">${data.length ? data.map((c) => `<div class="cf-admin-company"><strong>${esc(c.companyName)}</strong><div>아이디 ${esc(c.loginId)} · 사업자번호 ${esc(c.businessNo)}<br>담당자 ${esc(c.contactName)} · ${esc(c.phone)} · 등록차량 ${c.vehicleCount}대</div></div>`).join('') : '<div class="cf-card">등록 업체가 없습니다.</div>'}</div>`; }
     catch (e) { layer.querySelector('#cf_company_admin_list').innerHTML = `<div class="cf-screen"><div class="cf-card">${esc(e.message)}</div></div>`; }
   }
