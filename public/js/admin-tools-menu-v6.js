@@ -5,8 +5,8 @@
   const style = document.createElement('style');
   style.textContent = `
     .admin-tools-head,.driver-manage-head,.staff-manage-head{
-      height:76px!important;min-height:76px!important;box-sizing:border-box!important;
-      padding:14px 16px!important;display:flex!important;align-items:center!important
+      height:68px!important;min-height:68px!important;box-sizing:border-box!important;
+      padding:13px 16px!important;display:flex!important;align-items:center!important
     }
     .admin-tools-layer{
       position:fixed;inset:0;z-index:50000;background:#f8fafc;overflow:auto;
@@ -14,7 +14,7 @@
     }
     .admin-tools-layer[hidden]{display:none!important}
     .admin-tools-head{position:sticky;top:0;z-index:2;background:#0f172a;color:#fff}
-    .admin-tools-head h2,.driver-manage-head h2,.staff-manage-head h2{margin:0;font-size:24px;letter-spacing:-.7px}
+    .admin-tools-head h2,.driver-manage-head h2,.staff-manage-head h2{margin:0;font-size:23px;letter-spacing:-.6px}
     .driver-manage-head,.staff-manage-head{position:sticky!important;top:0!important;z-index:2!important;gap:0!important;background:#0f172a!important;color:#fff!important}
     .driver-manage-head > button,.staff-manage-head > button{display:none!important}
     .admin-tools-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;padding:20px 16px 28px}

@@ -644,23 +644,37 @@ async function companyRequestMeta(request, env, id) {
 async function listCompanies(request, env) {
   const auth = await requireStaff(request, env); if (auth.error) return auth.error;
   const rows = await env.DB.prepare(`
-    SELECT a.id, a.login_id, a.company_name, a.business_no, a.contact_name, a.phone, a.account_status, a.created_at,
+    SELECT a.id, a.login_id, a.company_name, a.business_no, a.contact_name, a.phone,
+           a.contract_type_id, a.account_status, a.created_at,
            COUNT(v.id) AS vehicle_count
       FROM company_accounts a LEFT JOIN company_vehicles v ON v.company_account_id = a.id
      GROUP BY a.id ORDER BY a.company_name, a.login_id
   `).all();
   return json((rows.results || []).map((r) => ({
     id: r.id, loginId: r.login_id, companyName: r.company_name, businessNo: r.business_no,
-    contactName: r.contact_name, phone: r.phone, accountStatus: r.account_status,
+    contactName: r.contact_name, phone: r.phone, contractTypeId: r.contract_type_id || '',
+    accountStatus: r.account_status,
     vehicleCount: Number(r.vehicle_count || 0), createdAt: r.created_at,
   })));
+}
+
+async function deleteCompany(request, env, id) {
+  const auth = await requireStaff(request, env, true); if (auth.error) return auth.error;
+  const row = await env.DB.prepare('SELECT id FROM company_accounts WHERE id = ?').bind(id).first();
+  if (!row) return error('업체 계정을 찾을 수 없습니다.', 404);
+  await env.DB.batch([
+    env.DB.prepare('DELETE FROM company_sessions WHERE company_account_id = ?').bind(id),
+    env.DB.prepare('DELETE FROM company_vehicles WHERE company_account_id = ?').bind(id),
+    env.DB.prepare('DELETE FROM company_accounts WHERE id = ?').bind(id),
+  ]);
+  return json({ ok: true });
 }
 
 export function isCompanyFlowPath(path) {
   return path.startsWith('/api/company/')
     || path.startsWith('/api/driver-access/')
     || path.startsWith('/api/admin/company-requests/')
-    || path === '/api/admin/companies';
+    || path.startsWith('/api/admin/companies');
 }
 
 export async function handleCompanyFlowApi(request, env) {
@@ -731,6 +745,8 @@ export async function handleCompanyFlowApi(request, env) {
   const metaMatch = path.match(/^\/api\/admin\/company-requests\/([^/]+)\/meta$/);
   if (metaMatch && method === 'GET') return companyRequestMeta(request, env, decodeURIComponent(metaMatch[1]));
   if (method === 'GET' && path === '/api/admin/companies') return listCompanies(request, env);
+  const companyMatch = path.match(/^\/api\/admin\/companies\/([^/]+)$/);
+  if (companyMatch && method === 'DELETE') return deleteCompany(request, env, decodeURIComponent(companyMatch[1]));
 
   return null;
 }

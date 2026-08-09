@@ -78,7 +78,7 @@
     .cf-driver{min-height:100dvh;background:#f8fafc}.cf-driver .cf-screen{max-width:720px}.cf-rules{padding-left:0;list-style:none;margin:0}.cf-rules li{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #e2e8f0;line-height:1.45}.cf-rules li:last-child{border-bottom:0}
     .cf-num{flex:0 0 28px;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#dbeafe;color:#1d4ed8;font-weight:900}.cf-route-img{width:100%;height:auto;border-radius:12px;border:1px solid #e2e8f0;background:#fff}.cf-route-steps{padding-left:22px;line-height:1.65}
     .cf-agree{display:flex;gap:10px;align-items:flex-start;font-weight:800;line-height:1.45;margin:14px 0}.cf-agree input{width:22px;height:22px;margin-top:1px}.cf-photo input[type=file]{width:100%;padding:11px;border:1px dashed #94a3b8;border-radius:12px;background:#fff}
-    .cf-admin-companies{position:fixed;inset:0;z-index:95000;background:#f8fafc;overflow:auto}.cf-admin-company{padding:14px;border-bottom:1px solid #e2e8f0;background:#fff}.cf-admin-company strong{font-size:17px}.cf-admin-company div{margin-top:5px;color:#64748b;font-size:14px;line-height:1.45}
+    .cf-admin-companies{position:fixed;inset:0;z-index:95000;background:#f8fafc;overflow:auto}.cf-admin-company{display:flex;gap:10px;align-items:center;padding:14px;border-bottom:1px solid #e2e8f0;background:#fff}.cf-admin-company-info{flex:1;min-width:0}.cf-admin-company strong{display:block;font-size:16px}.cf-admin-company-info>div{margin-top:5px;color:#64748b;font-size:14px;line-height:1.45}.cf-admin-company-del{flex:0 0 auto;width:auto}
     .cf-staff-workflow{margin-top:14px}.cf-share-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.cf-annot{position:fixed;inset:0;z-index:100000;background:#cbd5e1;display:flex;flex-direction:column}
     .cf-annot-head{height:68px;background:#0f172a;color:#fff;display:flex;align-items:center;gap:8px;padding:10px}.cf-annot-head strong{flex:1;text-align:center}.cf-annot-head button{height:44px;border:0;border-radius:10px;padding:0 13px;font-weight:900}
     .cf-annot-stage{position:relative;flex:1;overflow:auto;background:#94a3b8;padding:8px;touch-action:none}.cf-annot-wrap{position:relative;margin:0 auto;background:#fff;width:min(100%,900px)}.cf-annot-wrap img{display:block;width:100%;height:auto}.cf-annot-wrap canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
@@ -369,19 +369,56 @@
     } catch { /* legacy request */ }
   }
 
+  function contractTypeName(id) {
+    if (!id) return '';
+    return state.vehicleTypes.find((t) => t.id === id)?.name || '';
+  }
+
+  function companyAdminRow(c) {
+    const contract = contractTypeName(c.contractTypeId);
+    const line2 = [contract, c.phone].filter(Boolean).join(', ');
+    return `<div class="cf-admin-company"><div class="cf-admin-company-info"><strong>${esc(c.companyName)} (${esc(c.businessNo)})</strong><div>${esc(line2)}</div></div><button class="cf-btn cf-danger cf-small cf-admin-company-del" data-cf-company-del="${esc(c.id)}" data-cf-company-name="${esc(c.companyName)}">삭제</button></div>`;
+  }
+
   async function openCompanyManager() {
     document.querySelector('.cf-admin-companies')?.remove();
     const layer = document.createElement('section'); layer.className = 'cf-admin-companies';
     // 헤더: 뒤로가기 버튼·설명 없이 제목만 크게(다른 관리 화면과 동일한 24px).
-    layer.innerHTML = `<header class="cf-appbar"><div><h1 style="font-size:24px;font-weight:800;letter-spacing:-.5px;margin:0">업체관리</h1></div></header><main id="cf_company_admin_list"><div class="cf-screen">불러오는 중…</div></main>`;
+    layer.innerHTML = `<header class="cf-appbar"><div><h1 style="font-size:23px;font-weight:800;letter-spacing:-.6px;margin:0">업체관리</h1></div></header><main id="cf_company_admin_list"><div class="cf-screen">불러오는 중…</div></main>`;
     document.body.append(layer);
     // 하드웨어/브라우저 뒤로가기 시 앱이 종료되지 않고 이 화면만 닫혀 이전(관리자모드) 화면으로
     // 돌아가도록 히스토리 상태를 쌓고 popstate에서 닫는다.
     history.pushState({ adminCompanyManager: true }, '');
     const onPop = () => { window.removeEventListener('popstate', onPop); if (layer.isConnected) layer.remove(); };
     window.addEventListener('popstate', onPop);
-    try { const res = await fetch('/api/admin/companies'); const data = await res.json(); if (!res.ok) throw new Error(data?.error || '조회 실패'); layer.querySelector('#cf_company_admin_list').innerHTML = `<div class="cf-screen">${data.length ? data.map((c) => `<div class="cf-admin-company"><strong>${esc(c.companyName)}</strong><div>아이디 ${esc(c.loginId)} · 사업자번호 ${esc(c.businessNo)}<br>담당자 ${esc(c.contactName)} · ${esc(c.phone)} · 등록차량 ${c.vehicleCount}대</div></div>`).join('') : '<div class="cf-card">등록 업체가 없습니다.</div>'}</div>`; }
-    catch (e) { layer.querySelector('#cf_company_admin_list').innerHTML = `<div class="cf-screen"><div class="cf-card">${esc(e.message)}</div></div>`; }
+
+    const listBox = layer.querySelector('#cf_company_admin_list');
+    async function loadList() {
+      try {
+        if (!state.vehicleTypes.length) { try { state.vehicleTypes = await api('/api/vehicle-types', { companyAuth: false }); } catch { /* noop */ } }
+        const res = await fetch('/api/admin/companies'); const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || '조회 실패');
+        listBox.innerHTML = `<div class="cf-screen">${data.length ? data.map(companyAdminRow).join('') : '<div class="cf-card">등록 업체가 없습니다.</div>'}</div>`;
+      } catch (e) {
+        listBox.innerHTML = `<div class="cf-screen"><div class="cf-card">${esc(e.message)}</div></div>`;
+      }
+    }
+
+    listBox.addEventListener('click', async (event) => {
+      const btn = event.target.closest?.('[data-cf-company-del]'); if (!btn) return;
+      const id = btn.dataset.cfCompanyDel; const name = btn.dataset.cfCompanyName || '';
+      if (!confirm(`'${name}' 업체 계정을 삭제하시겠습니까?\n등록된 차량 정보도 함께 삭제됩니다.`)) return;
+      btn.disabled = true;
+      try {
+        const res = await fetch(`/api/admin/companies/${encodeURIComponent(id)}`, { method: 'DELETE' });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.error || '삭제하지 못했습니다.');
+        toast('업체를 삭제했습니다.');
+        await loadList();
+      } catch (e) { btn.disabled = false; toast(e.message); }
+    });
+
+    await loadList();
   }
 
   document.addEventListener('click', (event) => {
