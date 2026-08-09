@@ -2,12 +2,13 @@
   --entry-pass-shell-width:520px;
   --entry-pass-browser-zoom:.85;
   --entry-pass-browser-vw:117.6470588vw;
+  --entry-pass-browser-vh:117.6470588dvh;
   --entry-pass-outer-bg:#f1f5f9;
 }
 
 /*
- * 브라우저 줌으로 #app/body 바깥이 노출되어도 좌우·하단 공백은
- * 화면 종류와 관계없이 동일한 공통 배경색을 사용한다.
+ * 앱 바깥의 좌우 여백은 화면 종류와 관계없이 동일한 공통색을 사용한다.
+ * 가운데 앱 영역은 #app 자체 배경을 사용하므로 각 화면의 배경색을 그대로 유지한다.
  */
 html,
 body{
@@ -69,11 +70,22 @@ body > .staff-manage-layer .staff-manage-body{
 @media (display-mode: browser){
   body{
     zoom:var(--entry-pass-browser-zoom);
+    min-height:var(--entry-pass-browser-vh)!important;
+  }
+
+  /*
+   * 줌 후에도 가운데 앱 배경이 브라우저 맨 아래까지 이어지게 한다.
+   * 117.647dvh × 0.85 = 실제 보이는 높이 100dvh 이므로,
+   * 하단도 '좌측 공백 | 현재 화면 배경 | 우측 공백' 구조가 그대로 이어진다.
+   */
+  #app{
+    min-height:var(--entry-pass-browser-vh)!important;
   }
 
   /*
    * CSS zoom 상태에서 100vw를 직접 쓰는 fixed 레이어는 휴대폰에서 폭도 85%로
    * 줄어들 수 있다. 1 / 0.85 만큼 viewport 폭을 보정해 #app과 같은 시각 폭을 유지한다.
+   * 높이 역시 같은 비율로 보정해 레이어 배경이 브라우저 하단까지 이어지게 한다.
    */
   body > .past-request-overlay,
   body > .cf-completed-overlay,
@@ -83,6 +95,9 @@ body > .staff-manage-layer .staff-manage-body{
   body > .staff-manage-layer,
   body > .forced-password-layer{
     width:min(var(--entry-pass-browser-vw),var(--entry-pass-shell-width))!important;
+    height:var(--entry-pass-browser-vh)!important;
+    min-height:var(--entry-pass-browser-vh)!important;
+    bottom:auto!important;
   }
 }
 
