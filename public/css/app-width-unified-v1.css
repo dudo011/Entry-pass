@@ -4,16 +4,32 @@
   --entry-pass-browser-vw:117.6470588vw;
   --entry-pass-browser-vh:117.6470588dvh;
   --entry-pass-outer-bg:#f1f5f9;
+  --entry-pass-center-bg:#f8fafc;
+  --entry-pass-visible-shell-half:260px;
 }
 
 /*
- * 앱 바깥의 좌우 여백은 화면 종류와 관계없이 동일한 공통색을 사용한다.
- * 가운데 앱 영역은 #app 자체 배경을 사용하므로 각 화면의 배경색을 그대로 유지한다.
+ * 앱 바깥 배경을 브라우저 전체 높이에 걸쳐 3구역으로 유지한다.
+ * 좌/우 = 공통 바깥 배경, 가운데 = 앱 본문 배경.
+ * 콘텐츠 높이와 무관하게 브라우저 최하단까지 같은 세로 구조가 이어진다.
  */
-html,
+html{
+  min-height:100%;
+  background:
+    linear-gradient(
+      to right,
+      var(--entry-pass-outer-bg) 0,
+      var(--entry-pass-outer-bg) max(0px,calc(50% - var(--entry-pass-visible-shell-half))),
+      var(--entry-pass-center-bg) max(0px,calc(50% - var(--entry-pass-visible-shell-half))),
+      var(--entry-pass-center-bg) min(100%,calc(50% + var(--entry-pass-visible-shell-half))),
+      var(--entry-pass-outer-bg) min(100%,calc(50% + var(--entry-pass-visible-shell-half))),
+      var(--entry-pass-outer-bg) 100%
+    ) fixed!important;
+}
+
 body{
   min-height:100%;
-  background:var(--entry-pass-outer-bg)!important;
+  background:transparent!important;
 }
 
 /*
@@ -68,16 +84,16 @@ body > .staff-manage-layer .staff-manage-body{
  * 기기 크기와 관계없이 휴대폰·태블릿·PC 브라우저에 동일하게 적용한다.
  */
 @media (display-mode: browser){
+  :root{
+    /* 520px × 0.85 = 실제 보이는 앱 폭 442px, 절반은 221px */
+    --entry-pass-visible-shell-half:221px;
+  }
+
   body{
     zoom:var(--entry-pass-browser-zoom);
     min-height:var(--entry-pass-browser-vh)!important;
   }
 
-  /*
-   * 줌 후에도 가운데 앱 배경이 브라우저 맨 아래까지 이어지게 한다.
-   * 117.647dvh × 0.85 = 실제 보이는 높이 100dvh 이므로,
-   * 하단도 '좌측 공백 | 현재 화면 배경 | 우측 공백' 구조가 그대로 이어진다.
-   */
   #app{
     min-height:var(--entry-pass-browser-vh)!important;
   }
@@ -108,6 +124,10 @@ body > .staff-manage-layer .staff-manage-body{
 @media (display-mode: standalone),
        (display-mode: fullscreen),
        (display-mode: window-controls-overlay){
+  :root{
+    --entry-pass-visible-shell-half:260px;
+  }
+
   body{
     zoom:1!important;
   }
