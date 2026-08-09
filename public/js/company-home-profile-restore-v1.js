@@ -5,7 +5,7 @@
   /*
    * 2026-08-09 회원정보 수정 기능을 추가하면서 업체 홈의 코어 마크업이
    * `업체명 헤더 + 새 출입 신청 1개` 형태로 바뀌어, 기존 홈 보정
-   * (출입 신청 관리 / 새 출입 신청 + 출입 이력 / 한 줄 신청내역)이
+   * (신청 내역 / 새 출입 신청 + 출입 이력 / 한 줄 신청내역)이
    * 더 이상 동작하지 않게 된 회귀를 복원한다.
    *
    * 회원정보 수정 기능 자체는 유지한다. 코어가 만든 profile 버튼을 잠시
@@ -14,6 +14,20 @@
    * 코어 bindCompany()는 최초 렌더 시 view='profile'을 클로저에 보관하므로
    * data-cf-view를 잠시 바꿔도 실제 클릭 대상은 정보수정 화면 그대로다.
    */
+
+  const style = document.createElement('style');
+  style.textContent = `
+    #app.company-flow-active .cf-appbar .cf-profile-home-bridge{
+      width:auto!important;
+      min-width:max-content!important;
+      max-width:none!important;
+      padding-left:11px!important;
+      padding-right:11px!important;
+      font-size:14px!important;
+      white-space:nowrap!important;
+    }
+  `;
+  document.head.appendChild(style);
 
   function prepareHome() {
     const requestList = document.getElementById('cf_request_list');
@@ -41,11 +55,14 @@
       return;
     }
 
-    /* 헤드로 이동된 뒤에는 기능과 문구를 정보수정으로 확정한다. */
+    /* 헤드로 이동된 뒤에는 홈 제목과 회원정보 기능을 최종 확정한다. */
     profileButton.classList.add('cf-profile-home-bridge');
     if (profileButton.dataset.cfView !== 'profile') profileButton.dataset.cfView = 'profile';
-    if (profileButton.textContent !== '정보수정') profileButton.textContent = '정보수정';
-    profileButton.setAttribute('aria-label', '정보수정');
+    if (profileButton.textContent !== '회원정보(차량관리)') profileButton.textContent = '회원정보(차량관리)';
+    profileButton.setAttribute('aria-label', '회원정보(차량관리)');
+
+    const title = appbar.querySelector('h1');
+    if (title && title.textContent !== '신청 내역') title.textContent = '신청 내역';
   }
 
   let scheduled = false;
