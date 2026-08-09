@@ -59,17 +59,38 @@ Entry-Pass는 자재센터 외부 차량 출입을 사전에 신청·승인하�
 
 ## 3. 현재 주요 파일 설명
 
-> 실제 동작 여부는 반드시 `public/index.html`의 로드 목록과 캐시 버전을 함께 확인한다.
+> 파일도 사용자 영역별로 구분한다. 실제 동작 여부는 반드시 `public/index.html`의 로드 목록과 캐시 버전을 함께 확인한다.
+
+### 3.1 공통 기반 파일
+
+계약업체 화면과 자재센터 직원 화면 양쪽에 영향을 주거나 앱 전체 실행·레이아웃을 담당하는 파일이다.
 
 | 파일 | 역할 |
 |---|---|
-| `src/worker.js` | 현재 Worker 단일 진입점. 과거 v2~v10 레이어를 내부에 동작 보존 병합하고 신규 업체 흐름과 직원 API를 라우팅 |
+| `src/worker.js` | 현재 Worker 단일 진입점. 과거 v2~v10 레이어를 내부에 동작 보존 병합하고 계약업체·직원 API를 함께 라우팅 |
+| `public/index.html` | 실제 CSS/JS 로드 순서와 캐시 버전의 기준 |
+| `public/js/mo-raf-guard.js` | MutationObserver 상호 재발화에 의한 UI 하드 프리즈 방지 |
+| `public/css/app-width-unified-v1.css` | 모든 일반 화면 520px 폭 통일, 브라우저 85% zoom, PWA 100%, 외부 배경 통일 |
+| `wrangler.toml` | Cloudflare Worker/D1 설정 |
+
+### 3.2 계약업체·차량기사 관련 파일
+
+계약업체 가입·정보수정·차량관리·출입신청과 승인 후 차량기사 보안링크 흐름에 관련된 파일이다.
+
+#### 서버/API
+
+| 파일 | 역할 |
+|---|---|
 | `src/company-flow-api.js` | 업체 인증, 차량관리, 업체 정보수정, 신청 관련 기본 API |
 | `src/company-registration-v2.js` | 계약업체 회원가입 및 계정 생성 |
 | `src/company-contract-request-v2.js` | 업체 계약유형 강제 및 신규 출입신청 wrapper |
 | `src/company-driver-share-v2.js` | 승인 후 기사 링크 조회·공유 데이터 |
 | `src/company-driver-access-v3.js` | 기사 보안링크 조회, 안전수칙 진행, 현장사진 업로드, 자동완료 |
-| `public/index.html` | 실제 CSS/JS 로드 순서와 캐시 버전의 기준 |
+
+#### 계약업체 화면
+
+| 파일 | 역할 |
+|---|---|
 | `public/js/company-flow-v1.js` | 계약업체 기본 화면·상태·API 공통 처리 |
 | `public/js/company-flow-entry-loader-v2.js` | 업체 흐름 진입 및 화면 연결 |
 | `public/js/company-registration-ui-v2.js` | 업체 회원가입 UI |
@@ -80,24 +101,45 @@ Entry-Pass는 자재센터 외부 차량 출입을 사전에 신청·승인하�
 | `public/js/company-request-flow-v2.js` | 계약업체 신규 출입신청 전체 흐름 |
 | `public/js/company-request-prefetch-v1.js` | 새 신청 진입 전에 계약정보·차량 등 데이터 사전 캐시 |
 | `public/js/company-flow-ui-fix.js` | 계약업체 화면 공통 헤더·스타일·세부 UI 보정 |
+| `public/js/safety-highlights-v2.js` | 계약유형별 안전수칙 화면 보정 |
 | `public/js/transport-route-refined.js` | 계약유형별 차량 동선 화면 |
 | `public/js/route-image-cache-v2.js` | 동선 이미지 캐시 버전 강제 갱신 |
+| `public/js/application-flow-refined.js` | 업체 신청 화면 보정. 차량동선 화면은 덮어쓰지 않도록 유지 |
+| `public/js/work-plan-form-editor.js` | 작업계획서 앱 내 작성·편집 기능 |
+| `public/js/work-plan-stable-save-v1.js` | 작업계획서 저장 흐름 보조 |
+| `public/js/work-plan-map-position-fix.js` | 작업계획서 내 동선 지도 위치 보정 |
+
+#### 계약유형·동선 데이터
+
+| 파일 | 역할 |
+|---|---|
+| `data/vehicleTypes.js` | 계약유형, 안전수칙, 동선, 필수서류 기준 데이터 |
+| `public/route-images/` | 계약유형별 동선 지도 이미지 |
+
+### 3.3 자재센터 직원·관리자 관련 파일
+
+출입신청 승인·완료·통계와 회원관리·직원관리 등 자재센터 내부 업무에 관련된 파일이다.
+
+#### 직원 출입신청 관리
+
+| 파일 | 역할 |
+|---|---|
 | `public/js/staff-console-shell.js` | 자재센터 직원 콘솔 헤더 구성, 직원/관리자 공통 `관리자모드` 버튼 생성 |
-| `public/js/admin-tools-menu-v6.js` | 관리자모드 메뉴. 회원관리와 직원관리 권한 분기 |
+| `public/css/staff-console-shell.css` | 직원·관리자 콘솔 헤더/레이아웃 |
 | `public/js/admin-today-only.js` | 직원 화면 대기/승인/완료 탭의 오늘 기준 workflow 처리 |
-| `public/js/request-list-unified-v1.js` | 신청 목록을 `출입일자 | 차량번호 | 상태` 3열 구조로 통일 |
+| `public/js/request-list-unified-v1.js` | 직원 신청 목록을 `출입일자 | 차량번호 | 상태` 3열 구조로 통일 |
 | `public/js/admin-stats-refined.js` | 자재센터 직원 통계 화면 보정 |
 | `public/js/admin-excel-refined.js` | 통계 결과 Excel 내보내기 |
+
+#### 관리자모드·계정관리
+
+| 파일 | 역할 |
+|---|---|
+| `public/js/admin-tools-menu-v6.js` | 관리자모드 메뉴. 회원관리와 직원관리 권한 분기 |
 | `public/js/staff-account-management.js` | 직원 계정 관련 관리 기능 |
 | `public/js/staff-member-management.js` | 직원/회원 관리 화면 기능 |
 | `public/js/driver-account-management-v2.js` | 레거시 차량기사 회원 관리 |
 | `public/js/password-reset-flow-v2.js` | 비밀번호 초기화 관련 직원 관리 흐름 |
-| `public/js/mo-raf-guard.js` | MutationObserver 상호 재발화에 의한 UI 하드 프리즈 방지 |
-| `public/css/staff-console-shell.css` | 직원·관리자 콘솔 헤더/레이아웃 |
-| `public/css/app-width-unified-v1.css` | 모든 일반 화면 520px 폭 통일, 브라우저 85% zoom, PWA 100%, 외부 배경 통일 |
-| `data/vehicleTypes.js` | 계약유형/안전수칙/동선/필수서류 기준 데이터 |
-| `public/route-images/` | 계약유형별 동선 지도 이미지 |
-| `wrangler.toml` | Cloudflare Worker/D1 설정 |
 
 ---
 
