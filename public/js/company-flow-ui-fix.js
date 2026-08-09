@@ -49,13 +49,7 @@
       letter-spacing:0!important;
     }
     #app .cf-appbar small {
-      display:block!important;
-      margin-top:3px!important;
-      color:#fff!important;
-      font-size:15px!important;
-      font-weight:600!important;
-      line-height:1.3!important;
-      opacity:.76!important;
+      display:none!important;
     }
     #app .cf-appbar .cf-spacer { flex:1!important; }
     #app .cf-head-btn {
