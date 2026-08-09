@@ -8,5 +8,5 @@
     return;
   }
 
-  document.write('<scr' + 'ipt src="/js/app.js?v=20260801-100"></scr' + 'ipt>');
+  document.write('<scr' + 'ipt src="/js/app.js?v=20260808-019"></scr' + 'ipt>');
 })();

@@ -346,7 +346,8 @@
   };
 
   let poll = null;
-  const stopPoll = () => { if (poll) { clearInterval(poll); poll = null; } };
+  let lastStaffSig = '';
+  const stopPoll = () => { if (poll) { clearInterval(poll); poll = null; lastStaffSig = ''; } };
 
   // 뒤로가기(하드웨어/브라우저 '<') 지원용 화면 검증
   const AUTH_VIEWS = ['driverHome', 'driverProfile', 'driverTypes', 'driverSafety',
@@ -1131,7 +1132,14 @@
   }
 
   async function loadStaff() {
-    try { state.staffData = await api('/requests'); } catch (e) { return toast(e.message); }
+    let data;
+    try { data = await api('/requests'); } catch (e) { return toast(e.message); }
+    state.staffData = data;
+    // 데이터가 이전과 동일하면 재렌더하지 않는다. (5초 폴링마다 전체 재렌더 → 화면 깜빡임 및
+    //  탭 재생성으로 완료/승인 탭 상태가 초기화되던 문제 방지)
+    const sig = JSON.stringify(data);
+    if (sig === lastStaffSig) return;
+    lastStaffSig = sig;
     if (state.view === 'staffConsole') render();
   }
   // 이미 폴링 중이면 재시작하지 않음(재렌더 → 재시작 무한루프 방지)

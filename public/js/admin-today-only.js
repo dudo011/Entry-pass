@@ -85,9 +85,11 @@
     const approvedTabs = [...tabs.querySelectorAll('.tab[data-tab="approved"]')];
     const approvedTab = approvedTabs.find((tab) => tab.dataset.workflowTab !== 'completed') || null;
 
-    /* 코어가 통계/대기/승인을 활성화해 다시 렌더링했다면 완료 모드를 즉시 해제한다. */
-    if (activeBeforePrepare && activeBeforePrepare !== completedTab
-      && activeBeforePrepare.dataset.workflowTab !== 'completed') {
+    /* 승인·완료 탭은 같은 data-tab='approved'를 공유하므로, 코어가 승인 탭을
+       활성화해 다시 렌더링해도 완료 모드를 해제하면 안 된다(그러면 완료 탭이
+       곧바로 승인으로 되돌아간다). 완료/승인 전환은 탭 클릭 리스너가 담당하고,
+       여기서는 대기·통계 등 approved 계열이 아닌 화면으로 이동했을 때만 해제한다. */
+    if (activeBeforePrepare && activeBeforePrepare.dataset.tab !== 'approved') {
       completedMode = false;
     }
 
