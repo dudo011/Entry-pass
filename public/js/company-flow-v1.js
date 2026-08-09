@@ -426,15 +426,9 @@
       }
     }
 
-    async function loadDetail(id) {
+    function loadDetail(id) {
       const c = companies.find((x) => x.id === id); if (!c) return loadList();
-      listBox.innerHTML = `<div class="cf-screen"><div class="cf-card">불러오는 중…</div></div>`;
-      let vehicles = [];
-      try { const res = await fetch(`/api/admin/companies/${encodeURIComponent(id)}/vehicles`); const d = await res.json(); if (res.ok) vehicles = d; } catch { /* noop */ }
       const contract = contractTypeName(c.contractTypeId);
-      const vehiclesHtml = vehicles.length
-        ? vehicles.map((v) => `<div class="cf-item"><div class="cf-item-top"><strong>${esc(v.vehicleNumber)}</strong><button class="cf-btn cf-danger cf-small" style="margin-left:auto" data-cf-veh-del="${esc(v.id)}" data-cf-veh-num="${esc(v.vehicleNumber)}">삭제</button></div><div class="cf-meta">${esc(v.driverName || '')}${v.driverPhone ? ` · ${esc(v.driverPhone)}` : ''}</div></div>`).join('')
-        : '<div class="cf-card" style="color:#64748b">등록된 차량이 없습니다.</div>';
       listBox.innerHTML = `<div class="cf-screen">
         <button class="cf-form-btn" data-cf-company-back style="margin:0 0 10px">‹ 업체 목록</button>
         <div class="cf-card"><div class="cf-item-top"><strong style="font-size:18px">${esc(c.companyName)}</strong></div>
@@ -442,8 +436,6 @@
           <button class="cf-btn cf-secondary" style="margin-top:12px" data-cf-company-reset="${esc(c.id)}">🔑 비밀번호 초기화</button>
           <div id="cf_reset_result"></div>
         </div>
-        <div class="cf-title">등록 차량 (${vehicles.length}대)</div>
-        <div id="cf_admin_vehicles">${vehiclesHtml}</div>
       </div>`;
     }
 
@@ -480,22 +472,6 @@
           if (box) box.innerHTML = `<div class="cf-reset-box">임시 비밀번호가 발급되었습니다.<br>아이디 <b>${esc(data.loginId)}</b><br>임시 비밀번호 <b>${esc(data.tempPassword)}</b><div style="margin-top:6px;font-weight:700;color:#92400e">이 화면을 벗어나면 다시 확인할 수 없습니다. 업체 담당자에게 안전하게 전달해 주세요.</div></div>`;
           reset.disabled = false;
         } catch (e) { reset.disabled = false; toast(e.message); }
-        return;
-      }
-
-      const vehDel = event.target.closest?.('[data-cf-veh-del]');
-      if (vehDel) {
-        const open2 = layer.querySelector('[data-cf-company-reset]');
-        const companyId = open2?.dataset.cfCompanyReset || '';
-        if (!confirm(`차량 '${vehDel.dataset.cfVehNum}'을(를) 등록 내역에서 삭제하시겠습니까?`)) return;
-        vehDel.disabled = true;
-        try {
-          const res = await fetch(`/api/admin/companies/${encodeURIComponent(companyId)}/vehicles/${encodeURIComponent(vehDel.dataset.cfVehDel)}`, { method: 'DELETE' });
-          const data = await res.json().catch(() => ({}));
-          if (!res.ok) throw new Error(data?.error || '삭제하지 못했습니다.');
-          toast('차량을 삭제했습니다.');
-          await loadDetail(companyId);
-        } catch (e) { vehDel.disabled = false; toast(e.message); }
         return;
       }
     });

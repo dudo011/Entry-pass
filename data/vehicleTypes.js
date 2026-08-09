@@ -82,7 +82,7 @@ export default [
   {
     id: 'transport',
     passPrefix: 'B',
-    name: '물자수송용역 차량',
+    name: '물자수송용역',
     subtitle: '연간 물자수송 용역계약 차량',
     icon: '🚛',
     color: '#2563eb',
@@ -94,7 +94,7 @@ export default [
   {
     id: 'delivery',
     passPrefix: 'C',
-    name: '기자재 납품차량',
+    name: '기자재 납품',
     subtitle: '기자재·부품 납품 차량',
     icon: '🚚',
     color: '#0d9488',
@@ -113,7 +113,7 @@ export default [
   {
     id: 'scrap',
     passPrefix: 'D',
-    name: '불용품 매각차량',
+    name: '불용품 매각',
     subtitle: '불용·매각품 반출 차량',
     icon: '♻️',
     color: '#65a30d',
@@ -132,7 +132,7 @@ export default [
   {
     id: 'pcbs',
     passPrefix: 'E',
-    name: 'PCBs처리용역 차량',
+    name: 'PCBs처리용역',
     subtitle: 'PCBs 함유 폐기물 처리 용역 차량',
     icon: '☣️',
     color: '#dc2626',

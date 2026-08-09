@@ -685,24 +685,6 @@ async function updateCompanyProfile(request, env) {
   return json({ account: publicAccount(updated) });
 }
 
-// 관리자: 특정 업체의 등록차량 조회
-async function listCompanyVehicles(request, env, id) {
-  const auth = await requireStaff(request, env); if (auth.error) return auth.error;
-  const company = await env.DB.prepare('SELECT id FROM company_accounts WHERE id = ?').bind(id).first();
-  if (!company) return error('업체 계정을 찾을 수 없습니다.', 404);
-  const rows = await env.DB.prepare('SELECT * FROM company_vehicles WHERE company_account_id = ? ORDER BY created_at').bind(id).all();
-  return json((rows.results || []).map(publicVehicle));
-}
-
-// 관리자: 특정 업체의 등록차량 삭제(DB에서 실제 삭제)
-async function deleteCompanyVehicle(request, env, id, vehicleId) {
-  const auth = await requireStaff(request, env, true); if (auth.error) return auth.error;
-  const result = await env.DB.prepare('DELETE FROM company_vehicles WHERE id = ? AND company_account_id = ?')
-    .bind(vehicleId, id).run();
-  if (!result.meta?.changes) return error('차량을 찾을 수 없습니다.', 404);
-  return json({ ok: true });
-}
-
 // 관리자: 업체가 비밀번호 분실 시 임시 비밀번호 발급(발급값을 관리자에게 1회 표시)
 function makeTempPassword() {
   const chars = 'abcdefghijkmnpqrstuvwxyz23456789'; // 혼동되는 0,O,1,l,I 등 제외
@@ -799,10 +781,6 @@ export async function handleCompanyFlowApi(request, env) {
   const metaMatch = path.match(/^\/api\/admin\/company-requests\/([^/]+)\/meta$/);
   if (metaMatch && method === 'GET') return companyRequestMeta(request, env, decodeURIComponent(metaMatch[1]));
   if (method === 'GET' && path === '/api/admin/companies') return listCompanies(request, env);
-  const companyVehiclesMatch = path.match(/^\/api\/admin\/companies\/([^/]+)\/vehicles$/);
-  if (companyVehiclesMatch && method === 'GET') return listCompanyVehicles(request, env, decodeURIComponent(companyVehiclesMatch[1]));
-  const companyVehicleMatch = path.match(/^\/api\/admin\/companies\/([^/]+)\/vehicles\/([^/]+)$/);
-  if (companyVehicleMatch && method === 'DELETE') return deleteCompanyVehicle(request, env, decodeURIComponent(companyVehicleMatch[1]), decodeURIComponent(companyVehicleMatch[2]));
   const companyResetMatch = path.match(/^\/api\/admin\/companies\/([^/]+)\/reset-password$/);
   if (companyResetMatch && method === 'POST') return resetCompanyPassword(request, env, decodeURIComponent(companyResetMatch[1]));
   const companyMatch = path.match(/^\/api\/admin\/companies\/([^/]+)$/);

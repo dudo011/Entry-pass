@@ -5,10 +5,10 @@
   const COMPANY_TOKEN_KEY = 'ep_company_token';
   const CONTRACT_TYPES = [
     { id: 'construction', name: '공사업체' },
-    { id: 'transport', name: '물자수송용역 차량' },
-    { id: 'delivery', name: '기자재 납품차량' },
-    { id: 'scrap', name: '불용품 매각차량' },
-    { id: 'pcbs', name: 'PCBs처리용역 차량' },
+    { id: 'transport', name: '물자수송용역' },
+    { id: 'delivery', name: '기자재 납품' },
+    { id: 'scrap', name: '불용품 매각' },
+    { id: 'pcbs', name: 'PCBs처리용역' },
   ];
 
   const style = document.createElement('style');

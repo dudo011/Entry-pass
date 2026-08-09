@@ -14,11 +14,11 @@
     '5': ['운전면허증, 화물운송종사자격증 소지'],
   };
   const VEHICLE_ICONS = {
-    '물자수송용역 차량': '🚛',
-    '공사업체 차량': '🏗️',
-    '기자재 납품차량': '🚚',
-    '불용품 매각차량': '♻️',
-    'PCBs처리용역 차량': '☣️',
+    '물자수송용역': '🚛',
+    '공사업체': '🏗️',
+    '기자재 납품': '🚚',
+    '불용품 매각': '♻️',
+    'PCBs처리용역': '☣️',
   };
   const VEHICLE_TYPE_LABELS = {
     transport: '물자수송용역',
@@ -94,7 +94,7 @@
     }
 
     appbar.querySelector('.back')?.remove();
-    const stopOnlyVehicle = originalTitle === '기자재 납품차량' || originalTitle === '불용품 매각차량';
+    const stopOnlyVehicle = originalTitle === '기자재 납품' || originalTitle === '불용품 매각';
     const isSafetyPage = originalSub.includes('필수 안전수칙') || originalSub.includes('기타 안전수칙');
     const displaySub = stopOnlyVehicle && isSafetyPage
       ? (originalSub.includes('기타') ? '출입차량 안전수칙(2)' : '출입차량 안전수칙(1)')
